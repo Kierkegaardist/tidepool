@@ -52,4 +52,5 @@ powershell -ExecutionPolicy Bypass -File installer\build.ps1 -Version 0.2.1   (m
 - `web/live/` holds the restyling files Marina edits, and its `README.md` explains every key.
 - Set `CD_DEBUG_PORT=9340` before starting to get a DevTools port.
 
-Image credits and licences are in [`web/assets/CREDITS.md`](web/assets/CREDITS.md). The icons are Crystal Clear (LGPL), the scenes come from Poly Haven HDRIs (CC0), and the Winamp skins are from the Winamp Skin Museum.
+## License
+The code is MIT (see [LICENSE](LICENSE)). The images keep their own licences, listed in [`web/assets/CREDITS.md`](web/assets/CREDITS.md). The icons are Crystal Clear (LGPL), the scenes come from Poly Haven HDRIs (CC0), and the Winamp skins are from the Winamp Skin Museum.
