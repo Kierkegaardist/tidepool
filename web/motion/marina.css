@@ -1,29 +1,42 @@
 /* ---- Marina's home: the rail orb is her bowl (orb.js mount home: sky + reef canvas, her, glass canvas). She swims the bowl,
-   turns at the glass, drops to her anemone (bottom left) and hovers there a while. Transforms only; .covered/.frozen pause her. ---- */
+   turns at the glass, drops down to the reef (bottom left) and hovers there a while. Transforms only; .covered/.frozen pause her. ---- */
 .orb.mhome{overflow:visible}
-.mswim{position:absolute;left:36.5%;top:44%;width:27%;aspect-ratio:42/32;pointer-events:none;animation:mswim 30s ease-in-out infinite}
+.mswim{position:absolute;left:31%;top:40%;width:38%;aspect-ratio:42/32;pointer-events:none;animation:mswim 30s ease-in-out infinite}   /* 38 % of the bowl (was 27) */
 .mbob{width:100%;height:100%;animation:mbob 3.2s ease-in-out infinite}
 .mfish{display:block;width:100%;height:100%;overflow:visible}
 .mfish *{transform-box:fill-box}
-.mfish .tail{transform-origin:100% 50%;animation:mtail 1.1s ease-in-out infinite}
-.mfish .pec{transform-origin:90% 5%;animation:mpec .9s ease-in-out infinite}
-.mfish .dor{transform-origin:40% 100%;animation:mdor 2.4s ease-in-out infinite}
-.mfish .eye{transform-origin:center;animation:mblink 6s infinite}
+.mfish .fb{transform-origin:85% 50%;animation:mwig .55s ease-in-out infinite alternate}   /* her body flexes with each stroke, pivoting near the head */
+.mfish .tail{transform-origin:95.4% 56%;animation:mtail 2.2s ease-in-out infinite}   /* the peduncle on the cropped tail photo */
 .mfish .talk{display:none}
 .mfish .mouth{transform-box:fill-box;transform-origin:center}
-@keyframes mtail{0%,100%{transform:rotate(8deg) scaleX(.95)}50%{transform:rotate(-8deg) scaleX(1.04)}}
-@keyframes mpec{50%{transform:rotate(-24deg) scaleX(.8)}}
-@keyframes mdor{50%{transform:skewX(-7deg)}}
-@keyframes mblink{0%,94%,100%{transform:none}96%{transform:scaleY(.1)}}
-@keyframes mbob{50%{transform:translateY(-6%) rotate(-2deg)}}
-/* path in % of her own box (about 23 x 17 px): right along the middle, turn, back high and far (smaller), turn, down to the anemone, rest */
+@keyframes mwig{from{transform:rotate(-1.3deg) skewY(-.8deg)}to{transform:rotate(1.3deg) skewY(.8deg)}}
+/* side view: the tail sweeps toward and away from you, so it foreshortens more than it turns; three strokes, then a glide */
+@keyframes mtail{0%,100%{transform:rotate(5deg) scaleX(1)}10%{transform:rotate(-4deg) scaleX(.76)}20%{transform:rotate(5deg) scaleX(1)}30%{transform:rotate(-4deg) scaleX(.76)}
+  40%{transform:rotate(5deg) scaleX(1)}50%{transform:rotate(-3deg) scaleX(.8)}62%{transform:rotate(2deg) scaleX(.96)}80%{transform:rotate(-1deg) scaleX(.92)}}
+@keyframes mbob{50%{transform:translateY(-5%) rotate(-2deg)}}
+/* path in % of her own box: cruise right, dart, turn, back high and far, turn, down to the reef for two nibbles, cruise, turn, home */
 @keyframes mswim{
-  0%{transform:translate(-75%,0) scale(1,1)}
-  26%{transform:translate(80%,-12%) scale(1,1)}
-  30%{transform:translate(92%,-30%) scale(-.9,.9)}
-  52%{transform:translate(-55%,-62%) scale(-.82,.82);opacity:.92}
-  56%{transform:translate(-80%,-48%) scale(.86,.86)}
-  66%{transform:translate(-45%,-10%) scale(.95,.95);opacity:1}
-  76%{transform:translate(-60%,28%) scale(1,1)}
-  90%{transform:translate(-70%,22%) scale(1,1)}
-  100%{transform:translate(-75%,0) scale(1,1)}}
+  0%{transform:translate(-45%,10%) scale(1,1) rotate(0)}
+  12%{transform:translate(8%,0) scale(1,1) rotate(-3deg)}
+  15.5%{transform:translate(44%,-10%) scale(1,1) rotate(-6deg)}
+  19%{transform:translate(50%,-14%) scale(-.95,.95) rotate(0)}
+  34%{transform:translate(-18%,-24%) scale(-.82,.82) rotate(2deg);opacity:.93}
+  40%{transform:translate(-46%,-12%) scale(-.84,.84) rotate(0)}
+  43.5%{transform:translate(-50%,0) scale(.9,.9) rotate(0);opacity:1}
+  52%{transform:translate(-10%,32%) scale(1,1) rotate(10deg)}
+  57%{transform:translate(4%,46%) scale(1,1) rotate(20deg)}
+  60%{transform:translate(4%,42%) scale(1,1) rotate(6deg)}
+  63%{transform:translate(5%,47%) scale(1,1) rotate(22deg)}
+  67%{transform:translate(2%,34%) scale(1,1) rotate(-4deg)}
+  78%{transform:translate(36%,18%) scale(1,1) rotate(0)}
+  81.5%{transform:translate(44%,16%) scale(-1,1) rotate(0)}
+  92%{transform:translate(-32%,20%) scale(-1,1) rotate(-2deg)}
+  95.5%{transform:translate(-46%,14%) scale(1,1) rotate(0)}
+  100%{transform:translate(-45%,10%) scale(1,1) rotate(0)}}
+/* bubbles rising through the bowl, from the reef to the surface */
+.mbub{position:absolute;bottom:14%;width:3.2%;aspect-ratio:1;border-radius:50%;pointer-events:none;opacity:0;
+  background:radial-gradient(circle at 32% 30%,rgba(255,255,255,.95) 0 14%,rgba(255,255,255,.12) 30%,rgba(255,255,255,.05) 62%,rgba(255,255,255,.6) 74%,transparent 78%);animation:mbub 6s ease-in infinite}
+.mbub:nth-of-type(1){left:62%;animation-delay:.4s}
+.mbub:nth-of-type(2){left:70%;width:2.2%;animation-duration:7.5s;animation-delay:2.6s}
+.mbub:nth-of-type(3){left:24%;width:2.6%;animation-duration:9s;animation-delay:5s}
+@keyframes mbub{0%{transform:translate(0,0) scale(.6);opacity:0}8%{opacity:.9}35%{transform:translate(28%,-380%)}65%{transform:translate(-22%,-760%)}88%{opacity:.85}100%{transform:translate(18%,-1500%) scale(1.1);opacity:0}}

@@ -117,80 +117,53 @@
     g.restore();
   }
 
-  /* ---- Marina's bowl: the sea seen from inside (water, light shafts from the real sun or moon, a coral reef), then the glass over her ---- */
+  /* ---- Marina's bowl, Frutiger Aero style: a bright, saturated reef (photo cutouts) in glossy water, caustic light, bubbles, the real sun or moon's shafts ---- */
+  const FLOOR = new Image(), onFloor = [];   // concepts/mascot/reef/build.py composes it from three reef photos (assets/CREDITS.md); pages using Orb sit in web/
+  FLOOR.onload = () => onFloor.splice(0).forEach(f => f()); FLOOR.src = "assets/marina/floor.webp";
+  const vivid = (c, k = .45) => { const m = (c[0] + c[1] + c[2]) / 3; return c.map(v => cl(m + (v - m) * (1 + k), 0, 255)); };   // Aero water: the phase colour, more saturated
+  const BUBS = Array.from({ length: 9 }, (_, i) => [((i * .37) % 1) * 1.5 - .75, .1 + ((i * .61) % 1) * .8, .018 + ((i * .29) % 1) * .03]);
   function reef(g, x, y, r, hz, c, lit) {
-    const P = (u, v) => [x + u * r, y + v * r], W = v => v * r;
-    let sd = 5; const rn = () => (sd = (sd * 16807) % 2147483647) / 2147483647;   // fixed seed: the same reef every redraw
-    const wg = g.createLinearGradient(0, hz, 0, y + r);
-    wg.addColorStop(0, css(c.horizon)); wg.addColorStop(.12, css(c.water)); wg.addColorStop(1, css(c.waterDeep));
-    g.fillStyle = wg; g.fillRect(x - r, hz, r * 2, y + r - hz);
-    g.fillStyle = "rgba(255,255,255,.55)"; g.fillRect(x - r, hz - .4, r * 2, Math.max(.8, r * .02));   // the underside of the surface
-    if (lit[2] > .03) for (let i = 0; i < 4; i++) {   // light shafts fanning down from where the sun (or moon) is
+    const W = v => v * r, bot = y + r, wa = vivid(c.water), wd = vivid(c.waterDeep, .3);
+    const wg = g.createLinearGradient(0, hz, 0, bot);
+    wg.addColorStop(0, css(vivid(c.horizon, .2))); wg.addColorStop(.1, css(wa)); wg.addColorStop(1, css(wd));
+    g.fillStyle = wg; g.fillRect(x - r, hz, r * 2, bot - hz);
+    g.save(); g.beginPath(); g.rect(x - r, hz, r * 2, bot - hz); g.clip();
+    // caustics: soft bright ripples on the water near the surface
+    g.lineWidth = Math.max(.5, W(.008)); g.lineCap = "round";
+    for (let k = 0; k < 5; k++) {
+      const yy = hz + W(.06 + k * .07); g.strokeStyle = `rgba(255,255,255,${.12 - k * .02})`; g.beginPath();
+      for (let s = -1; s <= 1.001; s += .05) { const px = x + s * r, py = yy + W(.018) * Math.sin(s * 11 + k * 1.7); s <= -1 ? g.moveTo(px, py) : g.lineTo(px, py); }
+      g.stroke();
+    }
+    if (lit[2] > .03) for (let i = 0; i < 4; i++) {   // light shafts from where the sun (or moon) is, behind the reef
       const u0 = lit[0] + W(-.16 + i * .1), sp = W(.08 + i * .03), fall = (lit[0] - x) * -.35 + W(-.3 + i * .2);
-      const sg = g.createLinearGradient(0, hz, 0, y + r * .8); sg.addColorStop(0, css(lit[1], .22 * lit[2])); sg.addColorStop(1, css(lit[1], 0));
+      const sg = g.createLinearGradient(0, hz, 0, y + r * .8); sg.addColorStop(0, css(lit[1], .3 * lit[2])); sg.addColorStop(1, css(lit[1], 0));
       g.fillStyle = sg; g.beginPath(); g.moveTo(u0, hz); g.lineTo(u0 + W(.05), hz); g.lineTo(u0 + fall + sp, y + r * .8); g.lineTo(u0 + fall - sp * .3, y + r * .8); g.fill();
     }
-    g.save(); g.translate(x, y + r); g.scale(1.5, 1.5); g.translate(-x, -(y + r));   // the reef drawn at 1.5x from the bottom: fills the lower half and runs up the glass
-    g.lineCap = "round";
-    const branch = (px, py, a, len, w, n, col, tip) => {   // branching coral / sea fan: tapering forks, light tips
-      const qx = px + Math.cos(a) * len, qy = py + Math.sin(a) * len;
-      g.strokeStyle = col; g.lineWidth = w; g.beginPath(); g.moveTo(px, py); g.quadraticCurveTo(px + Math.cos(a + .3) * len * .5, py + Math.sin(a + .3) * len * .5, qx, qy); g.stroke();
-      if (n) for (let k = 0, m = 2 + (rn() > .6); k < m; k++) branch(qx, qy, a + (k - (m - 1) / 2) * (.45 + rn() * .3), len * (.62 + rn() * .2), w * .72, n - 1, col, tip);
-      else { g.fillStyle = tip; g.beginPath(); g.arc(qx, qy, w * .75, 0, TAU); g.fill(); }
-    };
-    const dome = (u, v, rx, ry, c0, c1, line) => {   // brain / boulder coral: a lit dome with meandering grooves
-      const [cx, cy] = P(u, v), dg = g.createRadialGradient(cx - W(rx) * .35, cy - W(ry) * .6, 0, cx, cy, W(rx) * 1.1);
-      dg.addColorStop(0, c0); dg.addColorStop(1, c1); g.fillStyle = dg;
-      g.beginPath(); g.ellipse(cx, cy, W(rx), W(ry), 0, Math.PI, 0); g.closePath(); g.fill();
-      g.save(); g.clip(); g.strokeStyle = line; g.lineWidth = Math.max(.6, W(.012));
-      for (let k = 0; k < 5; k++) { g.beginPath(); const yy = cy - W(ry) * (.15 + k * .17); g.moveTo(cx - W(rx), yy); for (let s = -1; s <= 1.01; s += .25) g.lineTo(cx + W(rx) * s, yy + W(.018) * Math.sin(s * 9 + k * 2)); g.stroke(); }
-      g.restore();
-    };
-    // back row: sea fan, kelp, a tall orange branch
-    branch(...P(-.66, .78), -1.75, W(.16), W(.022), 3, "rgba(150,96,196,.8)", "rgba(214,170,240,.9)");
-    for (const [u, h, b] of [[.72, .5, -.08], [.8, .4, .12], [.64, .36, -.2]]) {
-      const [bx, by] = P(u, .8); g.strokeStyle = "#3E8F4C"; g.lineWidth = W(.04);
-      g.beginPath(); g.moveTo(bx, by); g.bezierCurveTo(bx + W(b), by - W(h) * .4, bx - W(b), by - W(h) * .7, bx + W(b) * .6, by - W(h)); g.stroke();
+    if (FLOOR.complete && FLOOR.naturalWidth) {   // the reef fills the lower part and climbs to just under the surface at the back
+      const w = W(2.3), h = w * FLOOR.naturalHeight / FLOOR.naturalWidth;
+      g.drawImage(FLOOR, x - w / 2, bot + W(.04) - h, w, h);
     }
-    branch(...P(.4, .76), -1.5, W(.12), W(.035), 2, "#E0603A", "#FFC09A");
-    branch(...P(.18, .8), -1.65, W(.11), W(.03), 3, "rgba(120,84,190,.85)", "rgba(200,170,255,.9)");
-    branch(...P(-.16, .82), -1.45, W(.1), W(.03), 2, "#D9483A", "#FFB09A");
-    branch(...P(.56, .82), -1.8, W(.09), W(.026), 2, "#E8B83A", "#FFF0A0");
-    // the rock the reef grows on, and sand in front
-    for (const [u, v, a, b] of [[-.5, .86, .36, .14], [.42, .88, .4, .15], [-.02, .9, .3, .1]]) {
-      const [cx, cy] = P(u, v), rg = g.createRadialGradient(cx - W(a) * .3, cy - W(b) * .8, 0, cx, cy, W(a));
-      rg.addColorStop(0, "#8A7470"); rg.addColorStop(1, "#3B2C34"); g.fillStyle = rg; g.beginPath(); g.ellipse(cx, cy, W(a), W(b), 0, 0, TAU); g.fill();
+    const hz2 = g.createLinearGradient(0, hz, 0, bot); hz2.addColorStop(0, css(wa, .12)); hz2.addColorStop(.5, css(wa, .03)); hz2.addColorStop(1, css(wd, 0));
+    g.fillStyle = hz2; g.fillRect(x - r, hz, r * 2, bot - hz);   // only a breath of water over the reef: Aero stays crisp
+    for (const [u, v, s] of BUBS) {   // glossy bubbles: clear body, bright rim, a white glint
+      const bx = x + u * r, by = hz + v * (bot - hz) * .85, br = W(s);
+      g.strokeStyle = "rgba(255,255,255,.55)"; g.lineWidth = Math.max(.5, br * .18); g.beginPath(); g.arc(bx, by, br, 0, TAU); g.stroke();
+      g.fillStyle = "rgba(255,255,255,.12)"; g.fill();
+      g.fillStyle = "rgba(255,255,255,.9)"; g.beginPath(); g.arc(bx - br * .35, by - br * .35, br * .28, 0, TAU); g.fill();
     }
-    const sg = g.createLinearGradient(0, y + r * .86, 0, y + r); sg.addColorStop(0, "#E4D2A4"); sg.addColorStop(1, "#9C7F52");
-    g.fillStyle = sg; g.beginPath(); g.ellipse(x, y + r * 1.04, r, r * .16, 0, 0, TAU); g.fill();
-    // front row: domes, tube sponges, a small pink branch, and the anemone (Marina's home)
-    dome(.12, .88, .15, .13, "#A9CF6A", "#4E7A2A", "rgba(40,70,20,.45)");
-    dome(.5, .9, .11, .09, "#F0C46A", "#A8682A", "rgba(110,60,20,.45)");
-    dome(-.72, .9, .1, .08, "#8FA8E0", "#3E5590", "rgba(30,40,90,.45)");
-    for (const [u, h, col] of [[.27, .16, "#9A5CC8"], [.31, .11, "#B47CE0"], [.86, .12, "#E8C23A"]]) {
-      const [bx, by] = P(u, .9); g.strokeStyle = col; g.lineWidth = W(.045); g.beginPath(); g.moveTo(bx, by); g.lineTo(bx + W(.01), by - W(h)); g.stroke();
-      g.fillStyle = "rgba(30,10,40,.55)"; g.beginPath(); g.ellipse(bx + W(.01), by - W(h), W(.016), W(.008), 0, 0, TAU); g.fill();
-    }
-    branch(...P(-.05, .84), -1.35, W(.08), W(.022), 2, "#E58BB5", "#FFD0E4");
-    const [ax, ay] = P(-.3, .8);
-    g.fillStyle = "#B88A90"; g.beginPath(); g.ellipse(ax, ay, W(.1), W(.05), 0, 0, TAU); g.fill();
-    for (let k = 0; k < 30; k++) {   // anemone tentacles: long, curling out and up
-      const a = -Math.PI / 2 + (k / 29 - .5) * 2.6 + (rn() - .5) * .2, L = W(.17 + rn() * .1), bx = ax + Math.cos(a) * W(.05), by = ay - W(.01);
-      const ex = bx + Math.cos(a) * L, ey = by + Math.sin(a) * L * .9, cx2 = bx + Math.cos(a + .5) * L * .6, cy2 = by + Math.sin(a + .5) * L * .6;
-      const tg = g.createLinearGradient(bx, by, ex, ey); tg.addColorStop(0, "#C99AA2"); tg.addColorStop(.7, "#F1DDB6"); tg.addColorStop(1, "#FFF3D8");
-      g.strokeStyle = tg; g.lineWidth = W(.026); g.beginPath(); g.moveTo(bx, by); g.quadraticCurveTo(cx2, cy2, ex, ey); g.stroke();
-    }
-    for (let k = 0; k < 14; k++) { const [px, py] = P(-.8 + rn() * 1.6, .95 + rn() * .04); g.fillStyle = ["#8C7B6A", "#C9B79A", "#6F6A63", "#D8CBB4"][k % 4]; g.beginPath(); g.ellipse(px, py, W(.025), W(.015), 0, 0, TAU); g.fill(); }
     g.restore();
-    g.fillStyle = css(c.water, .12); g.fillRect(x - r, hz, r * 2, y + r - hz);   // a little water over everything, for depth
+    g.fillStyle = "rgba(255,255,255,.7)"; g.fillRect(x - r, hz - .4, r * 2, Math.max(.8, r * .022));   // the underside of the surface, bright
   }
   function glass(g, x, y, r, c, hz, st) {   // over Marina: night darkens the water, then the Crystal gloss and rim
-    const top = y - r, night = cl((2 - st.sun.elev) / 14) * .55;
+    const top = y - r, night = cl((2 - st.sun.elev) / 14) * .42;   // night dims the bowl but the reef keeps some colour
     g.save(); g.beginPath(); g.arc(x, y, r, 0, TAU); g.clip();
     if (night > .01) { g.fillStyle = css(c.waterDeep, night); g.fillRect(x - r, hz, r * 2, y + r - hz); }
     const dep = g.createRadialGradient(x, y, r * .62, x, y, r); dep.addColorStop(0, "rgba(0,20,40,0)"); dep.addColorStop(1, "rgba(0,20,40,.38)");
     g.fillStyle = dep; g.fillRect(x - r, top, r * 2, r * 2);
-    const hl = g.createLinearGradient(0, top + r * .04, 0, y - r * .2); hl.addColorStop(0, "rgba(255,255,255,.7)"); hl.addColorStop(1, "rgba(255,255,255,0)");
+    const up = g.createRadialGradient(x, y + r * 1.05, 0, x, y + r * 1.05, r * .9); up.addColorStop(0, "rgba(160,240,255,.14)"); up.addColorStop(1, "rgba(160,240,255,0)");
+    g.fillStyle = up; g.fillRect(x - r, y, r * 2, r);   // Aero glow welling up from the bottom of the glass
+    const hl = g.createLinearGradient(0, top + r * .04, 0, y - r * .2); hl.addColorStop(0, "rgba(255,255,255,.88)"); hl.addColorStop(1, "rgba(255,255,255,0)");
     g.fillStyle = hl; g.beginPath(); g.ellipse(x, y - r * .58, r * .66, r * .36, 0, 0, TAU); g.fill();
     g.fillStyle = "rgba(255,255,255,.3)"; g.beginPath(); g.moveTo(x + r * .52, y - r * .62); g.quadraticCurveTo(x + r * .8, y - r * .35, x + r * .86, y - r * .05);
     g.lineTo(x + r * .76, y - r * .06); g.quadraticCurveTo(x + r * .7, y - r * .34, x + r * .46, y - r * .55); g.fill();   // a window reflection on the right
@@ -199,20 +172,21 @@
     g.strokeStyle = rim; g.lineWidth = Math.max(1, r * .024); g.beginPath(); g.arc(x, y, r - g.lineWidth / 2, 0, TAU); g.stroke();
   }
   // Marina: the same goldfish as the voice overlay (overlay.html), ids prefixed m-; ui.css .mswim swims her round the bowl
-  const FISH = `<svg viewBox="6 16 42 32" class="mfish"><defs><path id="m-bd" d="M46 34C45.6 31.6 43.6 28.4 40.4 26.4 37.6 24.6 35.4 23.6 32.6 23.6c-5 0-8.8 3.6-11.4 7.8l-.4 3.2c2.4 4.8 6.8 7.8 11.6 7.8 4.2 0 7.6-1.4 10.2-3.8 1.6-1.4 2.8-2.8 3.4-4.6z"/><clipPath id="m-bodyc"><use href="#m-bd"/></clipPath><linearGradient id="m-skin" x1="0" y1="0" x2=".15" y2="1"><stop offset="0" stop-color="#A82A0C"/><stop offset=".28" stop-color="#DC5418"/><stop offset=".55" stop-color="#F28C2A"/><stop offset=".8" stop-color="#FDBA55"/><stop offset="1" stop-color="#FFE2A6"/></linearGradient><radialGradient id="m-sheen" cx="58%" cy="40%" r="50%"><stop offset="0" stop-color="#FFF4D6" stop-opacity=".55"/><stop offset=".5" stop-color="#FFE0A0" stop-opacity=".18"/><stop offset="1" stop-color="#FFE0A0" stop-opacity="0"/></radialGradient><pattern id="m-scl" width="2" height="1.5" patternUnits="userSpaceOnUse" patternTransform="rotate(-6)"> <path d="M0 1.5Q1 .1 2 1.5M-1 .75Q0 -.65 1 .75M1 .75Q2 -.65 3 .75" stroke="#7A2006" stroke-opacity=".2" stroke-width=".2" fill="none"/> <path d="M.3 1.2Q1 .5 1.7 1.2" stroke="#FFE6B0" stroke-opacity=".22" stroke-width=".14" fill="none"/> </pattern><linearGradient id="m-fin" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#E8661F" stop-opacity=".9"/><stop offset=".5" stop-color="#F6943E" stop-opacity=".55"/><stop offset="1" stop-color="#FFD3A0" stop-opacity=".18"/></linearGradient><linearGradient id="m-finv" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#D9561A" stop-opacity=".9"/><stop offset="1" stop-color="#FFC890" stop-opacity=".22"/></linearGradient><linearGradient id="m-finp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#EE7A30" stop-opacity=".85"/><stop offset="1" stop-color="#FFD0A0" stop-opacity=".2"/></linearGradient><radialGradient id="m-iris" cx="45%" cy="40%" r="60%"><stop offset="0" stop-color="#F9DE8E"/><stop offset=".6" stop-color="#D79A35"/><stop offset="1" stop-color="#6E3A0E"/></radialGradient><linearGradient id="m-tshade" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7A1E04" stop-opacity=".45"/><stop offset=".3" stop-color="#7A1E04" stop-opacity="0"/><stop offset=".85" stop-color="#7A1E04" stop-opacity="0"/><stop offset="1" stop-color="#7A1E04" stop-opacity=".2"/></linearGradient></defs><g class="fx"><g class="fb"> <g class="tail"> <path d="M21.2 32.2C18.4 29.6 15.2 25.6 10.6 22c-1-.7-2.2-.6-3-.2 1.2 1.6 1 3.2 2 4.6-.8 1.4.4 3.2-.2 4.8 3.2 1.6 7.2 2 11.6 2.2z" fill="url(#m-fin)"/> <path d="M21 33.4c-4.4.2-8.4.8-11.4 2.2.6 1.6-.6 3.4.2 5-1 1.6-.6 3.2-2 4.8 1.2.4 2.6.2 3.6-.6 4.2-3.4 7.2-7.2 9.8-10.2z" fill="url(#m-fin)"/> <path d="M20.6 32.8L8.4 22.4M20.6 33l-10.8-6.4M20.6 33.1L9.6 30.6M20.6 33.6L9.8 35.8M20.6 33.8l-10.6 6.6M20.6 34L8.6 45" stroke="#B9420F" stroke-opacity=".35" stroke-width=".22" stroke-linecap="round"/> <path d="M7.6 21.8c1.2 1.6 1 3.2 2 4.6-.8 1.4.4 3.2-.2 4.8M9.6 35.6c.6 1.6-.6 3.4.2 5-1 1.6-.6 3.2-2 4.8" stroke="#FFE6C8" stroke-opacity=".4" stroke-width=".3" fill="none"/> </g> <g class="dor"> <path d="M26.4 26c.6-3.6 2.4-6.8 5.2-8.4.6 1.8 2.2 3 3 4 1.2 1 2.8 2 3.8 3.2-3.8-1.2-8.2-.6-12 1.2z" fill="url(#m-finv)"/> <path d="M28 25.2l3.2-7M30 24.4l2.6-5.4M32 24l2.4-3.4M34 23.9l2.4-1.6" stroke="#A8380C" stroke-opacity=".35" stroke-width=".2" stroke-linecap="round"/> </g> <path d="M24.6 39.6c-1.4 1.8-3.2 3-5 3.4 2.8.8 5.6 0 7.6-1.8z" fill="url(#m-finp)"/> <path d="M31.6 42c-.8 2-2.2 3.6-3.8 4.4 2.6.2 4.8-1 6-3z" fill="url(#m-finp)"/> <use href="#m-bd" fill="url(#m-skin)"/> <path d="M20 20h19.6c-2.6 4-3 13.6-.4 24H20z" fill="url(#m-scl)" clip-path="url(#m-bodyc)"/> <use href="#m-bd" fill="url(#m-sheen)"/> <use href="#m-bd" fill="url(#m-tshade)"/> <path d="M23 29.4c2.8-3.4 6.2-5 9.6-5 3 0 5.6 1 7.8 2.6-2.6-1-5-1.4-7.8-1.2-3.4.2-6.6 1.6-9.6 3.6z" fill="#7E1C04" opacity=".35"/> <path d="M23.2 37.8c2.6 2.6 5.8 3.8 9.2 3.8 4 0 7.6-1.6 10.2-4.2" stroke="#FFF0C8" stroke-opacity=".45" stroke-width=".5" fill="none" stroke-linecap="round"/> <path d="M24.4 32.4c4.4.6 9 .5 13.4-.4" stroke="#7A2006" stroke-opacity=".22" stroke-width=".3" stroke-dasharray=".35 .5" fill="none"/> <path d="M39.6 27.4c-2 3.4-2 9.2-.2 12.6" stroke="#8A2A0A" stroke-opacity=".32" stroke-width=".4" fill="none" stroke-linecap="round"/> <path d="M40.2 27.8c-1.7 3.2-1.7 8.6 0 11.8" stroke="#FFE0A8" stroke-opacity=".25" stroke-width=".3" fill="none"/> <path class="pec" d="M36.4 35.4c-2 1-3.8 3.2-4 5.2 2-.4 4-2.2 5-4.2z" fill="url(#m-finp)"/> <g class="eye"> <circle cx="41.4" cy="30.4" r="1.75" fill="#3A1A08" opacity=".55"/> <circle cx="41.4" cy="30.4" r="1.5" fill="url(#m-iris)"/> <circle cx="41.5" cy="30.5" r=".82" fill="#06070A"/> <circle cx="41.1" cy="30" r=".26" fill="#fff" opacity=".9"/><circle cx="41.95" cy="31" r=".12" fill="#fff" opacity=".5"/> </g> <circle cx="44" cy="31" r=".26" fill="#6A1C06" opacity=".6"/> <path class="smile" d="M45 34.45l1-.3" stroke="#5A1806" stroke-width=".35" fill="none" stroke-linecap="round"/> <g class="talk"><ellipse class="mouth" cx="45.8" cy="34.1" rx=".7" ry=".9" fill="#3A0E04" stroke="#F49A5A" stroke-width=".35"/></g> </g></g></svg>`;
+  // Marina is a real goldfish: photo layers cut by concepts/mascot/photo/build.py (public-domain photo, see assets/CREDITS.md). Tail swings at the peduncle; the mouth gulps while she talks.
+  const FISH = `<svg viewBox="6 16 42 32" class="mfish"><defs><radialGradient id="m-gulp"><stop offset="0" stop-color="#1A0402"/><stop offset=".6" stop-color="#3A0C04"/><stop offset="1" stop-color="#9A2A10" stop-opacity="0"/></radialGradient></defs><g class="fx"><g class="fb"><g class="tail"><image href="assets/marina/tail.webp" x="6.2" y="21.76" width="14.5" height="15.82"/></g><image class="mbody" href="assets/marina/body.webp" x="6" y="21.43" width="42" height="21.13"/><g class="talk"><ellipse class="mouth" cx="47.35" cy="30.4" rx=".55" ry=".7" fill="url(#m-gulp)"/></g></g></g></svg>`;
 
   function mount(el, { size = 64, now = () => new Date(), lat, lon, home = false } = {}) {
     const d = devicePixelRatio || 1, pad = size * .45;   // room for the halo
     const mk = () => { const cv = document.createElement("canvas"); cv.className = "orbc"; cv.width = cv.height = Math.round((size + pad * 2) * d);
       cv.style.cssText = `width:${size + pad * 2}px;height:${size + pad * 2}px;margin:${-pad}px;display:block;pointer-events:none` + (home ? ";position:absolute;left:0;top:0" : ""); return cv; };
     const cv = mk(), fr = home && mk();
-    if (home) { const m = document.createElement("div"); m.className = "mswim"; m.innerHTML = `<div class="mbob">${FISH}</div>`; el.replaceChildren(cv, m, fr); el.classList.add("mhome"); }
+    if (home) { const m = document.createElement("div"); m.className = "mswim"; m.innerHTML = `<div class="mbob">${FISH}</div>`; const bubs = [1, 2, 3].map(() => Object.assign(document.createElement("i"), { className: "mbub" })); el.replaceChildren(cv, ...bubs, m, fr); el.classList.add("mhome"); }
     else el.replaceChildren(cv);
     const g = cv.getContext("2d"), redraw = (date = now()) => {
       const st = sky(date, lat, lon), o = size / 2 + pad;
       for (const [k, L] of home ? [[g, "back"], [fr.getContext("2d"), "front"]] : [[g]]) { k.setTransform(d, 0, 0, d, 0, 0); k.clearRect(0, 0, cv.width, cv.height); draw(k, o, o, size / 2, st, date / 1000, L); }
     };
-    redraw(); setInterval(() => redraw(), 60000);   // live, but cheap: the sky moves once a minute, nothing animates in between
+    redraw(); if (home && !FLOOR.complete) onFloor.push(() => redraw()); setInterval(() => redraw(), 60000);   // live, but cheap: the sky moves once a minute, nothing animates in between
     return redraw;
   }
 

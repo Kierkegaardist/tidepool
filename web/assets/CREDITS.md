@@ -65,3 +65,14 @@ because its readme says a script drew its bitmaps and its file dates are faked, 
 | `img/stars.jpg` | [The Milky Way in Crater Lake](https://commons.wikimedia.org/wiki/File:The_Milky_Way_in_Crater_Lake_(26972610245).jpg), 2015 | NPS Natural Resources | Public domain (US NPS) |
 
 The goldfish photo from v3 is gone, because the fishbowl was removed.
+
+## Marina (`marina/`)
+
+`marina/body.webp` and `marina/tail.webp` are cut from one camera photo: [Carassius wild golden fish 2013 G1.jpg](https://commons.wikimedia.org/wiki/File:Carassius_wild_golden_fish_2013_G1.jpg)
+by George Chernilevsky (2013, a red-gold Prussian carp caught near Vinnytsia, Ukraine), released into the public domain. Downloaded 2026-11-15.
+The cutout, a cloned-over patch of missing scales, see-through fins and the split into body and tail were done by script (`concepts/mascot/photo/build.py`, no AI background removal).
+
+`marina/floor.webp` (the reef in her bowl) is composed from three camera photos on Wikimedia Commons, each keyed off its blue water and colour-boosted by script (`concepts/mascot/reef/build.py`); nothing was painted or generated. As a derivative it is CC BY-SA 4.0.
+- [Colorful underwater landscape of a coral reef.jpg](https://commons.wikimedia.org/wiki/File:Colorful_underwater_landscape_of_a_coral_reef.jpg), Jim E. Maragos, U.S. Fish and Wildlife Service, public domain (the coral bed)
+- [Elphinstone Reef soft corals.jpg](https://commons.wikimedia.org/wiki/File:Elphinstone_Reef_soft_corals.jpg), Alexander Vasenin, 2016, CC BY-SA 4.0 (the soft coral tree)
+- [Sea anemone Andman Islands.jpg](https://commons.wikimedia.org/wiki/File:Sea_anemone_Andman_Islands.jpg), Vardhan Patankar, 2017, CC BY-SA 4.0 (the anemone and clownfish)
