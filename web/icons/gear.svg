@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><!-- Settings gear, drawn in code by Alyosha in the Crystal gloss style (no outside art) -->
+<defs><radialGradient id="m" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="#c9d6e2"/><stop offset="1" stop-color="#5d6e80"/></radialGradient>
+<linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+<radialGradient id="h" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#9fe3ff"/><stop offset="1" stop-color="#1b6fa8"/></radialGradient></defs>
+<g transform="translate(64 66)"><g fill="url(#m)" stroke="#3b4a5a" stroke-width="2.5">
+<path d="M-9-52h18l3 13 9 4 11-7 13 13-7 11 4 9 13 3v18l-13 3-4 9 7 11-13 13-11-7-9 4-3 13h-18l-3-13-9-4-11 7-13-13 7-11-4-9-13-3v-18l13-3 4-9-7-11 13-13 11 7 9-4z"/></g>
+<circle r="20" fill="url(#h)" stroke="#123f5e" stroke-width="2.5"/><ellipse cx="0" cy="-30" rx="34" ry="16" fill="url(#g)" opacity=".7"/></g></svg>

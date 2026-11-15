@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><!-- Classic desktop: a framed window with a taskbar line, drawn in code by Alyosha -->
+<defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fd3ff"/><stop offset="1" stop-color="#1f74b8"/></linearGradient>
+<linearGradient id="c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d7e2ec"/></linearGradient></defs>
+<rect x="12" y="18" width="104" height="80" rx="8" fill="url(#t)" stroke="#16466e" stroke-width="4"/>
+<rect x="20" y="36" width="88" height="54" rx="3" fill="url(#c)"/><rect x="12" y="104" width="104" height="10" rx="5" fill="#2b3641"/>
+<circle cx="22" cy="109" r="4" fill="#8fd3ff"/><path d="M18 24h92" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".7"/></svg>

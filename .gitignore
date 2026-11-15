@@ -1,0 +1,27 @@
+bin/
+obj/
+.wv2/
+logs/
+*.user
+.undo/
+.icons/
+.heard.json
+.spotify
+tts/venv/
+tts/*.onnx
+tts/*.bin
+tts/sample-*.wav
+config.json
+config.json.new
+.chatkey
+extras/
+dist/
+# dev-only: tests, check scripts, previews, this PC's tools and state
+tests/
+web/tools/
+web/_*.html
+tools/skin-hunt/
+tools/vm-test.ps1
+obj-webtest/
+.popout.json
+.heard.json

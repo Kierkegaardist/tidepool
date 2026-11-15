@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><!-- Volume speaker, drawn in code by Alyosha -->
+<defs><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f8fb"/><stop offset=".5" stop-color="#b9c7d4"/><stop offset="1" stop-color="#6d7d8e"/></linearGradient></defs>
+<path d="M18 48h22l32-26v84L40 80H18z" fill="url(#b)" stroke="#3b4a5a" stroke-width="4" stroke-linejoin="round"/>
+<path d="M86 44q12 20 0 40M98 32q22 32 0 64" fill="none" stroke="#2f9fe0" stroke-width="8" stroke-linecap="round"/>
+<path d="M24 52h14l28-22v14" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".8"/></svg>

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-50 -50 100 100">
+  <!-- Tidepool flower for the Start orb. Drawn in code by Alyosha (no AI, no outside art). -->
+  <defs>
+    <radialGradient id="p" cx="50%" cy="30%" r="75%"><stop offset="0" stop-color="#fff"/><stop offset=".55" stop-color="#E9FBFF"/><stop offset="1" stop-color="#7FD6EE"/></radialGradient>
+    <radialGradient id="c" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#FFF6C8"/><stop offset=".6" stop-color="#FFC94A"/><stop offset="1" stop-color="#E08A10"/></radialGradient>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+  </defs>
+  <g stroke="#3A9FC0" stroke-opacity=".55" stroke-width="1.2">
+    <ellipse rx="13" ry="21" cy="-20" fill="url(#p)"/>
+    <ellipse rx="13" ry="21" cy="-20" fill="url(#p)" transform="rotate(72)"/>
+    <ellipse rx="13" ry="21" cy="-20" fill="url(#p)" transform="rotate(144)"/>
+    <ellipse rx="13" ry="21" cy="-20" fill="url(#p)" transform="rotate(216)"/>
+    <ellipse rx="13" ry="21" cy="-20" fill="url(#p)" transform="rotate(288)"/>
+  </g>
+  <circle r="11" fill="url(#c)" stroke="#B86A00" stroke-opacity=".5"/>
+  <ellipse rx="6" ry="3.5" cx="-2" cy="-5" fill="url(#g)"/>
+</svg>

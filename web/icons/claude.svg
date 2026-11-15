@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><!-- Claude, Frutiger Aero: an aqua glass orb holding Claude's terracotta burst. Drawn in code (tools: python, r6) -->
+<defs>
+<radialGradient id="orb" cx="50%" cy="38%" r="62%"><stop offset="0" stop-color="#e9fdff"/><stop offset=".45" stop-color="#7fd9f0"/><stop offset=".8" stop-color="#1f8fc4"/><stop offset="1" stop-color="#0c5a8e"/></radialGradient>
+<radialGradient id="under" cx="50%" cy="92%" r="55%"><stop offset="0" stop-color="#b8fff0" stop-opacity=".9"/><stop offset="1" stop-color="#b8fff0" stop-opacity="0"/></radialGradient>
+<linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset="1" stop-color="#fff" stop-opacity=".08"/></linearGradient>
+<linearGradient id="burst" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb08a"/><stop offset=".5" stop-color="#e2774f"/><stop offset="1" stop-color="#b9532f"/></linearGradient>
+<filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.2"/></filter>
+</defs>
+<ellipse cx="64" cy="121" rx="38" ry="5" fill="#0c3a5a" opacity=".35"/>
+<circle cx="64" cy="64" r="56" fill="url(#orb)" stroke="#0a4f7c" stroke-width="2.5"/>
+<circle cx="64" cy="64" r="56" fill="url(#under)"/>
+<g stroke="#fff1e6" stroke-width="11" stroke-linecap="round" opacity=".55" filter="url(#glow)"><line x1="63.7" y1="61.0" x2="62.4" y2="36.0"/><line x1="66.8" y1="61.9" x2="77.4" y2="46.1"/><line x1="68.2" y1="63.3" x2="91.7" y2="48.0"/><line x1="69.0" y1="66.3" x2="89.9" y2="67.8"/><line x1="68.5" y1="68.3" x2="89.8" y2="79.2"/><line x1="66.2" y1="70.5" x2="73.6" y2="85.8"/><line x1="64.3" y1="71.0" x2="65.7" y2="98.0"/><line x1="61.2" y1="70.1" x2="50.0" y2="86.7"/><line x1="59.8" y1="68.7" x2="38.8" y2="82.3"/><line x1="59.0" y1="65.7" x2="41.1" y2="64.4"/><line x1="59.5" y1="63.7" x2="36.4" y2="51.9"/><line x1="61.8" y1="61.5" x2="52.2" y2="41.7"/></g>
+<g stroke="#8f3d20" stroke-width="9.5" stroke-linecap="round"><line x1="63.7" y1="61.0" x2="62.4" y2="36.0"/><line x1="66.8" y1="61.9" x2="77.4" y2="46.1"/><line x1="68.2" y1="63.3" x2="91.7" y2="48.0"/><line x1="69.0" y1="66.3" x2="89.9" y2="67.8"/><line x1="68.5" y1="68.3" x2="89.8" y2="79.2"/><line x1="66.2" y1="70.5" x2="73.6" y2="85.8"/><line x1="64.3" y1="71.0" x2="65.7" y2="98.0"/><line x1="61.2" y1="70.1" x2="50.0" y2="86.7"/><line x1="59.8" y1="68.7" x2="38.8" y2="82.3"/><line x1="59.0" y1="65.7" x2="41.1" y2="64.4"/><line x1="59.5" y1="63.7" x2="36.4" y2="51.9"/><line x1="61.8" y1="61.5" x2="52.2" y2="41.7"/></g>
+<g stroke="url(#burst)" stroke-width="7" stroke-linecap="round"><line x1="63.7" y1="61.0" x2="62.4" y2="36.0"/><line x1="66.8" y1="61.9" x2="77.4" y2="46.1"/><line x1="68.2" y1="63.3" x2="91.7" y2="48.0"/><line x1="69.0" y1="66.3" x2="89.9" y2="67.8"/><line x1="68.5" y1="68.3" x2="89.8" y2="79.2"/><line x1="66.2" y1="70.5" x2="73.6" y2="85.8"/><line x1="64.3" y1="71.0" x2="65.7" y2="98.0"/><line x1="61.2" y1="70.1" x2="50.0" y2="86.7"/><line x1="59.8" y1="68.7" x2="38.8" y2="82.3"/><line x1="59.0" y1="65.7" x2="41.1" y2="64.4"/><line x1="59.5" y1="63.7" x2="36.4" y2="51.9"/><line x1="61.8" y1="61.5" x2="52.2" y2="41.7"/></g>
+<circle cx="64" cy="66" r="7" fill="url(#burst)"/>
+<path d="M20 52C22 28 42 13 64 13s42 15 44 39c-12-9-27-13-44-13S32 43 20 52z" fill="url(#gloss)"/>
+<ellipse cx="86" cy="98" rx="10" ry="4" fill="#fff" opacity=".35" transform="rotate(-28 86 98)"/>
+</svg>

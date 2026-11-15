@@ -1,0 +1,743 @@
+/* Tidepool Cross Menu, polish round: the page layer on top of core.css.
+   One type scale, one radius scale, one glass recipe, one focus ring, all as tokens on .ui. */
+.ui{position:absolute;inset:0;z-index:2;color:#fff;
+  --f-cap:600 13px/1 var(--font);--f-small:400 15px/1.35 var(--font);--f-body:400 18px/1.45 var(--font);--f-lead:400 24px/1.3 var(--font);
+  --f-h2:300 40px/1.1 var(--font);--f-h1:200 56px/1 var(--font);--f-display:200 80px/1 var(--font);
+  --track-cap:.22em;--r-xs:6px;--r-s:10px;--r-m:14px;--r-l:22px;
+  --ts:0 1px 2px rgba(0,16,28,.8),0 0 18px rgba(0,16,28,.35);
+  --lx:50%;   /* the sun's x on screen, 0-100 %: glass gloss sits under it (set every render) */
+  --sx:0px;   /* drop-shadow x offset, away from the sun */
+  --ease:cubic-bezier(.2,.9,.3,1);
+  --under:color-mix(in srgb,var(--glow) calc(var(--bio) * 55%),transparent)}   /* night: water glow lights glass from below */
+/* scrims: keep the title, clock and legend readable over bright cloud; stronger the brighter the photo (--gb) */
+.ui::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(0,18,32,calc(var(--gb) * .34)),transparent 300px),linear-gradient(0deg,rgba(0,18,32,calc(var(--gb) * .3)),transparent 160px)}
+.cap{font:var(--f-cap);letter-spacing:var(--track-cap);text-transform:uppercase}
+.ui .glassdark{background:linear-gradient(170deg,var(--glass-top,rgba(40,52,64,.66)),var(--glass-bottom,rgba(10,16,22,.82)));backdrop-filter:blur(var(--glass-blur,12px)) saturate(1.3);border:1px solid var(--glass-edge,rgba(255,255,255,.32));
+  box-shadow:0 0 0 1px rgba(0,8,16,.5),var(--sx) 24px 50px -10px rgba(0,10,20,.6),inset 0 1px 0 rgba(255,255,255,.45);border-radius:var(--r-l)}
+/* transitions: motion/motion.js owns them (track C tokens) */
+.ui .wa-skins{display:none}   /* skins are chosen in Music and Settings, not on the player */
+
+/* ---- rail ---- */
+.rail{position:absolute;left:0;top:0;bottom:0;width:136px;display:flex;flex-direction:column;align-items:center;gap:18px;padding:16px 0 20px;z-index:3;
+  background:linear-gradient(90deg,rgba(60,72,84,.55),rgba(18,24,30,.72) 48%,rgba(0,0,0,.82) 52%,rgba(20,26,32,.72));backdrop-filter:blur(10px) saturate(1.3);
+  border-right:1px solid rgba(0,0,0,.7);box-shadow:inset -1px 0 0 rgba(255,255,255,.3),10px 0 30px rgba(0,0,0,.35)}
+.rail .orb{position:relative;left:auto;bottom:auto;flex:none;margin-bottom:4px;width:84px;height:84px;cursor:pointer;background:none;box-shadow:none}
+.rail .orb::before{display:none}   /* move 1: orb.js draws the sky, gloss and rim in its canvas */
+.rail .slab{width:80px;height:80px;border-radius:16px;font:600 13px/1 var(--font);gap:5px;cursor:pointer;flex:none}.rail .slab .ic{width:40px;height:40px}
+.rail .slab.on{scale:1.3;font-size:10px;z-index:1;   /* 13 px once scaled */
+  background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 35%,rgba(255,255,255,.6)),color-mix(in srgb,var(--accent) 45%,transparent) 45%,color-mix(in srgb,var(--accent) 60%,transparent) 55%,color-mix(in srgb,var(--accent) 35%,rgba(255,255,255,.3)));
+  box-shadow:0 0 0 1.5px rgba(255,255,255,.9),0 0 0 4px color-mix(in srgb,var(--accent) 50%,transparent),0 0 24px var(--accent),inset 0 1.5px 1px #fff}   /* /1.3: drawn at scale */
+.rail .slab.sug::before{content:"";position:absolute;right:7px;top:7px;width:9px;height:9px;border-radius:50%;z-index:2;
+  background:radial-gradient(circle at 35% 30%,#fff,#FFD75E 50%,#C88A10);box-shadow:0 0 8px #FFD75E}
+.rail .slab .ld{position:absolute;left:50%;bottom:3px;width:16px;height:3px;margin-left:-8px;border-radius:2px;background:var(--accent);box-shadow:0 0 6px var(--accent);display:none}
+.rail .slab.live .ld{display:block}
+.rail .sp{flex:1}
+.rail,.clockline,.pill,.cat{user-select:none;-webkit-user-select:none}   /* double-clicking the orb was selecting the slab labels */
+.classic{display:flex;flex-direction:column;align-items:center;gap:5px;width:80px;padding:9px 0 8px;border-radius:var(--r-m);font:600 11px/1 var(--font);cursor:pointer;
+  background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.35);text-shadow:var(--ts)}
+.classic img{width:28px;height:28px}
+
+/* ---- title, clock, status pill (the content column starts at x 200) ---- */
+.cat{position:absolute;left:200px;top:64px;text-shadow:var(--ts)}
+.cat small{display:block;margin-bottom:10px;opacity:.88}
+.cat b{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}   /* kept for screen readers and motion.js; the visible title is .skyt */
+.skyt{position:absolute;left:188px;top:84px;font:200 200px/1 "Segoe UI",Tahoma,sans-serif;letter-spacing:-.02em;color:#fff;white-space:nowrap;pointer-events:none;
+  opacity:.94;text-shadow:0 2px 30px rgba(0,24,48,.28)}
+.clockline{position:absolute;right:56px;top:56px;text-align:right;text-shadow:var(--ts)}
+.clockline b{display:block;font:var(--f-h1);font-variant-numeric:tabular-nums}.clockline span{display:block;margin-top:6px;font:var(--f-small)}
+.pill{position:absolute;right:40px;top:146px;height:52px;display:flex;align-items:center;gap:16px;padding:0 18px;border-radius:26px!important;font:600 15px/1 var(--font)}
+.pill .run{display:flex;gap:12px;cursor:pointer}.pill .run i{position:relative;display:block;width:28px;height:28px}
+.pill .run img{width:28px;height:28px}.pill .run i::after{content:"";position:absolute;left:8px;right:8px;bottom:-7px;height:3px;border-radius:2px;background:var(--accent);box-shadow:0 0 6px var(--accent)}
+.pill .vr{width:1px;height:28px;background:rgba(255,255,255,.28)}
+.pill .ti{gap:7px}.pill .ti img{width:20px;height:20px}
+.bell{position:relative;width:28px;height:28px;display:grid;place-items:center;cursor:pointer}.bell svg{width:24px;height:24px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.5))}
+.bell b{position:absolute;right:-8px;top:-6px;min-width:18px;height:18px;border-radius:9px;background:radial-gradient(circle at 35% 30%,#ffb3a6,#E5484D 55%,#9a1d22);font:700 11px/18px var(--font);text-align:center;padding:0 5px;box-shadow:0 0 0 2px rgba(10,16,22,.85)}
+.bell b:empty{display:none}
+.pill .off{display:none;color:#FFD08A}.offline .pill .off{display:inline-flex}
+.hosted .pill .ti:not(.off),.hosted .ui:not(.offline) .pill .vr{display:none}
+.menuoff:not(.mouse) .legend,.menuoff .idlehint{opacity:0;pointer-events:none}   /* menu closed + mouse: the mouse hints are true, so they stay */   /* menu closed: the keys go to Windows, so the key hints would lie (r5c QA); Win+Esc brings them back with the menu */   /* in the host: no fake downloads or volume; the bell is real (host reads Windows' notification store) */
+
+/* ---- carousel: the current tile's left edge sits on the content column ---- */
+.rowclip{position:absolute;inset:0;pointer-events:none;-webkit-mask:linear-gradient(90deg,#000 calc(100% - 300px),transparent calc(100% - 20px));mask:linear-gradient(90deg,#000 calc(100% - 300px),transparent calc(100% - 20px))}
+.rowclip .row{pointer-events:auto}
+.row{position:absolute;left:0;top:272px;height:336px;display:flex;align-items:center;gap:32px;transition:transform .55s var(--ease)}
+.item{position:relative;flex:none;width:216px;height:216px;border-radius:40px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;cursor:pointer;
+  font:400 18px/1.2 var(--font);text-shadow:var(--ts);text-align:center;padding:0 18px;
+  background:radial-gradient(130% 70% at var(--lx) -18%,rgba(255,255,255,.55),rgba(255,255,255,.10) 58%,transparent 59%),linear-gradient(180deg,rgba(255,255,255,.10),rgba(0,26,44,.34));
+  backdrop-filter:blur(8px) saturate(1.4);border:1px solid color-mix(in srgb,var(--glow) 30%,rgba(255,255,255,.62));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 0 rgba(255,255,255,.22),inset 0 -30px 40px -24px var(--under),0 0 0 1px rgba(0,20,35,.35),var(--sx) 20px 34px -10px rgba(0,20,40,.55)}
+/* light phases (Aero rule): frosted white glass, dark text. Measured 1-2.6:1 contrast with white text by day before this. */
+.ui[data-base=light] .item{color:var(--text);text-shadow:0 1px 0 rgba(255,255,255,.55);
+  background:radial-gradient(130% 70% at var(--lx) -18%,rgba(255,255,255,.75),rgba(255,255,255,.3) 58%,transparent 59%),linear-gradient(180deg,rgba(255,255,255,.62),rgba(235,246,252,.46));
+  border-color:color-mix(in srgb,var(--glow) 25%,rgba(255,255,255,.9))}
+.ui[data-base=light] .item.empty{background:rgba(255,255,255,.4)}
+.item span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:100%;overflow-wrap:anywhere}   /* one long file name wraps to two lines and ends in "…", not cut mid-letter */
+.item img{width:80px;height:80px;filter:drop-shadow(var(--sx) 6px 5px rgba(0,30,50,.45))}
+.item img.fav{box-sizing:content-box;width:40px;height:40px;padding:20px;border-radius:22px;background:linear-gradient(180deg,#fff,#dfe8ef);box-shadow:inset 0 1px 0 #fff,0 4px 10px rgba(0,30,50,.35);object-fit:contain;filter:none}   /* site favicons are 16-64 px: drawn small on a white plate, never stretched */
+/* real game art (host.games): the cover fills the tile, the name sits on a dark fade at the bottom */
+.item img.art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%;border-radius:inherit;filter:none}
+.item:has(.art){justify-content:flex-end;padding-bottom:16px;overflow:hidden}
+.item:has(.art)::after{content:"";position:absolute;inset:45% 0 0;background:linear-gradient(transparent,rgba(0,12,24,.75))}
+.item:has(.art) span{position:relative;z-index:1;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+.item:has(.art):not(.cur) span,.item:has(.art):not(.cur)::after{display:none}   /* the cover already carries the logo: the name shows on the selected tile only */
+.item{transform-origin:0 50%}
+.item.cur{scale:1.556;font-weight:600;z-index:1}   /* 216 -> 336 px; label 18 -> 28 px, icon 80 -> 124 px (Crystal Clear is 128 px: never upscale) */
+.item.cur~.item{translate:120px 0}
+.item::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;   /* the focus ring fades, it never animates a shadow */
+  box-shadow:0 0 0 2px rgba(255,255,255,.95),0 0 0 5px color-mix(in srgb,var(--accent) 55%,transparent),0 0 40px var(--accent)}
+.item.cur::after{opacity:1}
+.item.before{opacity:0!important;pointer-events:none}
+.item .badge{position:absolute;top:16px;right:18px;font:700 12px/1 var(--font);letter-spacing:.1em;text-transform:uppercase;padding:5px 9px 5px 19px;border-radius:9px;text-shadow:none;
+  background:rgba(0,12,22,.5) radial-gradient(circle at 10px 50%,var(--dot) 0 3px,transparent 4px);border:1px solid rgba(255,255,255,.18)}
+.item.cur .badge{scale:.643;transform-origin:100% 0}   /* badge stays 12 px on the scaled tile */
+.item .badge.run{--dot:#7dff8a}.item .badge.sug{--dot:#FFD75E}
+.item.skel{background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.22) 50%,transparent 70%) 0 0/300% 100%,linear-gradient(180deg,rgba(0,26,44,.22),rgba(0,26,44,.42));animation:skel 1.6s linear infinite;border-color:rgba(255,255,255,.3)}
+@keyframes skel{from{background-position:100% 0}to{background-position:-50% 0}}
+.item.empty{border-style:dashed;background:rgba(0,20,35,.25);font:400 17px/1.4 var(--font)}
+.item.dimmed img{filter:grayscale(1) opacity(.55)}
+.desc{position:absolute;left:200px;top:648px;width:1080px;text-shadow:var(--ts)}
+.desc b{display:block;font:var(--f-h2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.desc p{font:var(--f-lead);margin-top:8px;opacity:.95}
+.desc .meta{display:block;margin-top:14px;opacity:.75}
+
+/* ---- Winamp ---- */
+.wa-dock,.shade{background:linear-gradient(180deg,#56626e,#262e36 48%,#12171c 52%,#2a333c)!important;backdrop-filter:none!important;border:1px solid #0a0e12!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 0 0 1px rgba(255,255,255,.08),0 18px 36px -10px rgba(0,0,0,.6)!important}
+.wa-dock::before,.shade::before{display:none}
+.wa-dock{position:absolute;right:40px;bottom:40px;border-radius:var(--r-m)!important}.wa-dock .wa{zoom:2}.wa-dock .wa-gadget{width:auto;padding:10px;background:none;box-shadow:none;border:0}   /* Winamp pixels at an integer scale only */
+.shade{position:absolute;right:40px;bottom:40px;display:none;align-items:center;gap:14px;padding:10px 14px;cursor:pointer;border-radius:var(--r-m)!important}
+.shade .wa{width:275px;height:14px;zoom:2}   /* the title scrolls inside the skin now (drawShade), not beside it */
+.shade-on .wa-dock{display:none}.shade-on .shade{display:flex}
+.wapaused{position:absolute;right:56px;bottom:300px;padding:6px 12px;border-radius:var(--r-s);background:rgba(0,10,20,.62);display:none}
+.wa-pause .wapaused{display:block}.shade-on .wapaused{display:none}
+.nomusic .wa-dock,.nomusic .shade,.nomusic .wapaused{display:none}
+.quietcard{position:absolute;right:40px;bottom:40px;display:none;align-items:center;gap:14px;padding:14px 18px;font:var(--f-small)}
+.quietcard img{width:36px;height:36px;opacity:.85}.quietcard b{display:block;font:600 16px/1.3 var(--font)}
+.nomusic .quietcard{display:flex}
+
+/* ---- legend: keyboard key + pad button per action ---- */
+.legend{position:absolute;left:200px;bottom:40px;display:flex;gap:28px;font:600 15px/30px var(--font);text-shadow:var(--ts)}
+.legend span{display:flex;align-items:center}
+.key{display:inline-grid;place-items:center;min-width:34px;height:28px;padding:0 8px;border-radius:var(--r-xs);margin-right:5px;font:700 13px/1 var(--font);color:#0b2a3c;font-style:normal;
+  background:linear-gradient(180deg,#fff,#dfe8ef 50%,#cbd6df 51%,#eef2f6);box-shadow:0 2px 0 #8d9aa6,0 3px 4px rgba(0,0,0,.45);text-shadow:none}
+.pad{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;margin-right:8px;font:800 13px/1 var(--font);font-style:normal;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.6);
+  --pc:#3b4652;background:radial-gradient(circle at 50% 18%,rgba(255,255,255,.85) 0 18%,transparent 42%),radial-gradient(circle at 50% 60%,color-mix(in srgb,var(--pc) 70%,#fff),var(--pc) 55%,color-mix(in srgb,var(--pc) 55%,#000));
+  box-shadow:0 2px 3px rgba(0,0,0,.6),0 0 0 1px rgba(0,0,0,.35)}
+/* DualSense: classes keep the button's position (A = bottom, B = right, X = left, Y = top, G = PS button), CSS draws PlayStation's symbol for it */
+:is(.p-A,.p-B,.p-X,.p-Y){--pc:#2a323b;font-size:0}:is(.p-A,.p-B,.p-X,.p-Y)::after{font-size:15px;font-weight:900}
+.p-A::after{content:"✕";color:#9db8ff}.p-B::after{content:"○";color:#ff8a93}.p-X::after{content:"□";color:#f2a6e2}.p-Y::after{content:"△";color:#66e0b4}
+.p-G{--pc:#2a323b;font-size:0}.p-G::after{content:"PS";font-size:11px}
+.p-V{width:auto;min-width:34px;padding:0 8px;border-radius:9px;--pc:#2a323b;font-size:11px}
+.pad:empty{display:none}
+.legend .concept{opacity:.6}
+.ov-switcher .legend,.ov-search .legend,.ov-hatch .legend,.ov-welcome .legend{z-index:8}   /* the hints matter most in overlays: keep them above the dim */
+
+/* ---- Claude panel ---- */
+.ui .cl{position:absolute;top:0;bottom:0;right:0;width:720px;z-index:5;display:flex;flex-direction:column;padding:36px 14px 24px;
+  border-radius:var(--r-l) 0 0 var(--r-l);border-right:0}
+.cl::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;   /* light Vista gloss: one sheen across the top of the blade */
+  background:linear-gradient(118deg,rgba(255,255,255,.16),rgba(255,255,255,.05) 24%,transparent 34%),linear-gradient(180deg,rgba(255,255,255,.08),transparent 120px)}
+.cl .client{flex:1;color:#fff;background:none;border:0;box-shadow:none;display:flex;flex-direction:column;overflow:hidden}
+.cl .client header{background:none;border-bottom:1px solid rgba(255,255,255,.18)}.cl .client header b{font:600 20px/1.2 var(--font);color:#fff}.cl .client header small{color:rgba(255,255,255,.75);font:var(--f-small)}
+.cl .msgs{font:400 16px/1.45 var(--font)}
+.cl .compose .field{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.35);color:#fff!important;box-shadow:inset 0 2px 4px rgba(0,0,0,.35)}.cl .compose .field::placeholder{color:rgba(255,255,255,.6)}.cl .msgs{overflow:hidden;justify-content:flex-end;-webkit-mask:linear-gradient(transparent,#000 48px);mask:linear-gradient(transparent,#000 48px)}
+.cl .m{isolation:isolate}.cl .m::before{z-index:-1}   /* bubble gloss sits behind the words, not over them */
+.cl input.field{color:#1c2a36;outline:none;font:var(--f-small)}
+.cl .send{cursor:pointer}
+.chip{cursor:pointer}.chip.k::before{content:attr(data-k);display:inline-block;width:16px;height:16px;margin-right:6px;border-radius:4px;background:#2c3a46;color:#fff;font-size:10px;line-height:16px;text-align:center}
+.steps{list-style:none;margin-top:6px}.steps li{padding:2px 0 2px 24px;position:relative;color:#55626e}
+.steps li::before{content:"";position:absolute;left:2px;top:6px;width:12px;height:12px;border-radius:50%;border:2px solid #9aa6b2}
+.steps li.ok{color:#1c2a36}.steps li.ok::before{border-color:#2aa84a;background:radial-gradient(circle,#3ccf4e 0 45%,transparent 50%)}
+.steps li.go::before{border-color:var(--accent);border-top-color:transparent;animation:spin .8s linear infinite}
+.steps li.you{color:#1c2a36}.steps li.you::before{border-color:var(--accent);background:radial-gradient(circle,var(--accent) 0 45%,transparent 50%)}
+.steps li.bad{color:#9a1d22}.steps li.bad::before{border-color:#E5484D;background:radial-gradient(circle,#E5484D 0 45%,transparent 50%)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.dots::after{content:"···";animation:blinkd 1s infinite}@keyframes blinkd{50%{opacity:.3}}
+.applying::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:20;background:linear-gradient(100deg,transparent 30%,color-mix(in srgb,var(--accent) 30%,transparent) 50%,transparent 70%) 0 0/300% 100%;animation:sweep 1.4s ease-in-out}
+@keyframes sweep{from{background-position:100% 0}to{background-position:0 0}}
+
+/* ---- overlays ---- */
+.dim{position:absolute;inset:0;z-index:6;background:rgba(0,8,16,.7);backdrop-filter:blur(16px);opacity:0;pointer-events:none}
+.ov-switcher .dim,.ov-search .dim,.ov-hatch .dim,.ov-welcome .dim{opacity:1;pointer-events:auto}
+.ovl{position:absolute;z-index:7;opacity:0;pointer-events:none;transform:translateY(-14px)}
+.ov-switcher #swi,.ov-search #srch,.ov-hatch #hatch,.ov-notifs #notifs,.ov-states #states,.ov-welcome #welcome{opacity:1;pointer-events:auto;transform:none}
+#swi{left:136px;right:0;top:0;bottom:90px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:34px}
+#swi .h{text-shadow:var(--ts)}
+#swirow{display:flex;gap:28px;align-items:center;align-self:flex-start;transition:transform var(--dur-move,.24s) var(--ease-glide,ease)}
+#swi.many{-webkit-mask:linear-gradient(90deg,transparent,#000 90px,#000 calc(100% - 90px),transparent);mask:linear-gradient(90deg,transparent,#000 90px,#000 calc(100% - 90px),transparent)}
+.card{flex:none;width:300px;text-align:center;font:var(--f-small);text-shadow:var(--ts);cursor:pointer;opacity:.75;transform-origin:0 50%}
+.card .shot{position:relative;height:169px;border-radius:var(--r-m);overflow:hidden;border:1px solid rgba(255,255,255,.6);background:#e8eef4 center/cover no-repeat;box-shadow:var(--sx) 16px 30px -6px rgba(0,0,0,.55)}   /* 16:9 */
+.card .shot::before{content:"";position:absolute;left:0;right:0;top:0;height:9%;background:linear-gradient(180deg,color-mix(in srgb,var(--bar,#5d7186) 70%,#fff),var(--bar,#2d3c4c))}   /* the app's own title-bar colour */
+.card .shot::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(160deg,rgba(255,255,255,.3),transparent 38%)}   /* glass over the thumbnail */
+.card .shot i{position:absolute;border-radius:3px}
+.card .shot img{position:absolute;right:8px;bottom:8px;width:44px;height:44px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.5))}
+.card.cur{scale:1.4667;translate:0 -12px;opacity:1;z-index:1}   /* 300 -> 440 px on the compositor; the cards after it slide 140 px (round 4: no width/height animation left) */
+.card.after{translate:140px 0}
+.card.cur .shot{box-shadow:0 0 0 2px #fff,0 0 0 5px color-mix(in srgb,var(--accent) 55%,transparent),0 0 28px var(--accent),var(--sx) 12px 24px -6px rgba(0,0,0,.6)}
+.card b{display:block;margin-top:12px;font:400 20px/1.3 var(--font)}.card.cur b{font-weight:600}.card small{display:block;height:1.35em;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card.desk .shot::before{display:none}
+#srch{left:460px;width:1000px;top:150px}
+#sq{width:100%;height:76px;padding:0 28px 0 78px;border-radius:38px;font:300 32px var(--font);color:#fff;outline:none;border:1px solid rgba(255,255,255,.55);caret-color:var(--accent);
+  background:rgba(10,20,30,.55) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='10' cy='10' r='6.5' fill='none' stroke='%23ffffff' stroke-width='2.4'/%3E%3Cpath d='M15 15l6 6' stroke='%23ffffff' stroke-width='2.8' stroke-linecap='round'/%3E%3C/svg%3E") 28px 50%/30px no-repeat;
+  backdrop-filter:blur(18px);box-shadow:inset 0 3px 8px rgba(0,0,0,.45),0 0 0 6px color-mix(in srgb,var(--accent) 35%,transparent),0 0 40px color-mix(in srgb,var(--accent) 50%,transparent)}
+#sres{margin-top:16px;padding:10px;max-height:730px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.35) transparent;overscroll-behavior:contain}.ui[data-base=light] #sres{scrollbar-color:rgba(0,40,60,.3) transparent}#sres:empty{display:none}   /* 12 results with headings ran past the legend and off the screen */
+.rh{padding:12px 16px 6px;opacity:.65}.rh:first-child{padding-top:4px}
+.res{display:flex;align-items:center;gap:16px;padding:10px 16px;border-radius:var(--r-m);font:400 20px/1.25 var(--font);cursor:pointer}
+.res img{width:40px;height:40px}.res small{display:block;font:var(--f-small);opacity:.75}.res em{margin-left:auto;font-style:normal;opacity:.7}
+.res.cur{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 55%,rgba(255,255,255,.3)),color-mix(in srgb,var(--accent) 30%,transparent));box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 0 0 2px rgba(255,255,255,.85)}
+.res.none{opacity:.75;cursor:default}
+#notifs{right:40px;top:212px;width:460px;padding:14px}
+#notifs::before{content:"";position:absolute;right:22px;top:-8px;width:14px;height:14px;transform:rotate(45deg);background:rgba(40,52,64,.9);border-left:1px solid rgba(255,255,255,.32);border-top:1px solid rgba(255,255,255,.32)}   /* points at the bell */
+#notifs h3{font:300 22px/1 var(--font);display:flex;align-items:center;padding:6px 6px 14px}#notifs h3 span{margin-left:auto;cursor:pointer;opacity:.8}
+.nt{display:flex;gap:12px;padding:12px;border-radius:var(--r-m);background:rgba(255,255,255,.08);margin-bottom:8px;font:var(--f-small)}
+.nt img{width:34px;height:34px;flex:none}.nt b{display:block;font:600 15px/1.3 var(--font)}.nt small{margin-left:auto;opacity:.7;flex:none;font-variant-numeric:tabular-nums}
+.nt.empty{justify-content:center;padding:28px 12px;opacity:.75;background:none}
+.quiet small{opacity:.7}.quiet{display:flex;align-items:center;justify-content:space-between;padding:12px 8px 4px;font:var(--f-small);border-top:1px solid rgba(255,255,255,.2);margin-top:6px}
+.tog{width:44px;height:24px;border-radius:12px;background:#3ccf4e;box-shadow:inset 0 2px 3px rgba(0,0,0,.4);position:relative}.tog::after{content:"";position:absolute;right:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff}
+.ui[data-base=light] .dim{background:rgba(24,52,74,.55)}
+.toast{position:absolute;right:40px;top:212px;width:440px;display:flex;gap:14px;padding:16px 18px;z-index:8;font:var(--f-small);border-left:4px solid var(--accent)!important;transform:translateX(480px);opacity:0}
+.toast.on{transform:none;opacity:1}.toast img{width:40px;height:40px}.toast b{display:block;font:600 16px/1.3 var(--font)}
+.ov-notifs .toast{opacity:0}
+.btns{display:flex;gap:14px;justify-content:flex-end;margin-top:28px}
+.btn{display:inline-flex;align-items:center;padding:10px 24px 10px 12px;border-radius:999px;font:600 16px/1 var(--font);cursor:pointer;border:1px solid rgba(255,255,255,.5);background:linear-gradient(180deg,rgba(255,255,255,.3),rgba(255,255,255,.06))}
+.btn.pri{text-shadow:0 1px 2px rgba(0,20,40,.6);background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 72%,#fff),var(--accent) 50%,color-mix(in srgb,var(--accent) 80%,#000) 51%,color-mix(in srgb,var(--accent) 70%,#fff));box-shadow:0 0 0 3px rgba(255,255,255,.9),0 0 22px var(--accent)}
+#states{left:150px;top:24px;width:420px;max-height:1030px;padding:14px;z-index:9;font:var(--f-small)}
+#states h3{font:300 18px/1 var(--font);padding:4px 6px 10px}#states .g{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+#states button{text-align:left;font:13px var(--font);color:#fff;padding:6px 10px;border-radius:8px;border:0;background:rgba(255,255,255,.08);cursor:pointer}
+#states button:hover{background:color-mix(in srgb,var(--accent) 50%,transparent)}
+#states .gh{grid-column:1/-1;margin:8px 0 2px 4px;opacity:.65}
+#states p{opacity:.75;font-size:12px;padding:8px 6px 0;line-height:1.5}
+
+/* ---- idle ---- */
+.m-idle .rail{transform:translateX(-160px)}
+.m-idle .cat,.m-idle .row,.m-idle .desc,.m-idle .legend,.m-idle .pill{opacity:0}
+.m-idle .clockline{transform:translate(-40px,30px) scale(1.5);transform-origin:100% 0}
+.idlehint{position:absolute;left:0;right:0;bottom:120px;text-align:center;opacity:0;text-shadow:var(--ts)}
+.m-idle .idlehint{opacity:.8}
+.arc{position:absolute;left:var(--covx,0);top:var(--covy,0);width:1920px;height:1080px;scale:var(--cov,1);pointer-events:none;opacity:0;transition:opacity var(--dur-idle,.9s) var(--ease-drift,ease)}
+.m-idle .arc{opacity:1}
+.arc path{fill:none;stroke:rgba(255,255,255,.55);stroke-width:2;stroke-dasharray:2 10;stroke-linecap:round;filter:drop-shadow(0 1px 2px rgba(0,16,28,.6))}
+.arc circle{fill:#fff;filter:drop-shadow(0 0 10px var(--glow)) drop-shadow(0 0 3px #fff)}
+.arc text{fill:#fff;text-anchor:middle;font:600 13px var(--font);letter-spacing:.22em;filter:drop-shadow(0 1px 2px rgba(0,16,28,.8))}
+
+/* ---- game running ---- */
+.covered #scenes{display:none}:is(.covered,.frozen) *{animation-play-state:paused!important}   /* perf.md: covered = GPU 0 %, every animation paused; frozen (a window over it) keeps the scene drawn, so it shows the moment the window moves */
+/* two screens, the bezel handoff (index.html handoff/slideAway): during screen 2's view transition only the menu layer and its named pieces move */
+:root{view-transition-name:none}.s2 .ui,.solo .ui{view-transition-name:ui}
+::view-transition-old(*):only-child,::view-transition-new(*):only-child{animation:none}   /* pieces in one layout only: the page flies them in or out itself */
+.game{position:absolute;inset:0;z-index:30;display:none;background:radial-gradient(ellipse at 50% 60%,#2a2f2a,#0b0d0b 70%);place-items:center;text-align:center}
+.game div{color:#8a948a;font:var(--f-body);font-size:18px;line-height:1.7}.game b{display:block;color:#c8d0c8;font:var(--f-h2)}
+.m-game .game{display:grid}.m-game>*:not(.game):not(.guide){visibility:hidden}
+
+
+/* ---- stock Windows (after the escape hatch) ---- */
+.stock{position:absolute;inset:0;z-index:40;display:none;background:linear-gradient(160deg,#1b4f72,#0c2233)}
+.m-stock .stock{display:block}.m-stock>*:not(.stock){visibility:hidden}
+.stock .icons{position:absolute;left:14px;top:14px;display:grid;gap:22px;font:12px "Segoe UI";color:#fff;text-align:center;text-shadow:0 1px 2px #000}
+.stock .icons img{width:44px;height:44px;display:block;margin:0 auto 4px}
+.stock .wtb{position:absolute;left:0;right:0;bottom:0;height:48px;background:#1d1f22;display:flex;align-items:center;gap:6px;padding-right:12px;font:12px "Segoe UI";color:#fff}
+.stock .wtb .st{width:48px;height:48px;display:grid;place-items:center}.stock .wtb .st i{width:18px;height:18px;border:2px solid #fff}
+.stock .wtb .se{width:340px;height:40px;background:#f3f3f3;color:#555;display:flex;align-items:center;padding:0 12px;font-size:14px}
+.stock .wtb img{width:26px;height:26px;margin:0 8px}.stock .wtb .sp{flex:1}.stock .wtb .tm{text-align:center;line-height:1.3;padding:0 8px}
+.stock .balloon{position:absolute;right:12px;bottom:60px;width:400px;padding:16px 18px;background:#2b2b2b;color:#fff;font:15px "Segoe UI";line-height:1.45;border:1px solid #444;cursor:pointer}
+.stock .balloon b{display:block;font-size:15px;margin-bottom:4px}
+
+/* ---- Claude points at what it is changing ---- */
+.point-wa .wa-dock,.point-wa .shade{box-shadow:0 0 0 3px #fff,0 0 0 8px color-mix(in srgb,var(--accent) 55%,transparent),0 0 40px var(--accent)!important}
+.point-glass .item::after,.point-glass .pill{opacity:1;box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 70%,#fff),0 0 30px var(--accent)!important}
+.res b{font-weight:700;color:#fff;text-decoration:underline;text-decoration-color:color-mix(in srgb,var(--accent) 80%,#fff);text-underline-offset:4px}
+
+/* ---- round 2: the orb is Home ---- */
+#orbw:hover .orb,#orbw.on .orb{box-shadow:0 0 0 3px rgba(255,255,255,.95),0 0 0 7px color-mix(in srgb,var(--accent) 55%,transparent),0 0 34px var(--accent)}
+/* ---- rail takes the phase: light smoked glass by day, the dark split only at night ---- */
+.ui[data-base=light] .rail{background:linear-gradient(90deg,rgba(255,255,255,.34),rgba(214,232,244,.30) 40%,rgba(160,190,210,.34) 60%,rgba(214,232,244,.30));border-right:1px solid rgba(255,255,255,.55);
+  box-shadow:inset -1px 0 0 rgba(0,30,50,.25),10px 0 30px rgba(0,30,50,.18)}
+.ui[data-base=light] .rail .slab:not(.on),.ui[data-base=light] .classic{color:var(--text);text-shadow:0 1px 0 rgba(255,255,255,.6)}
+.ui[data-base=dark] .rail{background:linear-gradient(90deg,rgba(60,72,84,.55),rgba(18,24,30,.72) 40%,rgba(0,0,0,.8) 60%,rgba(20,26,32,.72))}
+/* ---- a right-side panel pushes the menu back instead of overlapping it by luck ---- */
+.cl-on .rowclip,.ov-notifs .rowclip{opacity:.4}   /* opacity only: a filter here turned the whole glass row into one re-rendered surface (round 3) */
+.rowclip{transition:opacity var(--dur-panel,.45s) var(--ease-surface,ease)}
+/* ---- panels move on transform (GPU), per track C's note ---- */
+.ui .cl{transform:translateX(760px);transition:transform calc(var(--dur-panel,.45s) * .7) var(--ease-sink,ease-in)}
+.ui.cl-on .cl{transform:none;transition:transform var(--dur-panel,.45s) var(--ease-surface,ease-out)}
+/* ---- game guide: a full-height blade from the left ---- */
+.ui .guide{position:absolute;left:0;top:0;bottom:0;width:560px;z-index:31;display:none;flex-direction:column;gap:30px;padding:44px 40px;border-radius:0 var(--r-l) var(--r-l) 0;border-left:0}
+.m-game .guide{display:flex}   /* the slide (transform + timing) is motion.js's blade token */
+.guide-on .game{filter:blur(6px) brightness(.6)}
+.gtop{display:flex;align-items:center;gap:22px}.gorb{width:96px;height:96px;flex:none}
+.gclk{font:var(--f-display);font-variant-numeric:tabular-nums}
+.gsec{display:flex;flex-direction:column;gap:8px}.gsec .cap{opacity:.7}.gsec b{font:600 24px/1.2 var(--font)}.gsec>span:last-child:not(.cap){font:var(--f-small);opacity:.8}
+#gnotes .nt{margin-bottom:6px}
+#gbtns{margin-top:auto;display:flex;flex-direction:column;gap:10px}
+.gb{display:flex;align-items:center;gap:6px;padding:16px 18px;border-radius:var(--r-m);font:600 22px/1.2 var(--font);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.2);cursor:pointer}
+.gb small{display:block;font:var(--f-small);opacity:.7}
+.gb.cur{background:color-mix(in srgb,var(--accent) 45%,transparent);box-shadow:0 0 0 3px #fff,0 0 0 8px color-mix(in srgb,var(--accent) 55%,transparent),0 0 30px var(--accent)}
+
+/* track C parallax scales #scenes by 1.06 and shifts it 20 px down. #scenes had zero height (its children are absolute),
+   so the scale grew nothing vertically and a 20 px black band showed at the top. Give it the screen's box. */
+#scenes{position:absolute;left:var(--covx,0);top:var(--covy,0);width:1920px;height:1080px;scale:var(--cov,1);transform-origin:50% 50%}   /* --cov*: core.js fit(), covers a non-16:9 screen (scale composes with the parallax transform) */
+
+/* ---- round 3: the Claude blade is the shell's own glass, so by day it is the rail's frosted white with dark text ---- */
+.ui[data-base=light] .cl{background:linear-gradient(170deg,rgba(255,255,255,.66),rgba(226,240,250,.54));border-color:rgba(255,255,255,.8);
+  box-shadow:0 0 0 1px rgba(0,30,50,.18),-16px 0 40px -10px rgba(0,30,50,.3),inset 0 1px 0 #fff}
+.ui[data-base=light] .cl .client header{border-bottom-color:rgba(0,40,70,.15)}
+.ui[data-base=light] .cl .client header b{color:var(--text)}.ui[data-base=light] .cl .client header small{color:var(--secondary)}
+.ui[data-base=light] .cl .compose .field{background:rgba(255,255,255,.75);border-color:rgba(0,40,70,.25);color:var(--text)!important}
+.ui[data-base=light] .cl .compose .field::placeholder{color:var(--dim)}
+/* the blade covers the right edge: what lives there steps out of the way instead of peeking past its edge */
+.wa-dock,.shade,.quietcard{transition:opacity var(--dur-panel,.45s) var(--ease-drift,ease)}
+.cl-on .wa-dock,.cl-on .shade,.cl-on .quietcard,.cl-on .wapaused{opacity:0;pointer-events:none}
+.skyt{transition:opacity var(--dur-idle,.9s) var(--ease-drift,ease)}.idle .skyt{opacity:0}   /* idle: the title sinks with the menu */
+
+/* ================= round 4 (critique-r4) ================= */
+/* #2 first run and stock Windows: shell material, not a dialog. A full-width glass band across the lower third, display type, big rows. */
+.ui .band{left:0;right:0;top:560px;min-height:380px;padding:56px 120px 48px 200px;border-radius:0;border-width:1px 0;display:grid;grid-template-columns:auto 1fr auto;column-gap:56px;align-items:center;
+  transform:translateY(40px)}
+.band .worb{width:120px;height:120px}.band .bic{width:120px;height:120px;filter:drop-shadow(var(--sx) 8px 10px rgba(0,20,40,.45))}
+.band h2{font:var(--f-display);letter-spacing:-.01em}
+.band p{font:var(--f-lead);margin-top:16px;opacity:.92}.band .back{display:flex;align-items:center;gap:4px;font:var(--f-body);opacity:.85}
+.band ol{list-style:none;margin-top:22px;display:grid;gap:14px;font:var(--f-lead);font-size:22px}.band ol li{display:flex;align-items:center;gap:6px}
+.band .btns.col{flex-direction:column;align-items:stretch;justify-content:center;margin:0;gap:16px;min-width:320px}
+.band .btn{padding:16px 28px 16px 16px;font:600 28px/1.1 var(--font);border-radius:20px;gap:6px}
+.band .btn small{display:block;font:var(--f-cap);letter-spacing:var(--track-cap);text-transform:uppercase;opacity:.7;margin-top:4px}
+.band .btn .pad{width:40px;height:40px;font-size:18px;margin-right:12px}
+.ui[data-base=light] .band{color:var(--text);background:linear-gradient(170deg,rgba(255,255,255,.72),rgba(226,240,250,.6));border-color:rgba(255,255,255,.85);
+  box-shadow:0 0 0 1px rgba(0,30,50,.15),0 -20px 50px -20px rgba(0,30,50,.3),inset 0 1px 0 #fff}
+.ui[data-base=light] .band .btn:not(.pri){color:var(--text);border-color:rgba(0,40,70,.25);background:linear-gradient(180deg,#fff,rgba(255,255,255,.5))}
+.band::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(176deg,rgba(255,255,255,.18),transparent 30%)}   /* one Vista sheen, as on the Claude blade */
+
+/* #3 Claude blade: greeting card at the top, messages under it, body and input 18 px; nothing of the row shows under the blade */
+.cl .client header{padding:12px 16px 18px}
+.gcard{margin:18px 16px 4px;padding:18px 20px;border-radius:var(--r-l);background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.22)}
+.gcard p{font:var(--f-lead)}
+.sugs{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.sugs .chip{margin:0;font:var(--f-small);padding:7px 14px}
+.ui[data-base=light] .gcard{background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(255,255,255,.35));border-color:rgba(0,40,70,.12);color:var(--text)}
+.ui .cl .msgs{font:var(--f-body);justify-content:flex-start;overflow-y:auto;scrollbar-width:none;-webkit-mask:linear-gradient(transparent 6px,#000 56px);mask:linear-gradient(transparent 6px,#000 56px)}
+.cl .chip{font:var(--f-small);padding:5px 14px}.chip.k::before{width:20px;height:20px;line-height:20px;font-size:13px}
+.ui .cl input.field{font:var(--f-body);padding:14px 18px}.cl .send{width:80px;height:48px;font-size:16px}
+.cl-on .rowclip{-webkit-mask:linear-gradient(90deg,#000 calc(100% - 744px),transparent calc(100% - 720px));mask:linear-gradient(90deg,#000 calc(100% - 744px),transparent calc(100% - 720px))}
+
+/* #4 one type ramp: 200 / 80 / 40 / 24 / 18 / 15; floor 15, caps badges 13 */
+.rail .slab{font-size:15px}.rail .slab.on{font-size:11.5px}   /* 15 px once scaled */
+.classic{font-size:13px}
+.item .badge{font-size:13px;letter-spacing:.12em}.item.cur .badge{scale:.7}
+.bell b{font:700 13px/20px var(--font);height:20px;min-width:20px;border-radius:10px}
+.p-V{font-size:13px}
+.toast b{font-size:18px}.nt b{font-size:16px}
+
+/* #1 a game with no art: its first letter on a colour of its own, same gloss as the glyphs */
+.item .lt{display:grid;place-items:center;width:80px;height:80px;border-radius:20px;font:300 48px/1 var(--font);color:#fff;text-shadow:0 2px 3px rgba(0,0,0,.35);
+  background:radial-gradient(120% 60% at 50% -10%,rgba(255,255,255,.6),transparent 60%),linear-gradient(180deg,hsl(var(--h) 60% 62%),hsl(var(--h) 55% 34%));
+  border:2px solid hsl(var(--h) 50% 24%);box-shadow:var(--sx) 6px 10px -4px rgba(0,30,50,.45)}
+
+/* #11 notifications: light glass by day, the row fades before the panel */
+.ov-notifs .rowclip{-webkit-mask:linear-gradient(90deg,#000 calc(100% - 700px),transparent calc(100% - 550px));mask:linear-gradient(90deg,#000 calc(100% - 700px),transparent calc(100% - 550px))}
+#notifs{width:480px}
+.ui[data-base=light] #notifs,.ui[data-base=light] .toast{color:var(--text);background:linear-gradient(170deg,rgba(255,255,255,.78),rgba(226,240,250,.66));border-color:rgba(255,255,255,.9);
+  box-shadow:0 0 0 1px rgba(0,30,50,.15),var(--sx) 24px 50px -10px rgba(0,30,50,.35),inset 0 1px 0 #fff}
+.ui[data-base=light] #notifs::before{background:rgba(255,255,255,.85);border-color:rgba(255,255,255,.9)}
+.ui[data-base=light] #notifs .nt{background:rgba(255,255,255,.55);box-shadow:0 0 0 1px rgba(0,40,70,.08)}
+.ui[data-base=light] .quiet{border-top-color:rgba(0,40,70,.15)}
+
+/* #12 day overlays: the dim takes the phase's window colour, not navy */
+.ui[data-base=light] .dim{background:color-mix(in srgb,var(--window) 52%,transparent);backdrop-filter:blur(12px)}
+.ui[data-base=light] #swi .h,.ui[data-base=light] .card{color:var(--text);text-shadow:0 1px 0 rgba(255,255,255,.6)}
+.ui[data-base=light] #sq{color:var(--text);border-color:rgba(255,255,255,.95);background-color:rgba(255,255,255,.6);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='10' cy='10' r='6.5' fill='none' stroke='%23244a60' stroke-width='2.4'/%3E%3Cpath d='M15 15l6 6' stroke='%23244a60' stroke-width='2.8' stroke-linecap='round'/%3E%3C/svg%3E");
+  box-shadow:inset 0 2px 6px rgba(0,30,50,.25),0 0 0 6px color-mix(in srgb,var(--accent) 35%,transparent),0 0 40px color-mix(in srgb,var(--accent) 40%,transparent)}
+.ui[data-base=light] #sres{color:var(--text);background:linear-gradient(170deg,rgba(255,255,255,.75),rgba(226,240,250,.62));border-color:rgba(255,255,255,.9)}
+.ui[data-base=light] .res b{color:var(--text)}
+.ui[data-base=light].ov-switcher .legend,.ui[data-base=light].ov-search .legend,.ui[data-base=light].ov-hatch .legend,.ui[data-base=light].ov-welcome .legend{color:var(--text);text-shadow:0 1px 0 rgba(255,255,255,.6);background:rgba(255,255,255,.4)}
+/* #10 search: the selected row by night is the accent glass, not a bright slab */
+.ui[data-base=dark] .res.cur{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 38%,transparent),color-mix(in srgb,var(--accent) 16%,transparent))}
+
+/* #9 idle: the time is the title, drawn in the sky behind the ridge, centred; the date and the next sun event under it */
+.idle .skyt{opacity:.94;left:0!important;right:0;text-align:center}
+.m-idle .clockline{right:0;left:0;top:auto;bottom:250px;text-align:center;transform:none}
+.m-idle .clockline b{display:none}
+.m-idle .clockline span{font:var(--f-lead);margin-top:6px}
+#idate{display:none}.m-idle #idate{display:block;font:var(--f-cap);letter-spacing:var(--track-cap);text-transform:uppercase;opacity:.85;margin-top:14px}
+
+/* #14 the legend sits on its own smoked strip, so it reads on bright grass */
+.legend{left:184px;padding:6px 18px;border-radius:22px;background:linear-gradient(180deg,rgba(0,18,32,.26),rgba(0,18,32,.4));box-shadow:inset 0 1px 0 rgba(255,255,255,.18)}
+
+/* #15 loading: the shimmer moves on transform; empty: the line is display type with the controller */
+.item.skel{animation:none;background:linear-gradient(180deg,rgba(0,26,44,.22),rgba(0,26,44,.42));overflow:hidden}
+.item.skel::before{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.22) 50%,transparent 70%);animation:skel2 1.8s linear infinite}
+@keyframes skel2{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+.item.empty{font:300 22px/1.25 var(--font)}
+.item .badge{white-space:nowrap}
+.idle .skyt{top:30px!important}   /* above the sun's arc in every scene (the lake's arc crossed the digits) */
+#swi{gap:90px}   /* the focused card grows 40 px up and lifts 12: keep it off the heading */
+/* Two screens, Spill (concepts/dual, picked 2026-11-13). Body classes from index.html setScreen: dual, s1 | s2, and s2cov on screen 1 while a window is maximised on screen 2.
+   The carousel runs on across the bezel (no tile ever sits on it); screen 2 takes the clock, status pill and Winamp, and gives them back under s2cov. */
+.s2 .ui > *{display:none!important}
+.s2 #scrub,.s2 .skyt{display:none}
+.snapping .skyt{visibility:hidden!important}   /* while the glass snapshot is taken (snapGlass) */
+.s1:not(.s2cov):not(.pleft) .ui:not(.cl-on) .rowclip{-webkit-mask:none;mask:none}   /* notifications open on screen 2 now: screen 1 keeps its whole row */
+/* the Acer (24") has smaller pixels than the ASUS (27"): screen 2 scales the row by 27/24 so tiles look the same size on both. --s2-scale is the knob (live/theme.json vars) */
+.s2 .ui > .rowclip{display:block!important;scale:var(--s2-scale,1.125);transform-origin:0 440px;-webkit-mask:linear-gradient(90deg,#000 1320px,transparent 1650px);mask:linear-gradient(90deg,#000 1320px,transparent 1650px)}
+/* screen-2 tiles take clicks: index.html relays them to screen 1, which owns the row */
+.s2 .ui.cl-on > .rowclip{opacity:1}   /* Claude open on screen 1: screen 2 keeps the row, carrying on where the panel cuts screen 1's off (drawMenu edge), undimmed */
+.s1cov.s2 .ui > .rowclip{display:none!important}   /* windows cover the main screen: the start of the row is out of sight, so its tail goes too */
+.s2 .ui > :is(.clockline,.wa-dock){display:block!important}
+.s2 .ui > .pill{display:flex!important}
+.s2 .ui > #notifs{display:block!important}   /* the bell is on screen 2, so its notifications open there (pointing at it) */
+.s1:not(.s2cov) #notifs{display:none!important}
+.s1:not(.s2cov) :is(.clockline,.pill,.wa-dock,.shade,.quietcard,.wapaused){display:none!important}
+/* more than two screens (Setup › Screens): a partner on the left of the main screen takes the clock, Winamp and notifications but not the row's tail;
+   any other screen (s2x) shows only the scene */
+.s2.pleft .ui > .rowclip{display:none!important}
+.s2.s2x .ui > *{display:none!important}
+
+/* Claude panel close: a real button (mouse users had no way out; Esc / ○ / F2 still work) */
+.cl .client header .clx{margin-left:10px;width:34px;height:34px;flex:none;display:grid;place-items:center;border-radius:50%;cursor:pointer;
+  font:600 16px/1 var(--font);color:rgba(255,255,255,.8);background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);transition:background .15s,color .15s}
+.cl .client header .clx:hover{background:rgba(255,255,255,.2);color:#fff}
+.ui[data-base=light] .cl .client header .clx{color:var(--secondary);background:rgba(0,40,70,.06);box-shadow:inset 0 0 0 1px rgba(0,40,70,.15)}
+
+/* Claude panel as a real chat: wide answers, Markdown, code, Stop */
+.cl .m.ai{max-width:94%}.cl .m.me{max-width:80%}
+.cl .rt{white-space:pre-wrap;overflow-wrap:anywhere}
+.cl .m code{font:500 .86em/1.4 Consolas,"Cascadia Mono",monospace;background:rgba(20,40,60,.1);border-radius:5px;padding:1px 5px}
+.cl .m pre{margin:8px 0;padding:10px 12px;border-radius:10px;background:#0f1a24;color:#d8e6f2;overflow-x:auto;white-space:pre;scrollbar-width:thin}
+.cl .m pre code{background:none;padding:0;color:inherit;font-size:13px}
+.cl .m .mh{font-size:1.05em}
+.cl .steps{max-height:168px;overflow-y:auto;scrollbar-width:none}.cl .steps li{font:var(--f-small);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cl .steps li code{font-size:12px}
+.cl .send.stop{--accent:#b8433a}   /* the Send button's own Aero gloss, in red */
+.cl .m table{border-collapse:collapse;margin:6px 0;font:var(--f-small)}.cl .m th,.cl .m td{padding:4px 12px 4px 0;text-align:left;border-bottom:1px solid rgba(20,40,60,.14)}
+.cl .m th{font-weight:600}.cl .m tr:last-child td{border-bottom:0}
+.cl .steps:empty{display:none}.cl .steps{margin:0 0 6px}.cl .acts{margin-top:8px}
+/* real program and file icons (host: icons.local) fill their whole square, unlike the padded Crystal set: smaller, and clear of the RUNNING badge */
+.item img[src^="https://icons.local/"]:not(.fav){width:64px;height:64px;margin-top:20px}
+/* a game with only Steam's wide hero: the hero fills the tile, its logo sits on top (the cover's own logo does the naming) */
+.item img.glogo{position:absolute;left:10%;top:18%;width:80%;height:42%;object-fit:contain;z-index:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.7))}
+.item:has(.glogo) .art{object-position:50% 50%}
+/* a cover already carries the game's logo and the line under the row names it: no name printed over the art, even on the selected tile (r6) */
+.item:has(.art) span,.item:has(.art)::after{display:none}
+
+/* Home groups (PS3 style): a stack of glass cards behind the tile, and a vertical column of that app's windows under it */
+.item.grp{box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 0 rgba(255,255,255,.22),inset 0 -30px 40px -24px var(--under),0 0 0 1px rgba(0,20,35,.35),
+  9px -9px 0 -3px rgba(255,255,255,.17),9px -9px 0 -2px rgba(255,255,255,.28),18px -18px 0 -7px rgba(255,255,255,.09),var(--sx) 20px 34px -10px rgba(0,20,40,.55)}
+.col{position:absolute;left:200px;top:628px;width:620px;height:430px;overflow:hidden;pointer-events:none;opacity:0;translate:0 -14px;
+  transition:opacity .22s var(--ease-surface,ease-out),translate .22s var(--ease-surface,ease-out);-webkit-mask:linear-gradient(#000 82%,transparent);mask:linear-gradient(#000 82%,transparent)}
+.col-on .col{opacity:1;translate:0 0;pointer-events:auto}
+.col-on .desc{opacity:0;pointer-events:none;transition:opacity .15s}   /* hidden under the column's top rows: it ate their clicks */
+.col .cw{position:relative;display:flex;align-items:center;gap:16px;height:64px;margin-bottom:12px;padding:0 18px;border-radius:18px;cursor:pointer;
+  translate:0 var(--off,0);transition:translate .2s var(--ease-surface,ease-out),background .15s,opacity .15s;opacity:.62;
+  color:#fff;text-shadow:var(--ts);background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(0,26,44,.28));border:1px solid rgba(255,255,255,.22)}
+.col .cw img{width:40px;height:40px;flex:none;filter:drop-shadow(0 3px 4px rgba(0,20,40,.5))}
+.col .cw div{min-width:0}.col .cw b{display:block;font:500 19px/1.2 var(--font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.col .cw small{font:var(--f-small);opacity:.75}
+.col .cw.cur{opacity:1;background:radial-gradient(120% 90% at 30% -30%,rgba(255,255,255,.5),rgba(255,255,255,.08) 60%,transparent 61%),linear-gradient(180deg,rgba(255,255,255,.2),rgba(0,26,44,.3));
+  border-color:color-mix(in srgb,var(--glow) 60%,#fff);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 70%,transparent),0 0 22px color-mix(in srgb,var(--accent) 45%,transparent)}
+.ui[data-base=light] .col .cw{color:var(--text);text-shadow:0 1px 0 rgba(255,255,255,.55);background:linear-gradient(180deg,rgba(255,255,255,.6),rgba(235,246,252,.42))}
+/* wide pad pills (Create, Options): the round highlight washed the whole label out; a plain glossy bar instead */
+.pad.p-V{background:linear-gradient(180deg,#6a7682,#323c46 52%,#1e252c);color:#fff}
+/* long titles (a browser video as "now playing") clamp to two lines instead of running into the key hints */
+#idesc{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:980px}
+/* the legend grew (PS glyphs, Create pill): tighter gaps, and it stops before the player strip on the right */
+.legend{gap:20px}
+/* a shaped skin (region.txt) floats on the scene: no dark frame behind its cut-away corners */
+.wa-dock:has(.wa[style*="path("]){background:none!important;border-color:transparent!important;box-shadow:none!important}
+
+/* ===== mouse-first UX (r6): hover, hint bubble, paddles, scrubber, search bar, list tools, right-click menu ===== */
+.item{transition:translate .3s var(--ease-surface,ease-out),scale .3s var(--ease-surface,ease-out),transform .2s var(--ease-surface,ease-out),filter .2s,opacity .3s}
+.item.hov:not(.cur){transform:translateY(-10px);filter:brightness(1.12) saturate(1.1)}
+.item.hov::after{opacity:.35}   /* hover is a hint, not the selection ring */
+.mouse .item{cursor:pointer}
+.tip{position:absolute;z-index:9;translate:-50% 6px;padding:7px 14px;border-radius:999px;font:600 14px/1 var(--font);color:#fff;white-space:nowrap;pointer-events:none;opacity:0;
+  background:linear-gradient(180deg,rgba(40,60,80,.92),rgba(12,22,32,.92));border:1px solid rgba(255,255,255,.3);box-shadow:0 6px 18px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.25);transition:opacity .15s,translate .15s}
+.tip::before{content:"";position:absolute;left:50%;top:-6px;width:10px;height:10px;translate:-50% 0;rotate:45deg;background:rgba(40,60,80,.95);border-left:1px solid rgba(255,255,255,.3);border-top:1px solid rgba(255,255,255,.3)}
+.tip.on{opacity:1;translate:-50% 0}
+.paddle{position:absolute;top:396px;width:44px;height:88px;display:grid;place-items:center;font:300 52px/1 var(--font);color:#fff;cursor:pointer;z-index:4;border-radius:22px;
+  background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(0,26,44,.35));border:1px solid rgba(255,255,255,.35);box-shadow:0 6px 16px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.6);
+  opacity:0;pointer-events:none;transition:opacity .2s,background .15s}
+.paddle.pl{left:146px}.paddle.pr{right:24px}
+.mouse .paddle.on{opacity:.8;pointer-events:auto}.mouse .paddle.on:hover{opacity:1;background:linear-gradient(180deg,rgba(255,255,255,.4),rgba(0,26,44,.3))}
+.scr{position:absolute;left:200px;top:622px;width:1080px;height:14px;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .2s}
+.scr::before{content:"";position:absolute;left:0;right:0;top:5px;height:4px;border-radius:2px;background:rgba(255,255,255,.18)}
+.scr i{position:absolute;top:2px;width:64px;height:10px;border-radius:5px;background:linear-gradient(180deg,#fff,color-mix(in srgb,var(--accent) 70%,#fff));box-shadow:0 0 10px color-mix(in srgb,var(--accent) 60%,transparent);transition:left .25s var(--ease-surface,ease-out),width .25s}
+.mouse .scr.on{pointer-events:auto}.scr:active{cursor:grabbing}
+.sbar{position:absolute;left:760px;top:44px;height:44px;width:400px;display:flex;align-items:center;gap:12px;padding:0 10px 0 16px;border-radius:22px;cursor:text;z-index:3;
+  font:400 17px/1 var(--font);color:rgba(255,255,255,.75);background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(0,26,44,.32));border:1px solid rgba(255,255,255,.3);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 4px 14px rgba(0,0,0,.3);backdrop-filter:blur(6px);transition:background .15s,border-color .15s}
+.sbar:hover{background:linear-gradient(180deg,rgba(255,255,255,.26),rgba(0,26,44,.28));border-color:color-mix(in srgb,var(--accent) 60%,#fff);color:#fff}
+.sbar span{flex:1}.sbar .key{font-size:12px;opacity:.75}
+.sbar svg,.fbox svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+.tools{position:absolute;left:200px;top:822px;display:none;align-items:center;gap:22px;z-index:3}
+.has-tools .tools{display:grid}   /* filter + sort, then the Games launcher tabs on a row of their own */
+.fbox{display:flex;align-items:center;gap:10px;height:42px;width:300px;padding:0 12px 0 14px;border-radius:21px;color:rgba(255,255,255,.8);cursor:text;
+  background:rgba(0,20,35,.38);border:1px solid rgba(255,255,255,.28);box-shadow:inset 0 2px 4px rgba(0,0,0,.35)}
+.fbox:focus-within{border-color:color-mix(in srgb,var(--accent) 80%,#fff);box-shadow:inset 0 2px 4px rgba(0,0,0,.35),0 0 0 3px color-mix(in srgb,var(--accent) 35%,transparent)}
+.fbox input{flex:1;min-width:0;background:none;border:0;outline:none;color:#fff;font:400 16px/1 var(--font)}.fbox input::placeholder{color:rgba(255,255,255,.55)}
+.fbox .fx{cursor:pointer;font:600 13px/1 var(--font);padding:5px 7px;border-radius:50%;background:rgba(255,255,255,.14)}.fbox .fx:hover{background:rgba(255,255,255,.3)}
+.sorts{display:flex;align-items:center;gap:8px}.tools{grid-template-columns:auto auto;justify-content:start;row-gap:12px}.ltabs{grid-column:1/-1}.ltabs:empty{display:none}.sorts .cap{margin-right:4px;opacity:.7;text-shadow:var(--ts)}
+.sorts .chip{cursor:pointer;font:600 14px/1 var(--font);padding:9px 14px;border-radius:999px;color:#fff;background:rgba(0,20,35,.32);border:1px solid rgba(255,255,255,.25);transition:background .15s,border-color .15s}
+.sorts .chip:hover{background:rgba(255,255,255,.18)}
+.sorts .chip.on{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 85%,#fff),color-mix(in srgb,var(--accent) 70%,#000));border-color:color-mix(in srgb,var(--accent) 50%,#fff);color:var(--on_accent,#02130F);box-shadow:0 0 12px color-mix(in srgb,var(--accent) 45%,transparent)}
+.ctx{position:absolute;z-index:20;min-width:240px;padding:6px;border-radius:14px;display:none;font:400 16px/1 var(--font);color:#fff;box-shadow:0 14px 40px rgba(0,0,0,.55)}
+.ctx.on{display:block}
+.ctx .ch{padding:10px 12px 8px;font:600 12px/1.2 var(--font);letter-spacing:.08em;text-transform:uppercase;opacity:.65;max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ctx .ci{padding:12px 14px;border-radius:9px;cursor:pointer}.ctx .ci:hover{background:color-mix(in srgb,var(--accent) 35%,rgba(255,255,255,.08))}
+.ctx .ci.danger:hover{background:rgba(229,72,77,.45)}
+.ui[data-base=light] :is(.sbar,.fbox,.sorts .chip:not(.on)){color:var(--text);background:rgba(255,255,255,.55);border-color:rgba(0,40,70,.2)}
+.ui[data-base=light] .fbox input{color:var(--text)}.ui[data-base=light] .fbox input::placeholder{color:var(--dim)}
+:is(.m-idle) :is(.sbar,.tools,.scr,.paddle){opacity:0!important;pointer-events:none!important}
+.cl-on :is(.sbar,.tools,.paddle.pr){opacity:0;pointer-events:none}
+.col-on :is(.tools,.scr){opacity:0;pointer-events:none}
+.s2 :is(.sbar,.tools,.scr,.paddle,.ctx){display:none!important}   /* the hover tip shows: screen 2's tiles take the mouse */
+/* search results: covers for games, and a hover that says "click me" */
+#sres .res{cursor:pointer;transition:background .12s}#sres .res:not(.cur):hover{background:rgba(255,255,255,.1)}
+#sres .res img.cov{object-fit:cover;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+/* the concept's quiet-hours switch has nothing behind it in the real desktop: honest, so it goes */
+.hosted #notifs .quiet{display:none}
+.col .cw .wst{font-style:normal;opacity:.85;color:color-mix(in srgb,var(--accent) 60%,#fff)}
+.cl .m .el{display:block;font:600 11px/1.4 var(--font);letter-spacing:.08em;text-transform:uppercase;opacity:.55;margin-bottom:2px}.cl .m .el:empty{display:none}
+/* the scrub bar: one steady look on every tab, for keys and mouse alike (it used to brighten on hover and vanish on short tabs); the mouse can also drag it */
+.scr.on{opacity:.6}
+.row{user-select:none;touch-action:pan-y}
+/* Studio and Files: the column has a header (where you are, how many), and the card on the right shows what the picked tile or row is */
+.col:has(.colh){top:640px;height:346px}   /* clear of the tile above, stops above the key hints */
+.col-on .scr.on{opacity:0;pointer-events:none}   /* hidden means hidden: no hover or click can wake it */
+.col .cws{height:calc(100% - 44px);overflow:hidden;padding-top:3px}   /* rows scroll under here, never under the header */
+.col .colh{display:flex;align-items:baseline;gap:14px;height:34px;margin:0 4px 10px;text-shadow:var(--ts)}
+.col .colh b{font:600 20px/1.3 var(--font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:470px}.col .colh small{opacity:.7;white-space:nowrap}
+.col .colh .ycs{margin-left:auto;align-self:center;flex:none;font:600 14px/1 var(--font);font-style:normal;padding:8px 14px;border-radius:999px;cursor:pointer;background:rgba(0,20,35,.32);border:1px solid rgba(255,255,255,.3);transition:background .15s}
+.col .colh .ycs:hover{background:rgba(255,255,255,.22)}   /* a channel's sort: Newest ▾ opens the choices */
+.col .cw .go{margin-left:auto;font:300 30px/1 var(--font);opacity:.55;font-style:normal}
+.col .cw.wait{cursor:default;opacity:.8}
+.col .cw.playing small{color:color-mix(in srgb,var(--accent) 60%,#fff)}.ui[data-base=light] .col .cw.playing small{color:color-mix(in srgb,var(--accent) 65%,#000);opacity:1}
+.col .cw.playing img{animation:tp-beat 1s ease-in-out infinite}
+@keyframes tp-beat{50%{scale:1.12}}
+.deck{position:absolute;left:900px;top:646px;width:940px;height:336px;box-sizing:border-box;padding:24px 28px;border-radius:26px;overflow:hidden;color:#fff;text-shadow:var(--ts);
+  opacity:0;pointer-events:none;transition:opacity .2s var(--ease-surface,ease-out);display:flex;flex-direction:column;gap:16px}
+.deck-on .deck{opacity:1;pointer-events:auto}
+.cl-on .deck,.m-idle .deck,.s2 .deck,[class*="ov-"] .deck{opacity:0!important;pointer-events:none!important}
+.deck-on .desc{width:660px}.deck-on .fbox{width:190px}   /* five sort chips (Games) + the filter stop short of the card */.deck-on #idesc{max-width:660px}
+.deck .dh{display:flex;align-items:center;gap:16px}.deck .dh img{width:52px;height:52px;flex:none;object-fit:contain;filter:drop-shadow(0 3px 5px rgba(0,20,40,.5))}
+.deck .dh div{min-width:0}.deck .dh b{display:block;font:500 26px/1.15 var(--font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.deck .dh small{display:block;font:var(--f-small);opacity:.78;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.deck .stats{display:flex;gap:10px}
+.deck .stats div{flex:1;min-width:0;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.18)}
+.deck .stats b{display:block;font:500 24px/1.1 var(--font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.deck .stats small{opacity:.7;font-size:11px}
+.deck .chips{display:flex;flex-wrap:wrap;align-items:center;gap:7px;max-height:66px;overflow:hidden}.deck .chips .cap{opacity:.7;margin-right:4px}
+.deck .chips i{font:500 14px/1 var(--font);font-style:normal;padding:6px 10px;border-radius:999px;background:rgba(0,20,35,.3);border:1px solid rgba(255,255,255,.2)}
+.deck .none{opacity:.7;font:var(--f-small)}
+.deck .cap{opacity:.7}
+.deck .plr{margin-top:auto;display:flex;align-items:center;gap:16px;padding:12px 16px;border-radius:18px;cursor:pointer;background:rgba(0,20,35,.32);border:1px solid rgba(255,255,255,.2);transition:background .15s,border-color .15s}
+.deck .plr:hover{background:rgba(255,255,255,.14)}.deck .plr.on{border-color:color-mix(in srgb,var(--accent) 70%,#fff)}
+.deck .pp{flex:none;display:grid;place-items:center;width:46px;height:46px;border-radius:50%;font:600 17px/1 var(--font);text-shadow:none;color:var(--on_accent,#02130F);
+  background:radial-gradient(110% 70% at 50% 0,rgba(255,255,255,.75),transparent 60%),linear-gradient(180deg,color-mix(in srgb,var(--accent) 90%,#fff),color-mix(in srgb,var(--accent) 70%,#000));box-shadow:0 0 14px color-mix(in srgb,var(--accent) 45%,transparent)}
+.deck .pm{flex:1;min-width:0}.deck .pm b{display:block;font:500 17px/1.2 var(--font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.deck .pm small{font:var(--f-small);opacity:.7}
+.deck .pb{height:6px;margin-top:8px;border-radius:3px;background:rgba(255,255,255,.18);overflow:hidden}.deck .pb i{display:block;height:100%;width:0;background:var(--accent);border-radius:3px}
+.deck .plr.on .pb{cursor:col-resize;height:8px}
+.deck .pt{flex:none;font:500 15px/1 var(--font);opacity:.8;min-width:84px;text-align:right;font-variant-numeric:tabular-nums}
+.deck .use small{display:block;margin-top:8px;font:var(--f-small);opacity:.8}
+.deck .ub{height:14px;border-radius:7px;background:rgba(255,255,255,.16);overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.35)}
+.deck .ub i{display:block;height:100%;border-radius:7px;background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 80%,#fff),var(--accent))}.deck .ub.full i{background:linear-gradient(180deg,#ff9a8a,#e5484d)}
+.deck .ents{display:flex;flex-direction:column;gap:4px;margin-top:-8px}
+.deck .ents div{display:flex;align-items:center;gap:12px;height:30px}.deck .ents img{width:24px;height:24px;flex:none}
+.deck .ents b{font:400 16px/1.3 var(--font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.deck .ents small{margin-left:auto;flex:none;font:var(--f-small);opacity:.7}
+.deck:has(.pv){flex-direction:row;gap:24px}
+.deck .pv{flex:none;width:288px;height:288px;display:grid;place-items:center;border-radius:16px;overflow:hidden;background:rgba(0,12,22,.35);border:1px solid rgba(255,255,255,.14)}
+.deck .pvimg{max-width:100%;max-height:100%;object-fit:contain}.deck .pvic{width:128px;height:128px;filter:drop-shadow(0 6px 10px rgba(0,20,40,.5))}
+.deck .pvtxt{align-self:stretch;justify-self:stretch;margin:0;padding:12px 14px;font:12px/1.45 Consolas,monospace;white-space:pre;overflow:hidden;text-shadow:none;color:rgba(255,255,255,.88)}
+.deck .fi{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}
+.deck .fi > b{font:500 26px/1.15 var(--font);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word}
+.deck .fi > small{font:var(--f-small);opacity:.8}
+.deck dl{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;margin:4px 0 0;font:var(--f-small)}.deck dt{opacity:.6}.deck dd{margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* tiles: a fact badge (BPM, new files) and a drive's fill */
+.item .badge.info{--dot:#9fd8ff}.item .badge{z-index:2}.item:has(> img.art) .badge{top:auto;bottom:16px}   /* above cover art (Home's Continue on a game), and at the bottom: covers put their title at the top */
+.item .tbar{position:absolute;left:22px;right:22px;bottom:20px;height:7px;border-radius:4px;background:rgba(0,20,35,.3);overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.35)}
+.item .tbar i{display:block;height:100%;background:var(--accent);border-radius:4px}.item .tbar.full i{background:#e5484d}
+.col .cw img.th{object-fit:cover;border-radius:6px;filter:none;box-shadow:0 2px 6px rgba(0,20,40,.45);outline:1px solid rgba(255,255,255,.35)}   /* a picture shows itself */
+.nd{display:inline-block;width:8px;height:8px;margin:0 8px 2px 0;border-radius:50%;vertical-align:middle;background:var(--accent);box-shadow:0 0 8px var(--accent)}   /* changed today */
+.deck .pvnone{display:flex;flex-direction:column;align-items:center;gap:14px;opacity:.75}
+.col .cw:not(.cur,.wait):hover{opacity:.9;border-color:rgba(255,255,255,.5)}   /* the mouse sees what it would pick */
+.deck .ents img.th{object-fit:cover;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+
+/* Music cards: album art fills the square; the now-playing line under the facts; picks in a list or chip play like the player */
+.deck .pvimg.cover{width:100%;height:100%;object-fit:cover}
+.deck .npl{margin-top:auto;display:flex;align-items:center;gap:16px}.deck .npb{flex:1;height:8px;border-radius:4px;background:rgba(255,255,255,.18);overflow:hidden}.deck .npb.seek{cursor:col-resize}
+.deck .npb i{display:block;height:100%;width:0;background:var(--accent);border-radius:4px;transition:width .5s linear}
+.deck .pick{cursor:pointer;border-radius:8px;transition:background .15s}.deck .ents .pick:hover,.deck .chips i.pick:hover{background:rgba(255,255,255,.16)}
+.deck .ents .by{opacity:.6}
+.deck .plr.none{cursor:default;opacity:.6;border-style:dashed;background:none}.deck .plr.none .pp{background:rgba(255,255,255,.2);box-shadow:none;color:#fff}   /* where the player will be */
+.deck .npc{flex:none;display:flex;align-items:center;gap:6px}.deck .npc i{font-style:normal;display:grid;place-items:center;width:38px;height:38px;border-radius:50%;cursor:pointer;font:15px/1 var(--font);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);transition:background .15s}
+.deck .npc i:hover{background:rgba(255,255,255,.22)}.deck .npc i.big{width:46px;height:46px;font:600 17px/1 var(--font);text-shadow:none;color:var(--on_accent,#02130F);background:var(--accent);border-color:transparent}
+.col .cw.cur .wst{color:#fff;opacity:1;font-weight:600}.ui[data-base=light] .col .cw.cur .wst{color:var(--text)}   /* the picked row's note stays readable on its bright glass */
+.deck .wst{font-style:normal;color:color-mix(in srgb,var(--accent) 55%,#fff)}
+
+/* Claude panel: model and effort pickers in the header; the reasoning fold-out */
+.cl #csub2{display:flex;gap:6px;margin-top:4px}
+.cl #csub2 select{font:var(--f-small);color:inherit;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:2px 8px;cursor:pointer;outline:none}
+.cl .client header>div:nth-child(2){flex:1;min-width:0}   /* the selects pushed history/speaker/close off the blade */
+.cl #csub2{display:flex;flex-wrap:wrap;gap:4px}.cl #csub2 #cmics{max-width:170px;text-overflow:ellipsis}
+.cl #csub2 select:hover,.cl #csub2 select:focus{background:rgba(255,255,255,.2)}
+.cl #csub2 option{color:#111;background:#fff}
+.ui[data-base=light] .cl #csub2 select{background:rgba(0,40,70,.06);border-color:rgba(0,40,70,.2)}
+.cl .think{opacity:.7;font:var(--f-small);margin:2px 0 6px}.cl .think summary{cursor:pointer}.cl .think div{white-space:pre-wrap;max-height:180px;overflow:auto;margin-top:4px}
+/* Music: Spotify (index.html spTiles / addPick). The "Add to" picker sits where search does; its list styles are search's own .res rows */
+#addp{left:560px;width:800px;top:140px}
+.ov-add #addp{opacity:1;pointer-events:auto;transform:none}
+.ov-add .dim{opacity:1;pointer-events:auto}.ov-add .legend{z-index:8}
+.aph{display:flex;align-items:center;gap:20px;padding:0 8px;color:#fff;text-shadow:var(--ts)}
+.aph img{width:84px;height:84px;object-fit:cover;border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,.45);outline:1px solid rgba(255,255,255,.4)}
+.aph b{display:block;font:600 30px/1.2 var(--font)}.aph small{display:block;font:var(--f-small);opacity:.8}.aph .cap{opacity:.7}
+#alist{margin-top:16px;padding:10px;max-height:680px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.35) transparent;overscroll-behavior:contain}
+#alist .res{cursor:pointer;transition:background .12s}#alist .res:not(.cur):hover{background:rgba(255,255,255,.1)}
+#alist .res img.cov{object-fit:cover;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+.ui[data-base=light] #alist{color:var(--text);background:linear-gradient(170deg,rgba(255,255,255,.75),rgba(226,240,250,.62));border-color:rgba(255,255,255,.9)}
+.ui[data-base=light] .aph{color:var(--text);text-shadow:0 1px 0 rgba(255,255,255,.6)}
+.deck .chips.spa{margin-top:14px;max-height:none}.deck .chips.spa i{cursor:pointer;font-size:15px;padding:8px 14px;transition:background .15s}
+.deck .chips.spa i:hover{background:rgba(255,255,255,.2)}
+.ui[data-base=light] .deck .chips.spa i{background:rgba(255,255,255,.5);border-color:rgba(0,40,60,.18)}
+/* Claude panel, Claude Code parity (index.html: submit, drawQueue, cpop, steps, drawTodo, drawStat, history, voice) */
+.cl .client header .cib{width:34px;height:34px;flex:none;display:grid;place-items:center;border-radius:50%;cursor:pointer;margin-left:6px;background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,.22);transition:background .15s}
+.cl .client header .cib:hover{background:rgba(255,255,255,.2)}.cl .cib img{width:20px;height:20px;filter:drop-shadow(0 1px 2px rgba(0,20,40,.5))}
+.cl .client header .cib.on{background:color-mix(in srgb,var(--accent) 45%,transparent);box-shadow:inset 0 0 0 1px rgba(255,255,255,.6),0 0 12px color-mix(in srgb,var(--accent) 60%,transparent)}
+.ui[data-base=light] .cl .client header .cib{background:rgba(0,40,70,.06);box-shadow:inset 0 0 0 1px rgba(0,40,70,.15)}
+.cl .cbox{position:relative;margin:0 12px 12px}.cl .cbox .compose{margin:0;align-items:flex-end}
+.cl textarea.field{resize:none;border-radius:22px;min-height:50px;max-height:168px;padding:13px 18px;font:var(--f-body);line-height:1.35;outline:none;overflow-y:auto;scrollbar-width:none;font-family:var(--font)}
+.cl .compose .cib{width:44px;height:48px;flex:none;display:grid;place-items:center;border-radius:50%;cursor:pointer;font:300 28px/1 var(--font);color:#fff;background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3)}
+.cl .compose .cib:hover{background:rgba(255,255,255,.2)}
+.mic{width:48px;height:48px;flex:none;display:grid;place-items:center;border-radius:50%;cursor:pointer;background:radial-gradient(circle at 50% 30%,rgba(255,255,255,.35),rgba(255,255,255,.06) 60%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);transition:background .15s,box-shadow .2s}
+.mic img{width:26px;height:26px;filter:drop-shadow(0 1px 2px rgba(0,20,40,.5))}.mic:hover{background:rgba(255,255,255,.22)}
+.mic.on{background:radial-gradient(circle at 50% 30%,#ffd6d6,#e5484d 70%);box-shadow:0 0 0 0 rgba(229,72,77,.6),inset 0 0 0 1px rgba(255,255,255,.7);animation:micpulse 1.3s ease-out infinite}
+@keyframes micpulse{0%{box-shadow:0 0 0 0 rgba(229,72,77,.55),inset 0 0 0 1px rgba(255,255,255,.7)}100%{box-shadow:0 0 0 18px rgba(229,72,77,0),inset 0 0 0 1px rgba(255,255,255,.7)}}
+#srch{position:absolute}.smic{position:absolute;right:16px;top:14px}
+.cl .cq{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}.cl .cq:empty{display:none}
+.cl .qm{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:16px;font:var(--f-small);cursor:pointer}
+/* composer in the desktop's glass (user 13 Nov: it read flat and off-style): the search bar's recipe for the field, the round buttons and the queue */
+.cl .compose .field,.cl .compose .cib,.cl .compose .mic,.cl .qm{background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(0,26,44,.32));border:1px solid rgba(255,255,255,.3);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 4px 14px rgba(0,0,0,.3);transition:background .15s,border-color .15s,box-shadow .15s}
+.cl .compose .cib,.cl .compose .mic{width:48px;height:48px;box-sizing:border-box}
+.cl .compose :is(.cib,.mic):hover,.cl .qm:hover{background:linear-gradient(180deg,rgba(255,255,255,.26),rgba(0,26,44,.28));border-color:color-mix(in srgb,var(--accent) 60%,#fff)}
+.cl .compose .field:focus{border-color:color-mix(in srgb,var(--accent) 70%,#fff);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent),0 4px 14px rgba(0,0,0,.3)}
+.cl .qm .cap{font:700 11px/1 var(--font);letter-spacing:.1em;text-transform:uppercase;padding:5px 9px 5px 19px;border-radius:9px;background:rgba(0,12,22,.5) radial-gradient(circle at 10px 50%,#FFD75E 0 3px,transparent 4px);border:1px solid rgba(255,255,255,.18)}   /* the tiles' RUNNING badge */
+.ui[data-base=light] .cl :is(.compose .cib,.compose .mic,.qm){background:rgba(255,255,255,.55);border-color:rgba(0,40,70,.2);color:var(--text)}
+.cl .qm b{flex:1;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cl .qm i{font-style:normal;opacity:.7;padding:0 4px}.cl .qm i:hover{opacity:1}
+.cl .catt{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}.cl .catt:empty{display:none}
+.cl .att{position:relative}.cl .att img{width:64px;height:64px;object-fit:cover;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.4);outline:1px solid rgba(255,255,255,.5)}
+.cl .att i{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font:600 11px/1 var(--font);font-style:normal;background:#0f1a24;color:#fff;cursor:pointer;box-shadow:0 0 0 1px rgba(255,255,255,.5)}
+.cl .cpop{position:absolute;left:0;right:0;bottom:calc(100% + 8px);max-height:360px;overflow-y:auto;padding:6px;display:none;z-index:3;scrollbar-width:thin}.cl .cpop.on{display:block}
+.cl .cp{display:flex;align-items:baseline;gap:12px;padding:8px 12px;border-radius:10px;cursor:pointer}.cl .cp b{font:500 15px/1.3 var(--font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cl .cp small{font:var(--f-small);opacity:.65;margin-left:auto;flex:none}
+.cl .cp.cur{background:color-mix(in srgb,var(--accent) 40%,transparent);box-shadow:inset 0 0 0 1px rgba(255,255,255,.5)}.cl .cp.wait{opacity:.6;cursor:default}
+.cl .ctodo{display:none;margin:0 12px 8px;padding:10px 14px;border-radius:14px;background:rgba(0,20,35,.28);border:1px solid rgba(255,255,255,.18);font:var(--f-small);max-height:170px;overflow-y:auto;scrollbar-width:none}.cl .ctodo.on{display:block}
+.cl .td{padding:2px 0 2px 22px;position:relative}.cl .td::before{content:"";position:absolute;left:2px;top:5px;width:11px;height:11px;border-radius:3px;border:2px solid rgba(255,255,255,.55)}
+.cl .td.in_progress{font-weight:600}.cl .td.in_progress::before{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 50%,transparent)}
+.cl .td.completed{opacity:.6;text-decoration:line-through}.cl .td.completed::before{border-color:#3ccf4e;background:radial-gradient(circle,#3ccf4e 0 45%,transparent 50%)}
+.cl .ctodo .th{opacity:.7;margin-bottom:4px}
+.cl .cstat{margin:0 16px 6px;font:500 12px/1.3 var(--font);opacity:.65;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cl .cstat:empty{display:none}.cl .cstat .hot{color:#ffb4a8;opacity:1}
+.cl .chist{position:absolute;left:12px;right:12px;top:96px;bottom:90px;z-index:4;display:none;flex-direction:column;padding:12px;border-radius:18px}.cl .chist.on{display:flex}
+.cl .chist .hh{display:flex;align-items:center;padding:4px 8px 10px}.cl .chist .hh b{flex:1;font:600 18px/1.2 var(--font)}.cl .chist .hh i{font-style:normal;cursor:pointer;padding:4px 8px;opacity:.75}
+.cl .chist .hl{overflow-y:auto;scrollbar-width:thin;display:flex;flex-direction:column;gap:4px}
+.cl .hi{padding:10px 12px;border-radius:12px;cursor:pointer}.cl .hi:hover{background:rgba(255,255,255,.12)}.cl .hi b{display:block;font:500 15px/1.3 var(--font)}.cl .hi small{font:var(--f-small);opacity:.65}
+.cl .hi.cur{box-shadow:inset 0 0 0 1px rgba(255,255,255,.45)}.cl .hi.wait{opacity:.6;cursor:default}
+.cl .steps{max-height:300px}.cl .steps li details summary{cursor:pointer;list-style:none;overflow:hidden;text-overflow:ellipsis}.cl .steps li details summary::-webkit-details-marker{display:none}
+.cl .steps li details[open]{white-space:normal}.cl .steps li .sd{margin:4px 0 6px}.cl .steps li .sd:empty{display:none}
+.cl .steps .sd pre{margin:4px 0;padding:8px 10px;border-radius:8px;background:#0f1a24;color:#d8e6f2;font:12px/1.45 Consolas,"Cascadia Mono",monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:220px;overflow-y:auto;scrollbar-width:thin}
+.cl .steps .sd pre.cmd::before{content:"$ ";opacity:.5}.cl .steps .sd pre.out{opacity:.85}.cl .steps .sd pre.err{color:#ffb4a8}
+.cl .diff del,.cl .diff ins{display:block;text-decoration:none}.cl .diff del{background:rgba(229,72,77,.22);color:#ffc9c4}.cl .diff ins{background:rgba(60,207,78,.2);color:#c8f7cf}
+.cl .steps .sd dl{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font:12px/1.4 var(--font)}.cl .steps .sd dt{opacity:.6}.cl .steps .sd dd{overflow-wrap:anywhere}
+.cl .m pre{position:relative}.cl .m pre .cpy{position:absolute;top:6px;right:8px;font:600 11px/1 var(--font);padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.12);color:#d8e6f2;cursor:pointer;opacity:0;transition:opacity .15s}
+.cl .m pre:hover .cpy{opacity:1}.cl .m a[data-url]{color:inherit;text-decoration:underline;text-decoration-color:color-mix(in srgb,var(--accent) 80%,#fff);cursor:pointer}
+.cl .m .pics{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}.cl .m .pics img{width:96px;height:72px;object-fit:cover;border-radius:8px}
+.cl.drop::after{content:"Drop pictures here";position:absolute;inset:14px;border-radius:24px;border:2px dashed rgba(255,255,255,.7);display:grid;place-items:center;font:600 22px var(--font);color:#fff;background:rgba(0,30,50,.45);pointer-events:none;z-index:9}
+.cl .cpop.glassdark{background:linear-gradient(180deg,rgba(18,34,50,.97),rgba(8,18,30,.97))!important;backdrop-filter:none}   /* over the plan and steps: words behind it must not show through */
+.ui[data-base=light] .cl .cpop.glassdark{background:linear-gradient(180deg,rgba(255,255,255,.97),rgba(232,243,250,.97))!important;color:var(--text)}
+/* Web: site favicons (16-64 px) sit small on a white plate, like the row's tiles, never stretched */
+.item img.fav,.col .cw img.fv,.deck img.fv{color-scheme:light}   /* an SVG favicon that follows dark mode (GitHub's) turns white on the white plate */
+.col .cw img.fv{box-sizing:border-box;padding:8px;border-radius:10px;background:linear-gradient(180deg,#fff,#dfe8ef);object-fit:contain;filter:none;box-shadow:0 2px 5px rgba(0,20,40,.4)}
+.deck .dh img.fv{box-sizing:border-box;padding:10px;border-radius:14px;background:linear-gradient(180deg,#fff,#dfe8ef);filter:none;box-shadow:0 3px 7px rgba(0,20,40,.4)}
+.deck .ents img.fv{box-sizing:border-box;padding:3px;border-radius:6px;background:#fff;object-fit:contain}
+.deck .ents .pick{cursor:pointer}.deck .ents .pick:hover b{text-decoration:underline}
+.deck dd.url{overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+/* Video: YouTube (index.html "Video" block). The card's picture is 16:9 with the length on it; the player (#ytp) fills the menu screen,
+   everything but the key legend steps out of its way, and the scene stops drawing under it. Title, hints and cursor fade while it plays (#screen.ytcalm). */
+.deck .pv.ytpv{width:448px;height:252px;align-self:center;position:relative}
+.deck .ytdur{position:absolute;right:10px;bottom:10px;padding:5px 8px;border-radius:7px;background:rgba(0,0,0,.78);color:#fff;font:600 14px/1 Bahnschrift,var(--font);letter-spacing:.02em;font-style:normal;text-shadow:none}
+.ytp{position:absolute;inset:0;z-index:20;background:#000;display:none}
+.yt-on .ytp{display:block}
+.yt-on > :not(.ytp):not(.legend){visibility:hidden}
+.ytp-on #scenes{display:none}
+.ui.yt-on .legend{z-index:21;color:#fff;transition:opacity .5s}
+.ytp video,.ytp iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}
+.ytp iframe,.ytp.emb video{display:none}.ytp.emb iframe{display:block}
+.ytp .yth{position:absolute;left:0;right:0;top:0;display:flex;align-items:flex-start;gap:24px;padding:40px 56px 110px;background:linear-gradient(rgba(0,0,0,.72),rgba(0,0,0,.35) 55%,transparent);color:#fff;pointer-events:none;transition:opacity .5s}
+.ytp .yth > div{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}
+.ytp .yth b{font:300 38px/1.15 var(--font);letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+.ytp .yth small{font:400 17px/1.3 var(--font);opacity:.78}
+.ytp #ytx{pointer-events:auto;cursor:pointer;flex:none;width:52px;height:52px;display:grid;place-items:center;border-radius:50%;font-size:20px;
+  background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,.06));box-shadow:inset 0 0 0 1px rgba(255,255,255,.22),0 6px 16px rgba(0,0,0,.4)}
+.ytp #ytvol{pointer-events:auto;flex:none;width:160px;align-self:center;accent-color:#fff;cursor:pointer}.ytp.emb #ytvol{display:none}
+.ytp video::-webkit-media-controls-mute-button,.ytp video::-webkit-media-controls-volume-control-container,.ytp video::-webkit-media-controls-volume-slider,.ytp video::-webkit-media-controls-fullscreen-button{display:none}   /* greyed: split streams, and #ytx is the way out */
+.ytp #ytx:hover{background:rgba(255,255,255,.28)}
+.ytp.emb .yth{padding-bottom:40px;background:none}.ytp.emb .yth > div{visibility:hidden}   /* YouTube's own player has its title bar */
+.ytp .ytm{position:absolute;inset:0;display:grid;place-items:center;color:#fff;font:600 15px/1 Bahnschrift,var(--font);letter-spacing:.14em;pointer-events:none;opacity:.8}
+.ytcalm .ytp .yth,.ytcalm .ui.yt-on .legend{opacity:0}.ytcalm .ytp{cursor:none}
+/* Video, round 2 (15 Nov): header buttons, the watch page (#ytp.page: the video, its info under it, Up next on the right), the search chips,
+   channel cards, 16:9 thumbnails in the column, the playlist name box. Page view keeps clear of the key legend (bottom 100px). */
+.ytp .ytb{pointer-events:auto;cursor:pointer;flex:none;align-self:center;font:600 15px/1 var(--font);font-style:normal;padding:11px 16px;border-radius:999px;color:#fff;white-space:nowrap;
+  background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.05));box-shadow:inset 0 0 0 1px rgba(255,255,255,.22),0 4px 12px rgba(0,0,0,.35);transition:background .15s}
+.ytp .ytb:hover{background:rgba(255,255,255,.28)}
+.ytp .ytb.on{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 85%,#fff),color-mix(in srgb,var(--accent) 65%,#000));color:var(--on_accent,#02130F)}
+.ytp.emb:not(.page) .yth .ytb{display:none}   /* full view of the embed: its own bar is up there; Tab and P still work */
+#ytinfo,#ytrec{display:none}
+.ytp.page{background:radial-gradient(120% 90% at 30% 0%,#1b2733,#070b10 70%)}
+.ytp.page video,.ytp.page iframe,.ytp.page .ytm{inset:auto;left:64px;top:88px;width:1152px;height:648px;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.6)}
+.ytp.page video,.ytp.page iframe{background:#000}
+.ytp.page .yth{padding:18px 56px 0 64px;background:none;align-items:center}.ytp.page .yth > div{visibility:hidden}
+.ytp.page #ytinfo{display:flex;flex-direction:column;gap:12px;position:absolute;left:64px;top:752px;width:1152px;bottom:100px;color:#fff}
+.ytit{font:400 26px/1.2 var(--font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ytch{display:flex;align-items:center;gap:12px}.ytch .sp{flex:1}
+.ytcn{font:600 18px/1 var(--font);cursor:pointer}.ytcn:hover{text-decoration:underline}.ytcn.off{cursor:default;text-decoration:none}
+.ytch small{opacity:.7;font-size:15px}
+.ytp .ytch .ytb{padding:9px 14px;font-size:14px}
+.ytdesc{flex:1;min-height:0;overflow-y:auto;padding:12px 16px;border-radius:12px;background:rgba(255,255,255,.07);font:400 15px/1.45 var(--font);white-space:pre-wrap;overflow-wrap:anywhere;color:rgba(255,255,255,.88)}
+.ytdesc > b{display:block;font-weight:600;margin-bottom:4px}
+.ytdesc a{color:#9fd3ff;cursor:pointer}.ytdesc a:hover{text-decoration:underline}
+.ytp.page #ytrec{display:block;position:absolute;left:1256px;right:48px;top:88px;bottom:100px;overflow-y:auto;color:#fff;padding-right:8px}
+.ytrh{margin:4px 6px 10px;opacity:.75}
+.ytr{display:flex;gap:12px;padding:6px;border-radius:10px;cursor:pointer;transition:background .15s}.ytr:hover{background:rgba(255,255,255,.1)}.ytr.none{cursor:default;opacity:.7}
+.ytrt{position:relative;flex:none;width:176px;height:99px;border-radius:8px;overflow:hidden;background:#111}
+.ytrt img{width:100%;height:100%;object-fit:cover}
+.ytrt i{position:absolute;right:5px;bottom:5px;padding:3px 5px;border-radius:5px;background:rgba(0,0,0,.8);font:600 12px/1 Bahnschrift,var(--font);font-style:normal}
+.ytr > div{min-width:0;display:flex;flex-direction:column;gap:6px;padding-top:2px}
+.ytr b{font:500 15px/1.3 var(--font);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ytr small{font-size:13px;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#ytrec::-webkit-scrollbar,.ytdesc::-webkit-scrollbar{width:8px}#ytrec::-webkit-scrollbar-thumb,.ytdesc::-webkit-scrollbar-thumb{background:rgba(255,255,255,.25);border-radius:4px}
+.tools-yt .fbox{display:none}
+.deck .ytfi > b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.col .cw img.th.wide{width:71px;height:40px}
+.deck .dh img.ytav{border-radius:50%;object-fit:cover;filter:none;box-shadow:0 3px 7px rgba(0,20,40,.45)}
+.deck .ytcd{margin:12px 0 0;font:var(--f-small);opacity:.85;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.ytname{width:100%;box-sizing:border-box;height:56px;padding:0 18px;border-radius:14px;border:1px solid rgba(255,255,255,.35);background:rgba(0,0,0,.25);color:#fff;font:400 22px/1 var(--font);outline:none}
+.ytname:focus{border-color:var(--accent)}
+.ui.yt-on.ov-add > #addp{visibility:visible;z-index:24}   /* + Playlist from the player: the picker over it */
+/* Video lag (15 Nov): a tile whose cover fills it, and the badge on that cover, need no live backdrop blur: the cover hides what the blur would show,
+   yet each blur is redrawn with every scene frame and carousel step (the row is transformed, so paintGlass can't bake it). Every Video tile is a cover
+   with a length badge; measured in headless Chrome with 24 of them: GPU process 2.7 -> 0.8 CPU-s per 3 s idle, renderer 1.6 -> 0.2. */
+.ui .item:has(> img.art),.ui .item:has(> img.art) .badge{backdrop-filter:none}
+.deck .ytcn{font:inherit;display:inline-block;padding:2px 10px;border-radius:999px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25)}.deck .ytcn::after{content:" ›"}.deck .ytcn:hover{background:rgba(255,255,255,.26);text-decoration:none}   /* the card's channel name: a pill that opens the channel */
+
+/* Setup › Voice off (or no whisper.cpp): no mic buttons, no wake toggle (index.html CFG) */
+.novoice .mic, .novoice #cwake { display: none !important; }
+/* Past chats: each chat's state (user, 15 Nov: several chats at once): working = pulsing accent dot, new reply = solid dot, idle = faint ring */
+.cl .hi{position:relative;padding-left:30px}.cl .hi .hs{position:absolute;left:11px;top:15px;width:9px;height:9px;border-radius:50%;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35)}
+.cl .hi[data-st=working] .hs{background:var(--accent);box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 70%,transparent);animation:hpulse 1.4s ease-out infinite}
+.cl .hi[data-st=fresh] .hs{background:#fff;box-shadow:0 0 8px rgba(255,255,255,.7)}
+.cl .hi[data-st=working] .hw,.cl .hi[data-st=fresh] .hw{opacity:1;font-weight:600}
+@keyframes hpulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 70%,transparent)}100%{box-shadow:0 0 0 9px transparent}}
+.cl .client header .cib#chis{position:relative}
+.cl .client header .cib#chis.busy::after,.cl .client header .cib#chis.fresh::after{content:"";position:absolute;right:1px;top:1px;width:9px;height:9px;border-radius:50%;background:var(--accent)}
+.cl .client header .cib#chis.busy::after{animation:hpulse 1.4s ease-out infinite}.cl .client header .cib#chis.fresh::after{background:#fff}
+.ui[data-base=light] .cl .hi .hs{box-shadow:inset 0 0 0 1.5px rgba(0,40,70,.35)}.ui[data-base=light] .cl .hi[data-st=fresh] .hs,.ui[data-base=light] .cl .client header .cib#chis.fresh::after{background:#123}
+.cl .chist .hh #chnew{font:600 14px/1 var(--font);border-radius:10px;margin-right:4px;background:rgba(255,255,255,.1)}.cl .chist .hh #chnew:hover{background:rgba(255,255,255,.22)}
+
+/* Marina's home (the rail orb's fish): motion/marina.css */
+
+/* the chat header: Marina in a small bowl instead of an app icon (no Claude branding, user 15 Nov) */
+.cav{width:52px;height:52px;flex:none;position:relative}.cav .orb{position:relative;left:auto;bottom:auto;width:52px;height:52px;background:none;box-shadow:none;border-radius:50%}.cav .orb::before{display:none}

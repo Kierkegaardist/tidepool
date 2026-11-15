@@ -1,0 +1,6 @@
+[Text]
+Normal=#00C0C0
+Current=#A0FFFF
+NormalBG=#000000
+SelectedBG=#242448
+Font=Tahoma

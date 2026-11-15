@@ -1,0 +1,29 @@
+/* ---- Marina's home: the rail orb is her bowl (orb.js mount home: sky + reef canvas, her, glass canvas). She swims the bowl,
+   turns at the glass, drops to her anemone (bottom left) and hovers there a while. Transforms only; .covered/.frozen pause her. ---- */
+.orb.mhome{overflow:visible}
+.mswim{position:absolute;left:36.5%;top:44%;width:27%;aspect-ratio:42/32;pointer-events:none;animation:mswim 30s ease-in-out infinite}
+.mbob{width:100%;height:100%;animation:mbob 3.2s ease-in-out infinite}
+.mfish{display:block;width:100%;height:100%;overflow:visible}
+.mfish *{transform-box:fill-box}
+.mfish .tail{transform-origin:100% 50%;animation:mtail 1.1s ease-in-out infinite}
+.mfish .pec{transform-origin:90% 5%;animation:mpec .9s ease-in-out infinite}
+.mfish .dor{transform-origin:40% 100%;animation:mdor 2.4s ease-in-out infinite}
+.mfish .eye{transform-origin:center;animation:mblink 6s infinite}
+.mfish .talk{display:none}
+.mfish .mouth{transform-box:fill-box;transform-origin:center}
+@keyframes mtail{0%,100%{transform:rotate(8deg) scaleX(.95)}50%{transform:rotate(-8deg) scaleX(1.04)}}
+@keyframes mpec{50%{transform:rotate(-24deg) scaleX(.8)}}
+@keyframes mdor{50%{transform:skewX(-7deg)}}
+@keyframes mblink{0%,94%,100%{transform:none}96%{transform:scaleY(.1)}}
+@keyframes mbob{50%{transform:translateY(-6%) rotate(-2deg)}}
+/* path in % of her own box (about 23 x 17 px): right along the middle, turn, back high and far (smaller), turn, down to the anemone, rest */
+@keyframes mswim{
+  0%{transform:translate(-75%,0) scale(1,1)}
+  26%{transform:translate(80%,-12%) scale(1,1)}
+  30%{transform:translate(92%,-30%) scale(-.9,.9)}
+  52%{transform:translate(-55%,-62%) scale(-.82,.82);opacity:.92}
+  56%{transform:translate(-80%,-48%) scale(.86,.86)}
+  66%{transform:translate(-45%,-10%) scale(.95,.95);opacity:1}
+  76%{transform:translate(-60%,28%) scale(1,1)}
+  90%{transform:translate(-70%,22%) scale(1,1)}
+  100%{transform:translate(-75%,0) scale(1,1)}}

@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <UseWPF>true</UseWPF>   <!-- for System.Windows.Automation (Web.Switch) -->
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <AssemblyName>ConsoleDesktop</AssemblyName>
+    <RootNamespace>ConsoleDesktop</RootNamespace>
+    <NoWarn>MSB3277</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Anthropic" Version="13.8.0" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2903.40" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.11" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="System.IO" />   <!-- UseWPF drops these two implicit usings -->
+    <Using Include="System.Net.Http" />
+    <EmbeddedResource Include="bridge.js" LogicalName="bridge.js" />
+  </ItemGroup>
+</Project>

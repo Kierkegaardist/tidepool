@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Console Desktop Setup</title>
+<style>
+  :root { --bg: #0b2233; --glass: rgba(255,255,255,.06); --edge: rgba(255,255,255,.14); --ink: #e8f6ff; --dim: #9bb8c9; --accent: #5fd3e8; --ok: #7ee2a0; --warn: #f0c46a; --bad: #f08a7a;
+    --cap: 600 12px/1 Bahnschrift, "Segoe UI", sans-serif; --body: 400 15px/1.45 "Segoe UI", sans-serif; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { font: var(--body); color: var(--ink); background: radial-gradient(120% 90% at 0% 0%, #164a63 0%, var(--bg) 55%, #071723 100%); display: grid; grid-template-columns: 230px 1fr; overflow: hidden; user-select: none; }
+  nav { padding: 28px 16px; border-right: 1px solid var(--edge); background: rgba(0,0,0,.18); display: flex; flex-direction: column; gap: 4px; }
+  nav h1 { font: 300 24px/1.1 "Segoe UI Light", "Segoe UI", sans-serif; margin: 0 8px 22px; }
+  nav h1 small { display: block; font: var(--cap); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+  nav a { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; color: var(--dim); text-decoration: none; cursor: pointer; }
+  nav a:hover { background: var(--glass); color: var(--ink); }
+  nav a.on { background: linear-gradient(180deg, rgba(95,211,232,.22), rgba(95,211,232,.08)); color: var(--ink); box-shadow: inset 0 0 0 1px rgba(95,211,232,.35); }
+  nav a i { width: 8px; height: 8px; border-radius: 50%; background: var(--edge); flex: none; }
+  nav a i.off { background: transparent; box-shadow: inset 0 0 0 1px var(--dim); }
+  nav a i.ok { background: var(--ok); }
+  nav .grow { flex: 1; }
+  main { overflow: auto; padding: 34px 44px 120px; scroll-behavior: smooth; }
+  section { max-width: 760px; margin-bottom: 46px; }
+  section > h2 { font: 300 30px/1.1 "Segoe UI Light", "Segoe UI", sans-serif; margin: 0 0 6px; display: flex; align-items: center; gap: 14px; }
+  section > p.lead { color: var(--dim); margin: 0 0 18px; }
+  .cap { font: var(--cap); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); margin: 18px 0 8px; display: block; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
+  .opt { position: relative; padding: 14px 14px 12px; border-radius: 12px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--edge); cursor: pointer; transition: background .15s, box-shadow .15s; }
+  .opt:hover { background: rgba(255,255,255,.1); }
+  .opt.on { background: linear-gradient(180deg, rgba(95,211,232,.25), rgba(95,211,232,.08)); box-shadow: inset 0 0 0 1.5px var(--accent); }
+  .opt b { display: block; font-weight: 600; }
+  .opt small { color: var(--dim); font-size: 12.5px; }
+  .opt .tag { position: absolute; top: 10px; right: 10px; font: var(--cap); font-size: 10px; letter-spacing: .08em; padding: 3px 6px; border-radius: 6px; background: rgba(126,226,160,.16); color: var(--ok); }
+  .opt .tag.no { background: rgba(255,255,255,.07); color: var(--dim); }
+  label.row { display: grid; grid-template-columns: 170px 1fr; align-items: center; gap: 14px; margin: 10px 0; }
+  label.row > span { color: var(--dim); }
+  input[type=text], input[type=password], input[type=number], select { font: inherit; color: var(--ink); background: rgba(0,0,0,.28); border: 1px solid var(--edge); border-radius: 9px; padding: 9px 11px; width: 100%; outline: none; user-select: text; }
+  input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(95,211,232,.18); }
+  select option { background: #0e2a3d; }
+  .with { display: flex; gap: 8px; } .with > :first-child { flex: 1; }
+  button { font: 600 14px/1 "Segoe UI", sans-serif; color: var(--ink); background: rgba(255,255,255,.1); border: 1px solid var(--edge); border-radius: 9px; padding: 10px 14px; cursor: pointer; white-space: nowrap; }
+  button:hover { background: rgba(255,255,255,.16); }
+  button.go { background: linear-gradient(180deg, #6fe0f2, #2fa9c4); color: #062231; border-color: transparent; }
+  button.go:hover { filter: brightness(1.08); }
+  button:disabled { opacity: .5; cursor: default; }
+  .switch { position: relative; width: 46px; height: 26px; flex: none; border-radius: 13px; background: rgba(255,255,255,.14); cursor: pointer; transition: background .15s; }
+  .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #dfeef6; transition: left .15s; }
+  .switch.on { background: var(--accent); } .switch.on::after { left: 23px; }
+  .note { color: var(--dim); font-size: 13px; margin: 8px 0 0; }
+  .note.warn { color: var(--warn); } .note.bad { color: var(--bad); } .note.ok { color: var(--ok); }
+  .card { padding: 14px 16px; border-radius: 12px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--edge); margin: 10px 0; }
+  .list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+  .list .it { display: flex; gap: 10px; align-items: center; } .list .it input { flex: 1; } .list .it input.nm { flex: 0 0 160px; }
+  .hits { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .hits button { font-weight: 400; padding: 7px 10px; }
+  footer { position: fixed; left: 230px; right: 0; bottom: 0; display: flex; align-items: center; gap: 12px; padding: 16px 44px; background: linear-gradient(0deg, rgba(5,18,28,.96) 60%, rgba(5,18,28,0)); }
+  footer .grow { flex: 1; color: var(--dim); font-size: 13px; }
+  footer label { display: flex; align-items: center; gap: 8px; color: var(--dim); font-size: 13px; cursor: pointer; }
+  a.link { color: var(--accent); cursor: pointer; text-decoration: none; } a.link:hover { text-decoration: underline; }
+  .hide { display: none !important; }
+  .mons { display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; margin: 6px 0 12px; }
+  .mon { flex: none; border-radius: 12px; padding: 10px 12px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--edge); display: flex; flex-direction: column; gap: 6px; min-width: 150px; }
+  .mon.main { box-shadow: inset 0 0 0 2px rgba(95,211,232,.8); }
+  .mon.off { opacity: .55; }
+  .mon .face { height: 70px; border-radius: 8px; background: linear-gradient(180deg, rgba(95,211,232,.25), rgba(95,211,232,.06)); display: grid; place-items: center; font: 300 30px/1 "Segoe UI Light", "Segoe UI", sans-serif; }
+  .mon.off .face { background: rgba(255,255,255,.05); }
+  .mon small { color: var(--dim); }
+  .mon .role { font-size: 13px; }
+  .mon .acts { display: flex; gap: 6px; flex-wrap: wrap; }
+  .mon .acts button { padding: 4px 9px; font-size: 13px; }
+</style>
+</head>
+<body>
+<nav id="nav">
+  <h1><small>Console Desktop</small>Setup</h1>
+  <a data-s="welcome"><i class="ok"></i>Welcome</a>
+  <a data-s="music"><i data-m="music"></i>Music</a>
+  <a data-s="web"><i data-m="web"></i>Web</a>
+  <a data-s="studio"><i data-m="studio"></i>Studio</a>
+  <a data-s="chat"><i data-m="claude"></i>Chat</a>
+  <a data-s="video"><i data-m="video"></i>Video</a>
+  <a data-s="voice"><i data-m="voice"></i>Voice</a>
+  <a data-s="more"><i class="ok"></i>Games, files and sun</a>
+  <a data-s="screens"><i class="ok"></i>Screens</a>
+  <div class="grow"></div>
+</nav>
+<main id="main">
+  <section id="s-welcome">
+    <h2>Make it yours</h2>
+    <p class="lead" id="wlead">Pick the apps the desktop talks to. Every tab is optional; anything not on this PC is switched off until it is. You can come back here any time from Settings › Setup.</p>
+    <div class="card" id="found"></div>
+  </section>
+
+  <section id="s-music">
+    <h2>Music <span class="switch" data-mod="music"></span></h2>
+    <p class="lead">The player the Now playing card, the media buttons and Heard lately follow. Any player that shows in Windows' volume pop-up works.</p>
+    <div class="grid" id="players"></div>
+    <div id="spotify" class="card hide">
+      <b>Spotify playlists and search in the Music tab</b>
+      <p class="note">Spotify only lets personal apps in. Make one at <a class="link" data-url="https://developer.spotify.com/dashboard">developer.spotify.com/dashboard</a> (Web API, redirect URI <code>http://127.0.0.1:8989/login</code>), paste its client ID here, then use Connect Spotify in the Music tab.</p>
+      <label class="row"><span>Client ID</span><input type="text" id="spid" placeholder="32 letters and digits" spellcheck="false"></label>
+    </div>
+    <label class="row hide" id="custrow"><span>Program name</span><input type="text" id="custplayer" placeholder="foobar2000, musicbee, vlc…" spellcheck="false"></label>
+  </section>
+
+  <section id="s-web">
+    <h2>Web <span class="switch" data-mod="web"></span></h2>
+    <p class="lead">Sites you visit most, history and bookmarks come from this browser, and links open in it. Firefox also shows its open tabs.</p>
+    <div class="grid" id="browsers"></div>
+  </section>
+
+  <section id="s-studio">
+    <h2>Studio <span class="switch" data-mod="studio"></span></h2>
+    <p class="lead">One tile per project with its versions, renders and backups. Tempo, tracks and plugins show for FL Studio, Ableton Live and REAPER projects.</p>
+    <div class="grid" id="daws"></div>
+    <label class="row"><span>Projects folder</span><span class="with"><input type="text" id="projects" spellcheck="false" placeholder="Found by itself"><button data-folder="projects">Browse…</button></span></label>
+    <p class="note" id="dawnote"></p>
+  </section>
+
+  <section id="s-chat">
+    <h2>Chat <span class="switch" data-mod="claude"></span></h2>
+    <p class="lead">The chat panel (F2) and the voice assistant. An agent (Claude Code, Codex or another) can work on this PC for you; a chat API just talks.</p>
+    <div class="grid" id="providers"></div>
+    <div id="apibox" class="hide">
+      <label class="row"><span>Name in the panel</span><input type="text" id="ainame" placeholder="Assistant" spellcheck="false"></label>
+      <label class="row"><span>Address</span><input type="text" id="aiurl" spellcheck="false"></label>
+      <label class="row" id="keyrow"><span>API key</span><span class="with"><input type="password" id="aikey" spellcheck="false"><button id="test">Check</button></span></label>
+      <label class="row"><span>Model</span><span class="with"><input type="text" id="aimodel" list="modellist" spellcheck="false"><datalist id="modellist"></datalist></span></label>
+      <label class="row"><span>Also in the picker</span><input type="text" id="aimodels" placeholder="other model ids, comma separated" spellcheck="false"></label>
+      <p class="note" id="apinote">The key is stored encrypted for your Windows account only.</p>
+    </div>
+    <div id="ccbox" class="hide">
+      <label class="row" id="cmdrow"><span>Command</span><input type="text" id="aicmd" spellcheck="false" placeholder="gemini -p -, aider --message-file -, …"></label>
+      <label class="row"><span>Works in folder</span><span class="with"><input type="text" id="home" spellcheck="false"><button data-folder="home">Browse…</button></span></label>
+      <p class="note" id="ccnote"></p>
+    </div>
+  </section>
+
+  <section id="s-video">
+    <h2>Video <span class="switch" data-mod="video"></span></h2>
+    <p class="lead">Search and play YouTube right in the desktop, no ads, through yt-dlp.</p>
+    <div class="card"><span id="ytstate"></span> <button id="getyt" class="hide">Get yt-dlp</button></div>
+  </section>
+
+  <section id="s-voice">
+    <h2>Voice <span class="switch" data-mod="voice"></span></h2>
+    <p class="lead">Mic buttons in every search and the chat, and the wake word. Speech is read on this PC by whisper.cpp; nothing is sent anywhere.</p>
+    <div class="card"><span id="wstate"></span> <button id="getwh" class="hide">Get whisper (about 220 MB)</button></div>
+  </section>
+
+  <section id="s-screens">
+    <h2>Screens</h2>
+    <p class="lead">Put your screens in the order they stand on your desk, left to right, and pick the main one: the menu opens there. The screen
+      beside it gets the clock, Winamp and notifications (on its right, the row of tiles carries on onto it too). Any other screen shows the live scene.</p>
+    <div class="mons" id="mons"></div>
+    <p class="note"><a class="link" id="identify">Identify</a> · shows each screen's number on it · <a class="link" id="monreset">Use Windows' order</a></p>
+  </section>
+
+  <section id="s-more">
+    <h2>Games, files and sun</h2>
+    <p class="lead">Games come from Steam and Epic by themselves. The sky follows the real sun where you are.</p>
+    <div class="cap">Tabs</div>
+    <div class="card"><label class="row"><span>Games</span><span class="switch" data-mod="games"></span></label><label class="row"><span>Files</span><span class="switch" data-mod="files"></span></label></div>
+    <div class="cap">Where you are</div>
+    <label class="row"><span>City</span><span class="with"><input type="text" id="city" spellcheck="false" placeholder="Type a city"><button id="findcity">Find</button></span></label>
+    <div class="hits" id="cities"></div>
+    <p class="note" id="placenote"></p>
+    <div class="cap">Your folders in Files</div>
+    <div class="list" id="places"></div>
+    <p class="note"><a class="link" id="addplace">＋ Add a folder</a> · Downloads, Documents, Pictures, Music and Videos are always there.</p>
+  </section>
+</main>
+<footer>
+  <div class="grow" id="status"></div>
+  <label><input type="checkbox" id="startup"> Start with Windows</label>
+  <button id="cancel">Cancel</button>
+  <button class="go" id="save">Save and start</button>
+</footer>
+
+<script>
+const $ = id => document.getElementById(id), qa = s => [...document.querySelectorAll(s)];
+const esc = t => String(t ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const FIRST = location.search.includes("first"), WV = window.chrome?.webview;
+const send = m => WV ? WV.postMessage(m) : console.log("to host", m);
+const PRESETS = [   // chat providers: id, name, what it is, api kind, address, needs a key
+  ["claude-code", "Claude Code", "Full access: files, commands, apps", null, null, false],
+  ["codex", "Codex", "OpenAI's agent, full access too", "cli", null, false],
+  ["cli", "Other agent", "Any command-line agent", "cli", "", false],
+  ["openai", "OpenAI", "ChatGPT's models", "openai", "https://api.openai.com/v1", true],
+  ["anthropic", "Claude API", "Claude models, chat only", "anthropic", "https://api.anthropic.com", true],
+  ["openrouter", "OpenRouter", "Hundreds of models, one key", "openai", "https://openrouter.ai/api/v1", true],
+  ["gemini", "Google Gemini", "Gemini models", "openai", "https://generativelanguage.googleapis.com/v1beta/openai", true],
+  ["groq", "Groq", "Very fast open models", "openai", "https://api.groq.com/openai/v1", true],
+  ["mistral", "Mistral", "Mistral's models", "openai", "https://api.mistral.ai/v1", true],
+  ["deepseek", "DeepSeek", "DeepSeek's models", "openai", "https://api.deepseek.com/v1", true],
+  ["xai", "xAI", "Grok models", "openai", "https://api.x.ai/v1", true],
+  ["ollama", "Ollama", "Models on this PC, free", "openai", "http://localhost:11434/v1", false],
+  ["lmstudio", "LM Studio", "Models on this PC, free", "openai", "http://localhost:1234/v1", false],
+  ["custom", "Other", "Any OpenAI-compatible address", "openai", "", true],
+  ["none", "No chat", "Hide the chat panel", null, null, false],
+];
+let ST = null, C = {}, keyTyped = null, places = [], mons = [];
+
+/* ---------- state from the host; the browser preview gets a made-up PC ---------- */
+addEventListener("load", () => { if (WV) { WV.addEventListener("message", e => onHost(e.data)); send({ type: "get" }); } else onHost({ type: "state", state: MOCK }); });
+function onHost(m) {
+  if (m.type === "state") { const fresh = !ST; ST = m.state; if (fresh) load(); else drawTools(); }
+  else if (m.type === "folder" && m.path) { $(m.id).value = m.path; if (m.id.startsWith("pl")) readPlaces(); }
+  else if (m.type === "places") drawCities(m.items);
+  else if (m.type === "models") { const r = m.result; $("test").disabled = false;
+    $("apinote").className = "note " + (r.ok ? "ok" : "bad"); $("apinote").textContent = r.ok ? `Connected · ${r.models.length} models` : "Didn't work: " + r.error;
+    if (r.ok) { $("modellist").innerHTML = r.models.map(x => `<option value="${esc(x)}">`).join(""); if (!$("aimodel").value && r.models[0]) $("aimodel").value = r.models[0]; } }
+  else if (m.type === "progress") $("status").textContent = `Downloading ${m.file} · ${(m.got / 1e6).toFixed(0)}${m.total ? " of " + (m.total / 1e6).toFixed(0) : ""} MB`;
+  else if (m.type === "fetched") { $("status").textContent = m.error ? `${m.tool} failed: ${m.error}` : `${m.tool} is ready`; qa("#getyt,#getwh").forEach(b => b.disabled = false); if (!m.error) setMod(m.tool === "yt-dlp" ? "video" : "voice", true); }
+  else if (m.type === "error") { $("status").textContent = "Something went wrong: " + m.message; $("save").disabled = false; }
+}
+
+function load() {
+  const s = ST.saved ?? {}, now = ST.now;
+  C = JSON.parse(JSON.stringify(s));   // keeps keys this page doesn't know about
+  C.music ??= {}; C.web ??= {}; C.studio ??= {}; C.chat ??= {}; C.modules ??= {}; C.files ??= {};
+  C.music.player ??= now.player; C.web.browser ??= now.browser; if (now.daw) C.studio.daw ??= now.daw;
+  C.chat.provider ??= now.chat; C.chat.name ??= now.chatName;
+  for (const [k, v] of Object.entries(now.modules)) C.modules[k] ??= v;
+  if (!ST.tools.ytdlp) C.modules.video = ST.saved?.modules?.video ?? false;
+  if (!ST.tools.whisper) C.modules.voice = ST.saved?.modules?.voice ?? false;
+  if (!now.daw && !s.studio?.daw) C.modules.studio = false;
+  $("wlead").textContent = FIRST ? "Pick the apps the desktop talks to. Every tab is optional; anything not on this PC stays off until it is. You can come back here any time from Settings › Setup."
+    : "Change what the desktop talks to. Saving restarts the desktop (the taskbar shows for a second).";
+  $("save").textContent = FIRST ? "Save and start" : "Save and restart";
+  $("startup").checked = FIRST ? true : now.startup;
+  $("spid").value = C.music.spotifyClientId ?? "";
+  $("projects").value = C.studio.projects ?? ""; $("projects").placeholder = now.projects ?? "Not found yet · browse to it";
+  $("home").value = C.chat.home ?? now.home ?? "";
+  $("city").value = C.place?.name ?? ""; $("placenote").textContent = C.place ? `${C.place.name} · ${C.place.lat}°, ${C.place.lon}°` : `Not set · guessing from your time zone (${now.place.lat}°, ${now.place.lon}°)`;
+  places = (C.files.places ?? []).map(p => ({ ...p })); drawPlaces();
+  C.screens ??= {}; monLoad();
+  const pre = PRESETS.find(p => p[0] === C.chat.preset) ?? (C.chat.provider === "claude-code" || C.chat.provider === "none" ? PRESETS.find(p => p[0] === C.chat.provider)
+    : C.chat.provider === "cli" ? PRESETS.find(p => p[0] === (!C.chat.command || C.chat.command === now.codex ? "codex" : "cli")) : PRESETS.find(p => p[4] && p[4] === C.chat.url) ?? PRESETS.find(p => p[0] === "custom"));
+  C.chat.preset = pre[0];
+  $("ainame").value = C.chat.provider === "api" ? C.chat.name ?? "" : ""; $("aiurl").value = C.chat.url ?? pre[4] ?? ""; $("aimodel").value = C.chat.model ?? ""; $("aimodels").value = (C.chat.models ?? []).join(", ");
+  $("aicmd").value = C.chat.command ?? now.codex;
+  $("aikey").placeholder = now.hasKey ? "Saved · type to replace" : "Paste your key";
+  drawFound(); drawAll(); drawTools();
+}
+
+/* ---------- drawing ---------- */
+const tag = ok => `<span class="tag ${ok ? "" : "no"}">${ok ? "On this PC" : "Not found"}</span>`;
+function pick(el, items, cur, onPick) {
+  el.innerHTML = items.map(([id, name, sub, ok]) => `<div class="opt ${id === cur ? "on" : ""}" data-id="${esc(id)}">${ok === undefined ? "" : tag(ok)}<b>${esc(name)}</b><small>${esc(sub ?? "")}</small></div>`).join("");
+  el.onclick = e => { const o = e.target.closest(".opt"); if (o) { onPick(o.dataset.id); drawAll(); } };
+}
+function drawAll() {
+  const known = ST.players.map(p => p.id), cust = !known.includes(C.music.player);
+  pick($("players"), [...ST.players.map(p => [p.id, p.name, p.id === "spotifast" ? "Playlists, liked songs, search" : p.id === "spotify" ? "Playlists and search once connected" : p.id === "any" ? "Follows any app or browser tab" : "Now playing and media keys", p.id === "any" || p.id === "ytmusic" ? undefined : p.installed]), ["custom", "Another player", "Name its program"]],
+    cust ? "custom" : C.music.player, id => { C.music.player = id === "custom" ? $("custplayer").value.trim() || "custom" : id; });
+  $("spotify").classList.toggle("hide", C.music.player !== "spotify"); $("custrow").classList.toggle("hide", !cust); if (cust && C.music.player !== "custom") $("custplayer").value = C.music.player;
+  pick($("browsers"), ST.browsers.map(b => [b.id, b.name, b.id === "firefox" ? "Tabs, history, bookmarks" : "History, bookmarks", b.installed]), C.web.browser, id => C.web.browser = id);
+  pick($("daws"), ST.daws.filter(d => d.id !== "logic" || d.installed).map(d => [d.id, d.name, ["fl", "ableton", "reaper"].includes(d.id) ? "Tempo, tracks, plugins" : "Projects and renders", d.installed]), C.studio.daw, id => { C.studio.daw = id; setMod("studio", true); });
+  $("dawnote").textContent = C.studio.daw ? "" : "No DAW found on this PC, so Studio is off. Pick one to switch it on.";
+  pick($("providers"), PRESETS.map(p => [p[0], p[1], p[2], p[0] === "claude-code" ? ST.tools.claude : p[0] === "codex" ? ST.tools.codex : undefined]), C.chat.preset, id => {
+    const p = PRESETS.find(x => x[0] === id); C.chat.preset = id;
+    C.chat.provider = id === "claude-code" || id === "none" ? id : p[3] === "cli" ? "cli" : "api";
+    if (p[3] === "cli") $("aicmd").value = id === "codex" ? ST.now.codex : $("aicmd").value === ST.now.codex ? "" : $("aicmd").value;
+    else if (p[3]) { C.chat.api = p[3]; if (p[4] !== null && id !== "custom") $("aiurl").value = p[4]; if (!$("ainame").value || PRESETS.some(x => x[1] === $("ainame").value)) $("ainame").value = id === "anthropic" ? "Claude" : p[1]; }
+    setMod("claude", id !== "none");
+  });
+  const pre = PRESETS.find(p => p[0] === C.chat.preset);
+  $("apibox").classList.toggle("hide", C.chat.provider !== "api"); $("ccbox").classList.toggle("hide", C.chat.provider !== "claude-code" && C.chat.provider !== "cli");
+  $("cmdrow").classList.toggle("hide", C.chat.provider !== "cli");
+  $("ccnote").textContent = C.chat.provider === "cli" ? "The agent runs with its own sign-in and full access, like in a terminal. Each ask goes in on stdin with the chat so far; what it prints is the reply."
+    : "Claude Code runs with its own sign-in, settings and full access, like in a terminal. The @ menu searches this folder.";
+  $("keyrow").classList.toggle("hide", !!pre && !pre[5] && pre[0] !== "custom");
+  if (C.chat.preset === "anthropic" && !$("aimodel").value) $("aimodel").value = "claude-opus-5-5";
+  qa(".switch[data-mod]").forEach(s => s.classList.toggle("on", C.modules[s.dataset.mod] !== false));
+  qa("nav i[data-m]").forEach(i => i.className = C.modules[i.dataset.m] === false ? "off" : "ok");
+}
+function drawTools() {
+  const t = ST.tools;
+  $("ytstate").textContent = t.ytdlp ? `yt-dlp is installed${t.js ? "" : " · install Node.js or Deno too, YouTube asks for it to play some videos"}.` : "yt-dlp is not on this PC.";
+  $("getyt").classList.toggle("hide", t.ytdlp);
+  $("wstate").textContent = t.whisper ? "whisper.cpp and its English models are installed." : "whisper.cpp is not on this PC.";
+  $("getwh").classList.toggle("hide", t.whisper);
+}
+function drawFound() {
+  const n = ST.now, P = ST.players.find(p => p.id === n.player), B = ST.browsers.find(b => b.id === n.browser), D = ST.daws.find(d => d.id === n.daw);
+  $("found").innerHTML = `<span class="cap" style="margin-top:0">Found on this PC</span>` + [
+    ["Music", P?.installed ? P.name : "No player found · Whatever is playing"], ["Web", B?.installed ? B.name : "No browser profile found"], ["Studio", D ? D.name : "No DAW found"],
+    ["Chat", [ST.tools.claude && "Claude Code", ST.tools.codex && "Codex"].filter(Boolean).join(" · ") || "No agent CLI found · pick a chat API"], ["Video", ST.tools.ytdlp ? "yt-dlp" : "yt-dlp missing · one click in Video"], ["Voice", ST.tools.whisper ? "whisper.cpp" : "whisper missing · one click in Voice"],
+  ].map(([k, v]) => `<label class="row"><span>${k}</span><b style="font-weight:400">${esc(v)}</b></label>`).join("");
+}
+/* ---------- Screens: config.json "screens": { order: [device, left to right], main: device, off: [devices] } (Host.Arrange) ---------- */
+function monLoad() {   // the saved order, then any screen it doesn't know by where Windows puts it
+  const all = ST.screens ?? [], order = C.screens.order ?? [];
+  const at = x => { const i = order.indexOf(x.id); return i < 0 ? 1e6 + x.x / 10 + x.y / 1e5 : i; };
+  mons = [...all].sort((a, b) => at(a) - at(b)).map(x => ({ ...x, n: [...all].sort((a, b) => a.x - b.x || a.y - b.y).indexOf(x) + 1 }));
+  drawMons();
+}
+const monMain = () => { const on = mons.filter(x => !(C.screens.off ?? []).includes(x.id)); return on.find(x => x.id === C.screens.main) ?? on.find(x => x.primary) ?? on[0] ?? mons[0]; };
+function monRole(x) {
+  const off = C.screens.off ?? [], on = mons.filter(m => !off.includes(m.id)); if (off.includes(x.id) && on.length) return "Off · the Windows wallpaper";
+  const mi = on.indexOf(monMain()), i = on.indexOf(x), partner = mi + 1 < on.length ? mi + 1 : mi - 1;
+  return i === mi ? "Main · the menu opens here" : i === partner ? (i > mi ? "Beside it · clock, Winamp, the row's tail" : "Beside it · clock, Winamp") : "The live scene";
+}
+function drawMons() {
+  const off = C.screens.off ?? [], main = monMain(), big = Math.max(...mons.map(x => x.w), 1);
+  $("mons").innerHTML = mons.length < 2 ? `<p class="note">One screen: everything happens on it. Plug in more and they show up here.</p>` : mons.map((x, i) => `<div class="mon${x === main ? " main" : ""}${off.includes(x.id) ? " off" : ""}" style="width:${Math.round(150 + 90 * x.w / big)}px">
+    <div class="face">${x.n}</div><b>Screen ${x.n}${x.primary ? " <small>· Windows' main</small>" : ""}</b><small>${x.w} × ${x.h}</small><span class="role">${monRole(x)}</span>
+    <div class="acts"><button data-mon="${i}" data-op="left"${i ? "" : " disabled"}>◀</button><button data-mon="${i}" data-op="right"${i < mons.length - 1 ? "" : " disabled"}>▶</button>
+    <button data-mon="${i}" data-op="main"${x === main || off.includes(x.id) ? " disabled" : ""}>Make main</button><button data-mon="${i}" data-op="off">${off.includes(x.id) ? "Turn on" : "Turn off"}</button></div></div>`).join("");
+}
+function monDo(i, op) {
+  const x = mons[i], off = new Set(C.screens.off ?? []);
+  if (op === "left" || op === "right") { const j = i + (op === "left" ? -1 : 1); [mons[i], mons[j]] = [mons[j], mons[i]]; C.screens.order = mons.map(m => m.id); }
+  else if (op === "main") C.screens.main = x.id;
+  else if (op === "off") { if (off.has(x.id)) off.delete(x.id); else if (mons.length - off.size > 1) off.add(x.id); C.screens.off = [...off]; if (C.screens.main === x.id && off.has(x.id)) delete C.screens.main; }
+  drawMons();
+}
+
+function drawPlaces() {
+  $("places").innerHTML = places.map((p, i) => `<div class="it"><input class="nm" type="text" id="pln${i}" value="${esc(p.name)}" placeholder="Name"><input type="text" id="plp${i}" value="${esc(p.path)}" placeholder="Folder"><button data-folder="plp${i}">Browse…</button><button data-drop="${i}">✕</button></div>`).join("");
+}
+const readPlaces = () => { places = places.map((p, i) => ({ name: $("pln" + i)?.value.trim() ?? p.name, path: $("plp" + i)?.value.trim() ?? p.path })); };
+function drawCities(items) {
+  $("cities").innerHTML = items.length ? items.map((c, i) => `<button data-city="${i}">${esc([c.name, c.region, c.country].filter(Boolean).join(", "))}</button>`).join("") : `<span class="note">No city by that name</span>`;
+  $("cities").onclick = e => { const b = e.target.closest("[data-city]"); if (!b) return; const c = items[+b.dataset.city];
+    C.place = { name: c.name, lat: c.lat, lon: c.lon }; $("city").value = c.name; $("placenote").textContent = `${c.name} · ${c.lat}°, ${c.lon}°`; $("cities").innerHTML = ""; };
+}
+const setMod = (k, on) => { C.modules[k] = on; drawAll(); };
+
+/* ---------- input ---------- */
+document.addEventListener("click", e => {
+  const t = e.target;
+  if (t.closest("nav a")) { const s = t.closest("nav a").dataset.s; $("s-" + s).scrollIntoView(); }
+  else if (t.dataset.mod) setMod(t.dataset.mod, C.modules[t.dataset.mod] === false);
+  else if (t.dataset.folder) send({ type: "folder", id: t.dataset.folder, at: $(t.dataset.folder).value || $(t.dataset.folder).placeholder, title: "Pick a folder" });
+  else if (t.dataset.drop) { readPlaces(); places.splice(+t.dataset.drop, 1); drawPlaces(); }
+  else if (t.dataset.url) send({ type: "open", url: t.dataset.url });
+  else if (t.id === "addplace") { readPlaces(); places.push({ name: "", path: "" }); drawPlaces(); }
+  else if (t.id === "findcity") send({ type: "place", q: $("city").value });
+  else if (t.dataset.mon) monDo(+t.dataset.mon, t.dataset.op);
+  else if (t.id === "identify") send({ type: "identify", names: Object.fromEntries(mons.map(x => [x.id, `${x.n}${x === monMain() ? " · Main" : ""}`])) });
+  else if (t.id === "monreset") { C.screens = {}; monLoad(); }
+  else if (t.id === "test") { t.disabled = true; $("apinote").className = "note"; $("apinote").textContent = "Checking…"; send({ type: "models", api: C.chat.api, url: $("aiurl").value, key: $("aikey").value || null }); }
+  else if (t.id === "getyt" || t.id === "getwh") { qa("#getyt,#getwh").forEach(b => b.disabled = true); $("status").textContent = "Starting the download…"; send({ type: "fetch", tool: t.id === "getyt" ? "yt-dlp" : "whisper" }); }
+  else if (t.id === "cancel") send({ type: "cancel" });
+  else if (t.id === "save") save();
+});
+$("city").addEventListener("keydown", e => { if (e.key === "Enter") send({ type: "place", q: $("city").value }); });
+$("custplayer").addEventListener("input", () => { C.music.player = $("custplayer").value.trim() || "custom"; });
+$("aikey").addEventListener("input", () => keyTyped = $("aikey").value);
+$("main").addEventListener("scroll", () => { const y = $("main").scrollTop + 120; let on = "welcome";
+  for (const s of qa("section")) if (s.offsetTop <= y) on = s.id.slice(2); qa("nav a").forEach(a => a.classList.toggle("on", a.dataset.s === on)); });
+
+function save() {
+  readPlaces();
+  const set = (o, k, v) => { if (v === "" || v == null) delete o[k]; else o[k] = v; };
+  set(C.music, "spotifyClientId", $("spid").value.trim());
+  if (C.music.player === "custom") { $("status").textContent = "Name the music player's program first (Music)."; $("main").scrollTop = $("s-music").offsetTop; return; }
+  set(C.studio, "projects", $("projects").value.trim());
+  C.chat.name = C.chat.provider === "api" ? $("ainame").value.trim() || "Assistant" : C.chat.provider === "claude-code" ? "Claude" : C.chat.provider === "cli" ? (C.chat.preset === "codex" ? "Codex" : "Agent") : undefined;
+  set(C.chat, "command", C.chat.provider === "cli" ? $("aicmd").value.trim() : "");
+  if (C.chat.provider === "cli" && !C.chat.command) { $("status").textContent = "Type the agent's command first (Chat)."; $("main").scrollTop = $("s-chat").offsetTop; return; }
+  if (C.chat.provider === "api") { set(C.chat, "url", $("aiurl").value.trim()); set(C.chat, "model", $("aimodel").value.trim()); C.chat.models = $("aimodels").value.split(",").map(s => s.trim()).filter(Boolean);
+    if (!C.chat.model) { $("status").textContent = "Pick a model for the chat first (Chat)."; $("main").scrollTop = $("s-chat").offsetTop; return; } }
+  set(C.chat, "home", C.chat.provider === "claude-code" || C.chat.provider === "cli" ? $("home").value.trim() : "");
+  C.files.places = places.filter(p => p.name && p.path);
+  C._about ??= "Which tabs are on and what each one talks to. Setup (ConsoleDesktop.exe --setup) writes this file.";
+  $("save").disabled = true; $("status").textContent = FIRST ? "Saved · starting the desktop" : "Saved · restarting the desktop";
+  send({ type: "save", config: C, key: keyTyped, startup: $("startup").checked, start: true });
+}
+
+/* ---------- browser preview only ---------- */
+const MOCK = { first: true, saved: null,
+  screens: [{ id: "\\.\DISPLAY2", primary: false, x: -1920, y: 0, w: 1920, h: 1080 }, { id: "\\.\DISPLAY1", primary: true, x: 0, y: 0, w: 2560, h: 1440 }, { id: "\\.\DISPLAY3", primary: false, x: 2560, y: 0, w: 1920, h: 1080 }],
+  now: { player: "spotify", browser: "chrome", daw: "ableton", chat: "none", chatName: "Assistant", place: { lat: 45, lon: 15, name: "Your time zone" }, hasKey: false, projects: "C:\\Users\\you\\Documents\\Ableton", home: "C:\\Users\\you",
+    modules: { games: true, music: true, video: true, studio: true, web: true, files: true, claude: true, voice: true }, startup: false, codex: "codex exec --skip-git-repo-check --sandbox danger-full-access -" },
+  players: [["spotifast", "Spotifast", false], ["spotify", "Spotify", true], ["tidal", "TIDAL", false], ["apple", "Apple Music", true], ["ytmusic", "YouTube Music", false], ["deezer", "Deezer", false], ["amazon", "Amazon Music", false], ["qobuz", "Qobuz", false], ["any", "Whatever is playing", false]].map(([id, name, installed]) => ({ id, name, installed })),
+  browsers: [["firefox", "Firefox", false], ["chrome", "Chrome", true], ["edge", "Edge", true], ["brave", "Brave", false], ["vivaldi", "Vivaldi", false], ["opera", "Opera", false], ["operagx", "Opera GX", false], ["librewolf", "LibreWolf", false], ["waterfox", "Waterfox", false], ["zen", "Zen", false]].map(([id, name, installed]) => ({ id, name, installed })),
+  daws: [["fl", "FL Studio", false], ["ableton", "Ableton Live", true], ["reaper", "REAPER", false], ["bitwig", "Bitwig Studio", false], ["cubase", "Cubase", false], ["studioone", "Studio One", false], ["logic", "Logic Pro", false]].map(([id, name, installed]) => ({ id, name, installed })),
+  tools: { claude: false, codex: true, ytdlp: false, js: false, whisper: false } };
+</script>
+</body>
+</html>

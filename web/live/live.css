@@ -1,0 +1,263 @@
+/* live.css: Claude's style overrides for Tidepool. Loaded after ui.css, so a rule here wins.
+   The host reloads it (and theme.json) when a file in live/ changes. Keep it small; prefer theme.json "vars" for sizes and glass. */
+
+/* ================= Upgrade 1 (14 Nov; user: "OK first draft, needs to look a lot more upgraded, more detailed, it looks a bit mid") =================
+   One material for every surface: soft diffuse glass, a lit top rim (gradient border), layered depth shadows, hairline dividers.
+   Type: Segoe UI for words, Bahnschrift (Windows' DIN) for caps, numbers and the clock. Geometry the JS relies on (tile 216 + 32, row top,
+   rail width, content column x 200) is untouched. */
+.ui{--fd:Bahnschrift,"Segoe UI",sans-serif;--hair:rgba(255,255,255,.14);
+  --depth:0 1px 1px rgba(0,8,16,.22),0 6px 14px -6px rgba(0,8,20,.4),var(--sx) 26px 48px -18px rgba(0,8,22,.62);
+  --mat:linear-gradient(180deg,rgba(255,255,255,.17),rgba(255,255,255,.05) 42%,rgba(0,16,30,.18));
+  --matedge:linear-gradient(172deg,rgba(255,255,255,.75),rgba(255,255,255,.16) 34%,rgba(255,255,255,.05) 62%,rgba(255,255,255,.26))}
+.ui[data-base=light]{--hair:rgba(0,40,70,.12);
+  --mat:linear-gradient(180deg,rgba(255,255,255,.7),rgba(255,255,255,.44) 46%,rgba(236,246,252,.36));
+  --matedge:linear-gradient(172deg,#fff,rgba(255,255,255,.55) 40%,rgba(255,255,255,.3) 70%,rgba(255,255,255,.8))}
+
+/* atmosphere: a soft lens vignette over the photo, under every surface */
+.ui::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(130% 95% at 55% 42%,transparent 58%,rgba(0,8,18,.34) 100%),linear-gradient(90deg,rgba(0,10,20,.22),transparent 420px)}
+.ui[data-base=light]::after{background:radial-gradient(130% 95% at 55% 42%,transparent 62%,rgba(0,20,40,.2) 100%),linear-gradient(90deg,rgba(0,20,40,.12),transparent 420px)}
+
+/* ---- the big sky title: thinner, tighter, lit from above and sinking into the haze ---- */
+.skyt{letter-spacing:-.045em;text-shadow:none;opacity:.92;color:transparent;
+  background:linear-gradient(180deg,#fff 18%,rgba(255,255,255,.72) 58%,rgba(255,255,255,.16) 96%);-webkit-background-clip:text;background-clip:text;
+  filter:drop-shadow(0 6px 28px rgba(0,22,44,.32))}
+
+/* ---- header: phase line with a live dot, the search pill as one clean capsule ---- */
+.cat small{display:flex;align-items:center;gap:12px;font:600 13px/1 var(--fd);letter-spacing:.26em;opacity:.92}
+.cat small::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent),0 0 14px var(--accent);animation:tp-pulse 3.2s ease-in-out infinite}
+.cat small::after{content:"";width:64px;height:1px;background:linear-gradient(90deg,rgba(255,255,255,.55),transparent)}
+@keyframes tp-pulse{50%{opacity:.45}}   /* opacity only: no shadow animates (perf.md) */
+.sbar{left:730px;width:460px;height:46px;border-radius:999px;font:400 16px/1 var(--font);color:rgba(255,255,255,.72);
+  background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.04)),rgba(6,14,26,.22);border:1px solid rgba(255,255,255,.2);
+  backdrop-filter:blur(22px) saturate(1.6);box-shadow:inset 0 1px 0 rgba(255,255,255,.38),inset 0 -1px 0 rgba(0,0,0,.12),0 12px 30px -12px rgba(0,8,20,.55)}
+.sbar .key{font:600 11px/1 var(--fd);letter-spacing:.12em;text-transform:uppercase;height:24px;min-width:0;padding:0 10px;border-radius:999px;margin:0;color:rgba(255,255,255,.85);
+  background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 1px rgba(255,255,255,.22);opacity:1}
+.ui[data-base=light] .sbar{background:linear-gradient(180deg,rgba(255,255,255,.75),rgba(255,255,255,.45));color:var(--secondary);border-color:rgba(255,255,255,.9);
+  box-shadow:inset 0 1px 0 #fff,0 0 0 1px rgba(0,40,70,.1),0 12px 30px -12px rgba(0,30,60,.35)}
+.ui[data-base=light] .sbar .key{color:var(--secondary);background:rgba(0,40,70,.07);box-shadow:inset 0 0 0 1px rgba(0,40,70,.14)}
+.clockline b{font:300 64px/1 var(--fd);letter-spacing:-.01em}
+.clockline span{font:500 15px/1.3 var(--font);opacity:.88}
+
+/* ---- rail: one frosted column; only the picked category is a slab, the rest are quiet icons ---- */
+.ui .rail{background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.02) 40%,rgba(0,0,0,.1)),rgba(6,12,22,.42);border-right:0;
+  backdrop-filter:blur(26px) saturate(1.5);box-shadow:inset -1px 0 0 rgba(255,255,255,.13),1px 0 0 rgba(0,0,0,.4),24px 0 60px -24px rgba(0,6,16,.6)}
+.ui[data-base=light] .rail{background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,.28)),rgba(220,236,246,.2);
+  box-shadow:inset -1px 0 0 rgba(255,255,255,.8),1px 0 0 rgba(0,30,50,.12),24px 0 60px -24px rgba(0,30,60,.3)}
+.rail .slab:not(.on){background:none;border-color:transparent;box-shadow:none;backdrop-filter:none;transition:background .2s,box-shadow .2s}
+.rail .slab:not(.on)::after{opacity:0}
+.rail .slab:not(.on) .ic{transition:transform .25s var(--ease)}
+.rail .slab:not(.on):hover{background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+.rail .slab:not(.on):hover .ic{transform:translateY(-2px) scale(1.06)}
+.rail .slab{font:600 13px/1 var(--font);letter-spacing:.01em}
+.classic{background:none;border-color:rgba(255,255,255,.18)}
+
+/* ---- tiles: diffuse glass with a lit rim; the picked one gets a floating ring and a breathing icon ---- */
+.ui .item{border-color:transparent;
+  background:radial-gradient(90% 55% at var(--lx) 0%,rgba(255,255,255,.2),transparent 70%),radial-gradient(110% 70% at 50% 115%,color-mix(in srgb,var(--glow) 20%,transparent),transparent 70%),var(--mat);
+  backdrop-filter:blur(14px) saturate(1.5);
+  box-shadow:inset 0 -28px 40px -26px var(--under),inset 0 0 0 1px rgba(255,255,255,.05),var(--depth)}
+.ui[data-base=light] .item{background:radial-gradient(90% 55% at var(--lx) 0%,rgba(255,255,255,.65),transparent 70%),var(--mat);
+  box-shadow:inset 0 -28px 40px -26px rgba(255,255,255,.4),0 0 0 1px rgba(0,40,70,.08),var(--depth)}
+.item:not(.skel)::before{content:"";position:absolute;inset:0;z-index:2;border-radius:inherit;padding:1px;pointer-events:none;background:var(--matedge);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.ui .item.empty{background:rgba(0,20,35,.25);border-color:rgba(255,255,255,.35)}.item.empty::before{display:none}   /* empty keeps its dashed outline */
+/* the ring floats 6 px off the glass (scaled with the tile), with a soft accent bloom under it */
+.ui .item::after,.ui .item:has(.art)::after{display:block;inset:-5px;border-radius:45px;background:none;
+  box-shadow:inset 0 0 0 5px color-mix(in srgb,var(--accent) 16%,rgba(255,255,255,.1)),0 0 0 2px rgba(255,255,255,.96),0 0 0 5px color-mix(in srgb,var(--accent) 34%,transparent),0 0 34px 3px color-mix(in srgb,var(--accent) 58%,transparent)}
+.item:has(.art):not(.cur)::after{opacity:0}.item.hov:has(.art)::after{opacity:.35}
+.ui .item.cur{box-shadow:inset 0 -28px 40px -26px var(--under),inset 0 0 0 1px rgba(255,255,255,.08),var(--sx) 40px 60px -24px rgba(0,8,22,.6)}
+.ui[data-base=light] .item.cur{box-shadow:inset 0 -28px 40px -26px rgba(255,255,255,.4),var(--sx) 40px 60px -24px rgba(0,30,60,.35)}
+/* the row stands on the water: each tile casts a faint reflection that fades within a few px */
+.rowclip .item{-webkit-box-reflect:below 10px linear-gradient(transparent 80%,rgba(255,255,255,.13))}
+.item.cur > img:not(.art):not(.glogo),.item.cur > .lt{animation:tp-float 5s ease-in-out infinite}
+@keyframes tp-float{50%{translate:0 -4px}}
+.item.cur > span{letter-spacing:-.005em}
+.item img.art{border-radius:inherit}
+.ui .item:has(.art){overflow:visible}   /* the floating ring sits outside the cover */
+.item:has(.art){box-shadow:var(--depth)}
+/* a group (several windows of one app) keeps its PS3 stack of glass cards behind it */
+.ui .item.grp,.ui .item.grp.cur{box-shadow:inset 0 -28px 40px -26px var(--under),9px -9px 0 -3px rgba(255,255,255,.14),9px -9px 0 -2px rgba(255,255,255,.26),18px -18px 0 -7px rgba(255,255,255,.08),var(--depth)}
+.item .badge{font:600 11.5px/1 var(--fd);letter-spacing:.14em;padding:6px 10px 6px 20px;border-radius:999px;
+  background:rgba(4,12,22,.55) radial-gradient(circle at 10px 50%,var(--dot) 0 3px,transparent 4px);border:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.16),0 2px 6px rgba(0,0,0,.25);backdrop-filter:blur(6px)}
+.item .badge::before{content:"";position:absolute;left:7px;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;box-shadow:0 0 8px var(--dot)}
+.item .lt{border-radius:22px;border-width:1px;box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 10px 20px -8px rgba(0,20,40,.6)}
+
+/* ---- the line under the row: an accent tick, big name, quiet facts, a position capsule ---- */
+.desc b{font:300 46px/1.12 var(--font);letter-spacing:-.018em}
+.desc p{font:400 21px/1.4 var(--font);opacity:.84;margin-top:6px}
+.desc .meta{display:inline-flex;align-items:center;gap:8px;margin-top:16px;padding:7px 12px 7px 10px;border-radius:999px;font:600 11.5px/1 var(--fd);letter-spacing:.18em;opacity:.9;
+  background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,.16)}
+.desc .meta::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent)}
+.desc .meta:empty{display:none}
+
+/* scrub bar: a hairline track, a glowing bead */
+.scr::before{top:6px;height:2px;background:linear-gradient(90deg,rgba(255,255,255,.28),rgba(255,255,255,.1))}
+.scr i{top:5px;height:4px;opacity:.85;border-radius:3px;background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 60%,#fff),#fff);box-shadow:0 0 12px color-mix(in srgb,var(--accent) 80%,transparent)}
+.scr.on{opacity:.75}
+
+/* filter + sort chips: same capsule language */
+.fbox{height:42px;background:rgba(4,12,22,.3);border-color:rgba(255,255,255,.18);box-shadow:inset 0 1px 3px rgba(0,0,0,.3),inset 0 -1px 0 rgba(255,255,255,.06);backdrop-filter:blur(14px)}
+.sorts .cap{font:600 11.5px/1 var(--fd);letter-spacing:.22em}
+.sorts .chip{font:600 13.5px/1 var(--font);padding:10px 15px;background:rgba(4,12,22,.26);border-color:rgba(255,255,255,.16);backdrop-filter:blur(14px)}
+.sorts .chip.on{box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 6px 16px -6px color-mix(in srgb,var(--accent) 80%,transparent)}
+
+/* ---- the card: the same glass as the tiles, a lit rim, hairline-ruled facts, numbers in Bahnschrift ---- */
+.ui .deck{border-radius:28px;border:0;background:radial-gradient(70% 60% at 12% 0%,rgba(255,255,255,.12),transparent 70%),linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.02) 40%),rgba(6,14,26,.5);
+  backdrop-filter:blur(26px) saturate(1.5);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),var(--depth);padding:22px;gap:14px}
+.deck::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;background:var(--matedge);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.deck > *{animation:tp-rise .42s var(--ease) both}.deck > :nth-child(2){animation-delay:.04s}.deck > :nth-child(3){animation-delay:.08s}.deck > :nth-child(4){animation-delay:.12s}.deck > :nth-child(n+5){animation-delay:.16s}
+.deck .fi > *{animation:tp-rise .42s var(--ease) both}.deck .fi > :nth-child(2){animation-delay:.05s}.deck .fi > :nth-child(3){animation-delay:.1s}.deck .fi > :nth-child(n+4){animation-delay:.15s}
+@keyframes tp-rise{from{opacity:0;translate:0 10px}}
+.deck .pv{width:292px;height:292px;border-radius:20px;border:0;background:radial-gradient(80% 80% at 50% 30%,rgba(255,255,255,.12),rgba(0,0,0,.25)),rgba(0,8,16,.3);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),inset 0 1px 0 rgba(255,255,255,.2),0 16px 34px -14px rgba(0,0,0,.7)}
+.deck .pv:has(.pvimg.cover){box-shadow:inset 0 0 0 1px rgba(255,255,255,.18),0 18px 40px -12px rgba(0,0,0,.75)}
+.deck .pvic{filter:drop-shadow(0 10px 18px rgba(0,10,30,.55))}
+.deck .fi{gap:12px;padding-top:6px}
+.deck .fi > b,.deck .dh b{font:600 28px/1.15 var(--font);letter-spacing:-.012em}
+.deck .fi > small,.deck .dh small{font:400 15px/1.3 var(--font);letter-spacing:.01em;opacity:.7}   /* names and paths: never upper-cased */
+.deck dl{gap:0 18px;margin-top:6px;font:400 16px/1 var(--font)}
+.deck dt,.deck dd{padding:11px 0;border-top:1px solid var(--hair)}
+.deck dt{font:600 11.5px/16px var(--fd);letter-spacing:.18em;text-transform:uppercase;opacity:.55}
+.deck dd{line-height:16px;font-weight:500}
+.deck .stats{gap:12px}
+.deck .stats div{padding:12px 14px;border-radius:16px;background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.03));border:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),inset 0 1px 0 rgba(255,255,255,.18)}
+.deck .stats b{font:500 26px/1.1 var(--fd);letter-spacing:-.01em}
+.deck .stats small{font:600 10.5px/1 var(--fd);letter-spacing:.18em;opacity:.6;display:block;margin-top:5px}
+.deck .chips .cap,.deck .cap{font:600 11.5px/1 var(--fd);letter-spacing:.2em}
+.deck .chips i{background:rgba(255,255,255,.07);border:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.16)}
+.deck .plr,.deck .npl{border-radius:18px}
+.deck .plr{background:rgba(255,255,255,.06);border:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+.deck .plr.on{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 70%,#fff),0 0 24px -6px var(--accent)}
+.deck .pb,.deck .npb{background:rgba(255,255,255,.14)}
+.deck .pb i,.deck .npb i{background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 70%,#fff),var(--accent));box-shadow:0 0 10px var(--accent)}
+.deck .pt{font:500 15px/1 var(--fd)}
+.deck .npc i{border:0;background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);transition:background .15s,transform .15s}
+.deck .npc i:hover{transform:scale(1.06)}
+.deck .npc i.big{box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 6px 18px -4px var(--accent)}
+.deck .ents div{border-radius:10px;padding:0 6px;margin:0 -6px}
+.deck .ents small{font:500 13px/1 var(--fd);letter-spacing:.04em}
+/* light phases: the card is the tiles' frosted white, with dark text */
+.ui[data-base=light] .deck{color:var(--text);text-shadow:none;
+  background:radial-gradient(70% 60% at 12% 0%,rgba(255,255,255,.7),transparent 70%),linear-gradient(180deg,rgba(255,255,255,.66),rgba(240,248,252,.5))}
+.ui[data-base=light] .deck .pv{background:radial-gradient(80% 80% at 50% 30%,rgba(255,255,255,.9),rgba(220,234,244,.6));box-shadow:inset 0 0 0 1px rgba(0,40,70,.1),0 16px 34px -16px rgba(0,30,60,.4)}
+.ui[data-base=light] .deck :is(.stats div,.plr,.chips i,.npc i){background:rgba(255,255,255,.55);box-shadow:inset 0 0 0 1px rgba(0,40,70,.12)}
+.ui[data-base=light] .deck :is(.pb,.npb,.ub){background:rgba(0,40,70,.12)}
+.ui[data-base=light] .deck .pvtxt{color:var(--text)}
+
+/* ---- legend + status pill: the same capsule, quieter ---- */
+.legend{background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.02)),rgba(4,12,22,.3);backdrop-filter:blur(18px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),inset 0 1px 0 rgba(255,255,255,.14);
+  font:600 14px/30px var(--font);padding:6px 16px 6px 8px}
+.key{font:700 12px/1 var(--fd);letter-spacing:.04em;border-radius:7px;height:26px;background:linear-gradient(180deg,#fff,#e6edf3);box-shadow:0 1px 0 #93a2ae,0 2px 5px rgba(0,0,0,.35),inset 0 -2px 0 rgba(0,30,50,.08)}
+.ui .pill{background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.03)),rgba(6,14,26,.4);border:0;backdrop-filter:blur(22px) saturate(1.5);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),inset 0 1px 0 rgba(255,255,255,.22),var(--depth)}
+.pill .run img{transition:transform .2s var(--ease)}.pill .run i:hover img{transform:translateY(-2px) scale(1.08)}
+.pill .run i::after{left:10px;right:10px;height:2px;bottom:-8px}
+
+/* tile labels: a tight shadow instead of the 18 px halo that drew a dark box behind each name */
+.ui[data-base=dark] .item > span{text-shadow:0 1px 2px rgba(0,10,20,.7),0 0 8px rgba(0,10,20,.35)}
+
+/* ---- Claude blade: the shell's glass, chip pickers, calmer bubbles ---- */
+.ui .cl{border:0;box-shadow:inset 1px 0 0 rgba(255,255,255,.16),-30px 0 80px -30px rgba(0,6,16,.7)}
+.ui[data-base=dark] .cl{background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.015) 30%),rgba(6,12,22,.72)}
+.cl .client header{align-items:flex-start;gap:14px;padding:6px 16px 18px;border-bottom:1px solid var(--hair)}
+.cl .client header b{font:600 22px/1.2 var(--font);letter-spacing:-.01em}
+.cl .avatar{filter:drop-shadow(0 6px 14px rgba(0,10,30,.45))}
+.cl #csub2{gap:6px;margin-top:8px}
+.cl #csub2 select{-webkit-appearance:none;appearance:none;height:28px;padding:0 26px 0 11px;font:600 12.5px/1 var(--font);border:0;border-radius:999px;
+  background:rgba(255,255,255,.08) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23fff' stroke-opacity='.7' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 10px center/9px;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.16);transition:background-color .15s,box-shadow .15s}
+.cl #csub2 select:hover,.cl #csub2 select:focus{background-color:rgba(255,255,255,.16);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 60%,rgba(255,255,255,.3))}
+.ui[data-base=light] .cl #csub2 select{background-color:rgba(255,255,255,.55);box-shadow:inset 0 0 0 1px rgba(0,40,70,.14);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23062a40' stroke-opacity='.6' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-size:9px}
+.cl .client header .cib{width:36px;height:36px;margin-left:4px;margin-top:6px}
+.cl .client header .status{margin-top:19px}
+.cl .clx{margin-top:6px}
+.gcard{border:0;margin:18px 14px 6px;padding:20px 22px;border-radius:22px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),inset 0 1px 0 rgba(255,255,255,.2)}
+.gcard p{font:300 25px/1.3 var(--font);letter-spacing:-.01em}
+.ui[data-base=dark] .cl .chip{color:#eaf2fa;border:0;background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);text-shadow:none;transition:background .15s}
+.ui[data-base=dark] .cl .chip:hover{background:color-mix(in srgb,var(--accent) 30%,rgba(255,255,255,.08))}
+.cl .m{border-radius:20px;box-shadow:none}
+.cl .m.ai{border-bottom-left-radius:6px}.cl .m.me{border-bottom-right-radius:6px;box-shadow:0 8px 20px -10px color-mix(in srgb,var(--accent) 80%,transparent)}
+.cl .m.me::after,.cl .m.ai::after{display:none}
+.ui[data-base=dark] .cl .m.ai{color:#eef4fa;border:0;background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.05));box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+.ui[data-base=dark] .cl .m.ai::before{display:none}
+.ui[data-base=dark] .cl .m code{background:rgba(255,255,255,.1)}
+.ui[data-base=dark] .cl .m :is(th,td){border-bottom-color:rgba(255,255,255,.14)}
+.ui[data-base=dark] .cl .steps li{color:rgba(238,244,250,.68)}.ui[data-base=dark] .cl .steps li.ok{color:#eef4fa}.ui[data-base=dark] .cl .steps li.bad{color:#ffb4a8}
+.ui[data-base=dark] .cl .steps li::before{border-color:rgba(255,255,255,.4)}
+.cl .cstat{font:500 12px/1.3 var(--fd);letter-spacing:.06em}
+.cl .send{border-radius:999px;font:600 15px/1 var(--font);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 8px 20px -8px var(--accent)}
+
+/* ---- overlays: search, notifications, toast, right-click, hover tip ---- */
+#sq{height:72px;border-radius:999px;font:300 30px var(--font);border:0;background-color:rgba(6,14,26,.55);backdrop-filter:blur(30px) saturate(1.5);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.3),inset 0 1px 0 rgba(255,255,255,.35),0 0 0 6px color-mix(in srgb,var(--accent) 22%,transparent),0 24px 60px -16px rgba(0,0,0,.6)}
+.ui #sres{margin-top:14px;padding:8px;border-radius:24px}
+.rh{font:600 11.5px/1 var(--fd)!important;letter-spacing:.22em!important;padding:14px 16px 8px}
+.res{border-radius:16px;gap:16px}
+.res.cur{box-shadow:inset 0 0 0 1px rgba(255,255,255,.7),inset 0 1px 0 rgba(255,255,255,.6),0 8px 24px -10px var(--accent)}
+.res em{font:500 13px/1 var(--fd);letter-spacing:.06em}
+.ui #notifs{border-radius:24px;padding:16px}
+#notifs h3{font:300 24px/1 var(--font);letter-spacing:-.01em}#notifs h3 span{font:600 11.5px/1 var(--fd);letter-spacing:.2em;padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.08)}
+.nt{border-radius:16px;background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.04));box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
+.nt small{font:500 13px/1.3 var(--fd)}
+.ui .toast{border-radius:20px;border:0!important;box-shadow:inset 3px 0 0 var(--accent),inset 0 0 0 1px rgba(255,255,255,.14),var(--depth)}
+.ui .ctx{border-radius:18px;padding:6px}.ctx .ch{font:600 11.5px/1.2 var(--fd);letter-spacing:.18em}.ctx .ci{border-radius:12px;padding:11px 14px}
+.tip{font:600 13.5px/1 var(--font);padding:8px 14px;background:linear-gradient(180deg,rgba(30,46,64,.94),rgba(10,18,28,.94));border-color:rgba(255,255,255,.2)}
+
+/* ---- the column (Home groups, Studio, Files): the tiles' glass in rows ---- */
+.col .cw{border:0;border-radius:18px;background:var(--mat);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),inset 0 1px 0 rgba(255,255,255,.16)}
+.col .cw.cur{background:radial-gradient(90% 120% at 20% 0%,rgba(255,255,255,.26),transparent 70%),var(--mat);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.55),0 0 0 2px color-mix(in srgb,var(--accent) 60%,transparent),0 10px 30px -10px var(--accent)}
+.col .colh b{font:600 21px/1.3 var(--font);letter-spacing:-.01em}.col .colh small{font:600 11.5px/1 var(--fd);letter-spacing:.18em;text-transform:uppercase}
+.col .cw small{opacity:.7}
+
+/* the card's art (cover, hero, picture) washes its glass in its own colours (index.html drawDeck sets --art) */
+.deck::after{content:"";position:absolute;inset:-80px;z-index:-1;pointer-events:none;background:var(--art,none) center/cover no-repeat;filter:blur(60px) saturate(1.7);opacity:.42}
+.ui[data-base=light] .deck::after{opacity:.3;filter:blur(60px) saturate(1.5) brightness(1.15)}
+/* the name under the row eases in when the pick changes (index.html render adds .tp-in) */
+.desc .tp-in{animation:tp-in .34s var(--ease) both}
+@keyframes tp-in{from{opacity:0;translate:-12px 0}}
+
+/* the picked category: the new glass tinted with the phase's accent, not the old split gloss */
+.ui .rail .slab.on{background:radial-gradient(100% 70% at 50% 0%,rgba(255,255,255,.42),transparent 72%),linear-gradient(180deg,color-mix(in srgb,var(--accent) 52%,rgba(255,255,255,.12)),color-mix(in srgb,var(--accent) 26%,rgba(0,10,20,.35)));
+  box-shadow:0 0 0 1px rgba(255,255,255,.8),0 0 0 3px color-mix(in srgb,var(--accent) 28%,transparent),0 0 24px color-mix(in srgb,var(--accent) 55%,transparent),0 10px 24px -8px rgba(0,8,20,.6),inset 0 1px 0 rgba(255,255,255,.85)}
+/* fill bars (drives, renders): a hairline track and a glowing fill */
+.item .tbar{height:6px;background:rgba(255,255,255,.12);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.item .tbar i,.deck .ub i{background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 55%,#fff),var(--accent));box-shadow:0 0 10px color-mix(in srgb,var(--accent) 80%,transparent)}
+.item .tbar.full i,.deck .ub.full i{background:linear-gradient(90deg,#ffb4a0,#e5484d);box-shadow:0 0 10px rgba(229,72,77,.7)}
+.deck .ub{height:10px;background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+
+/* idle: the time is the title, so it stays solid (the fade is for category names behind the row) */
+.idle .skyt{background:linear-gradient(180deg,#fff 30%,rgba(255,255,255,.78));-webkit-background-clip:text;background-clip:text;filter:brightness(1.35) drop-shadow(0 6px 40px rgba(0,22,44,.35))}
+.m-idle .idlehint{animation:tp-breathe 3.6s ease-in-out infinite}
+@keyframes tp-breathe{0%,100%{opacity:.85}50%{opacity:.4}}
+
+/* the row's quieter half: badges on tiles you are not on step back, the picked tile's stand out */
+.item:not(.cur):not(.hov) .badge{opacity:.78}
+/* a soft pool of the phase's light on the water under the row, so the tiles stand somewhere */
+.rowclip::before{content:"";position:absolute;left:120px;top:520px;width:1500px;height:160px;pointer-events:none;
+  background:radial-gradient(50% 50% at 30% 50%,color-mix(in srgb,var(--accent) 16%,transparent),transparent 70%);filter:blur(10px)}
+
+/* Winamp's dock and its collapsed strip: the shell's glass frame instead of the old metal bezel (a shaped skin still floats frameless) */
+.ui .wa-dock,.ui .shade{background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.03)),rgba(6,14,26,.45)!important;backdrop-filter:blur(22px) saturate(1.5)!important;border:0!important;border-radius:20px!important;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),inset 0 1px 0 rgba(255,255,255,.22),var(--depth)!important}
+
+/* now playing in screen 1's header (index.html drawNpCap): only while screen 2 holds the clock and the player */
+.npcap{position:absolute;right:56px;top:44px;height:46px;max-width:440px;display:none;align-items:center;gap:12px;padding:0 20px 0 14px;border-radius:999px;cursor:pointer;z-index:3;
+  background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.03)),rgba(6,14,26,.3);backdrop-filter:blur(22px) saturate(1.5);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.18),inset 0 1px 0 rgba(255,255,255,.3),0 12px 30px -12px rgba(0,8,20,.55);transition:background .15s,box-shadow .15s}
+.npcap:hover{background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.06)),rgba(6,14,26,.3);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 60%,#fff),0 12px 30px -12px rgba(0,8,20,.55)}
+.npcap span{min-width:0;display:flex;flex-direction:column;gap:4px;text-shadow:var(--ts)}
+.npcap small{font:600 10.5px/1 var(--fd);letter-spacing:.2em;opacity:.7}
+.npcap b{font:600 14px/1.1 var(--font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.npcap .eq{flex:none;display:flex;align-items:flex-end;gap:2px;width:22px;height:18px;padding:7px;box-sizing:content-box;border-radius:50%;background:color-mix(in srgb,var(--accent) 30%,rgba(255,255,255,.08));box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
+.npcap .eq b{flex:1;height:100%;border-radius:1px;background:linear-gradient(180deg,#fff,color-mix(in srgb,var(--accent) 60%,#fff));transform-origin:50% 100%;animation:tp-eq 1s ease-in-out infinite}
+.npcap .eq b:nth-child(2){animation-delay:-.35s;animation-duration:.8s}.npcap .eq b:nth-child(3){animation-delay:-.6s;animation-duration:1.15s}.npcap .eq b:nth-child(4){animation-delay:-.2s;animation-duration:.9s}
+@keyframes tp-eq{0%,100%{scale:1 .3}50%{scale:1 1}}
+.npcap.paused .eq b{animation-play-state:paused;scale:1 .3}
+.s1:not(.s2cov) .ui:not(.cl-on):not(.m-idle) .npcap.on{display:flex}
+.ui[data-base=light] .npcap{color:var(--text);background:linear-gradient(180deg,rgba(255,255,255,.75),rgba(255,255,255,.45));box-shadow:inset 0 0 0 1px rgba(255,255,255,.9),0 0 0 1px rgba(0,40,70,.08),0 12px 30px -12px rgba(0,30,60,.35)}
+.ui[data-base=light] .npcap span{text-shadow:none}

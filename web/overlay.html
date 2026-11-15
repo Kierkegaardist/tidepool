@@ -1,0 +1,276 @@
+<!doctype html>
+<!-- "Hey Marina" overlay (host: src/Overlay.cs, a topmost click-through window at the primary screen's top-left, real per-pixel alpha).
+     The host passes the main page's host.overlay(state, said, reply) on as { state: listening | thinking | working | speaking | done, said, reply },
+     and { level } (the mic's 50 ms peak, 0..1) while an ask records. Posts "gone" once it has faded out (the host hides the window).
+     Look (15 Nov, user: "dissolve the card into the new bowl"): Marina's bowl itself pops up. It grows out of the rail orb's spot (the same
+     reef bowl, motion/orb.js mount home + motion/marina.css), she acts out the state inside it, rings round the glass show listening / thinking /
+     speaking, and a small glass bubble beside it holds what you said and her reply. Old card: concepts/mascot/before/overlay.card.html.
+     Browser preview: overlay.html#speaking (listening, live, thinking, speaking, done, missed, stopped; -<phase 0..7> picks the sun phase). -->
+<html><head><meta charset="utf-8"><title>overlay</title>
+<link rel="stylesheet" href="motion/marina.css">
+<style>
+:root { --accent: #6FC3FF; --warn: #FFD27A; --text: #EAF1FF; --dim: rgba(234,241,255,.58); --hair: rgba(255,255,255,.12);
+  --font: "Segoe UI", sans-serif; --fd: Bahnschrift, "Segoe UI", sans-serif; --ease: cubic-bezier(.2,.9,.3,1); --spring: cubic-bezier(.2,1.25,.35,1);
+  --bg: linear-gradient(180deg, rgba(36,48,68,.46), rgba(15,22,37,.4) 55%, rgba(9,14,26,.44));
+  --edge: linear-gradient(170deg, rgba(255,255,255,.62), rgba(255,255,255,.14) 30%, rgba(255,255,255,.04) 62%, rgba(255,255,255,.2));
+  --depth: 0 1px 1px rgba(0,8,16,.22), 0 6px 14px -6px rgba(0,8,20,.4), 0 18px 34px -16px rgba(0,6,18,.5); --lv: 0; }
+:root.light { --text: #0E2A40; --dim: rgba(14,42,64,.58); --hair: rgba(0,40,70,.1);
+  --bg: linear-gradient(180deg, rgba(255,255,255,.62), rgba(245,250,254,.56) 55%, rgba(234,243,250,.56));
+  --edge: linear-gradient(170deg, #fff, rgba(255,255,255,.7) 40%, rgba(255,255,255,.4) 70%, rgba(255,255,255,.9));
+  --depth: 0 0 0 1px rgba(0,40,70,.08), 0 8px 16px -6px rgba(0,30,60,.22), 0 30px 56px -18px rgba(0,30,60,.42); }
+html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; font: 15px/1.4 var(--font); color: var(--text); user-select: none; cursor: default; }
+
+/* ---- the bowl: 132 px, grows out of the rail orb (84 px, centred 68,58 on the desktop) and shrinks back into it when it leaves ---- */
+.bowl { position: absolute; left: 14px; top: 10px; width: 132px; height: 132px; border-radius: 50%; opacity: 0;
+  transform: translate(-12px, -18px) scale(.636); transition: opacity .3s var(--ease), transform .65s var(--spring); }
+#o.on .bowl { opacity: 1; transform: none; }
+#o.out .bowl { opacity: 0; transform: translate(-12px, -18px) scale(.636); transition: opacity .5s ease .1s, transform .55s var(--ease); }
+.bowl::after { content: ""; position: absolute; inset: 0; border-radius: 50%; box-shadow: 0 0 0 1px rgba(0,8,20,.4), 0 12px 26px -10px rgba(0,10,30,.7); pointer-events: none; }
+#orb { position: relative; width: 100%; height: 100%; }
+#bubs { position: absolute; inset: 0; border-radius: 50%; overflow: hidden; pointer-events: none; }
+.bub { position: absolute; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle at 35% 30%, #fff 0 14%, rgba(255,255,255,.18) 30%, rgba(230,252,255,.08) 68%, rgba(255,255,255,.75) 100%);
+  animation: bub 1.4s cubic-bezier(.3,.6,.4,1) forwards; }
+@keyframes bub { 0% { transform: translate(0, 0) scale(.3); opacity: 0 } 15% { transform: translate(1px, -3px) scale(1); opacity: .95 } 100% { transform: translate(4px, -46px) scale(1.3); opacity: 0 } }
+
+/* rings round the glass: listening = a glow that swells with your voice; thinking = a light running round the rim; speaking = ripples */
+@property --a { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+.halo { position: absolute; inset: -3px; border-radius: 50%; opacity: 0; transition: opacity .3s; pointer-events: none;
+  box-shadow: 0 0 0 2.5px color-mix(in srgb, var(--accent) 75%, transparent), 0 0 18px 3px color-mix(in srgb, var(--accent) 60%, transparent);
+  transform: scale(calc(1 + var(--lv) * .1)); }
+#o[data-s=listening] .halo { opacity: calc(.35 + var(--lv) * .65); }
+.arc { position: absolute; inset: -5px; border-radius: 50%; padding: 3px; opacity: 0; transition: opacity .3s; pointer-events: none;
+  background: conic-gradient(from var(--a), transparent 0 55%, color-mix(in srgb, var(--accent) 40%, transparent) 75%, var(--accent) 97%, #fff 99%, transparent 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: run 1.3s linear infinite; filter: drop-shadow(0 0 5px var(--accent)); }
+@keyframes run { to { --a: 360deg } }
+#o:is([data-s=thinking],[data-s=working]) .arc { opacity: 1; }
+.rip { position: absolute; inset: 0; border-radius: 50%; box-shadow: 0 0 0 2px var(--accent); opacity: 0; pointer-events: none; }
+#o[data-s=speaking] .rip { animation: rip 2s cubic-bezier(.2,.6,.4,1) infinite; }
+#o[data-s=speaking] .rip + .rip { animation-delay: 1s; }
+@keyframes rip { 0% { transform: scale(1); opacity: .7 } 100% { transform: scale(1.22); opacity: 0 } }
+.badge { position: absolute; right: 2px; bottom: 4px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; z-index: 2;
+  background: linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,.12) 48%, transparent 52%), var(--accent);
+  box-shadow: 0 0 0 2.5px rgba(16,24,38,.9), inset 0 0 0 1px rgba(255,255,255,.35), 0 3px 8px rgba(0,0,0,.35); transform: scale(0); transition: transform .45s var(--spring); }
+.badge svg { width: 15px; height: 15px; }
+#o[data-s=done] .badge { transform: scale(1); }
+#o.miss .badge { background: var(--warn); }
+
+/* ---- Marina acts out the state (her swim loop in marina.css is the idle; these replace it while the bowl is up) ---- */
+#o[data-s=listening] .mswim { animation: mfront 1.8s ease-in-out infinite alternate; }   /* up against the glass, big, fins going fast */
+#o[data-s=listening] .mfish :is(.tail, .pec) { animation-duration: .45s; }
+@keyframes mfront { from { transform: translate(0, -4%) scale(1.5) } to { transform: translate(0, -11%) scale(1.5) } }
+#o:is([data-s=thinking],[data-s=working]) .mswim { animation: mlap 3.2s linear infinite; }   /* laps: near and big going right, far and small coming back */
+#o:is([data-s=thinking],[data-s=working]) .mfish .tail { animation-duration: .6s; }
+@keyframes mlap { 0% { transform: translate(0, -6%) scale(1.3) } 38% { transform: translate(95%, -6%) scale(1.2) } 50% { transform: translate(105%, -34%) scale(-.85, .85); opacity: .85 }
+  88% { transform: translate(-105%, -34%) scale(-.85, .85); opacity: .85 } 100% { transform: translate(0, -6%) scale(1.3) } }
+#o:is([data-s=speaking],[data-s=done]) .mswim { animation: mspeak 2.6s ease-in-out infinite alternate; }   /* hovers facing out while she talks */
+@keyframes mspeak { from { transform: translate(-6%, -4%) scale(1.4) } to { transform: translate(-6%, -9%) scale(1.4) } }
+#o[data-s=speaking] .mfish .talk { display: inline; } #o[data-s=speaking] .mfish .smile { display: none; }
+#o[data-s=done]:not(.miss):not(.halt) .mbob { animation: mflip .9s var(--ease), mbob 3.2s .9s ease-in-out infinite; }   /* done: a flip */
+@keyframes mflip { 0% { transform: none } 55% { transform: translateY(-10%) rotate(-300deg) } 100% { transform: rotate(-360deg) } }
+#o.miss .mbob { animation: none; transform: rotate(-16deg); transition: transform .6s var(--spring); }   /* missed: a puzzled tilt */
+#o.miss .mfish :is(.tail, .pec) { animation-duration: 2.6s; }
+#o.halt .mswim { animation: mback 2.6s var(--ease) forwards; }   /* stopped: darts to the back, small and dim, then drifts forward */
+@keyframes mback { 0% { transform: translate(-6%, -6%) scale(1.4) } 14%, 45% { transform: translate(-60%, -60%) scale(.7); opacity: .5 } 100% { transform: translate(-6%, -6%) scale(1.2); opacity: 1 } }
+
+/* ---- her text bubble: glass beside the bowl, what you said and her reply ---- */
+.card { position: absolute; left: 158px; top: 24px; width: 290px; border-radius: 18px; background: var(--bg); box-shadow: var(--depth), inset 0 1px 0 rgba(255,255,255,.18);
+  text-shadow: 0 1px 3px rgba(0,6,16,.65); overflow: hidden; opacity: 0; transform-origin: 0 30px; transform: translateX(-16px) scale(.9); filter: blur(6px);
+  transition: opacity .32s var(--ease) .12s, transform .6s var(--spring) .12s, filter .4s var(--ease) .12s; }
+#o.on .card { opacity: 1; transform: none; filter: none; }
+#o.out .card { opacity: 0; transform: translateX(-12px) scale(.94); filter: blur(4px); transition: opacity .4s ease, transform .45s var(--ease), filter .4s ease; }
+.card::before { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; background: var(--edge); pointer-events: none; z-index: 3;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+.card::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background: radial-gradient(70% 120% at 0% 0%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 62%); }
+:root.light .card { text-shadow: 0 0 6px rgba(255,255,255,.75); }
+/* a little tail pointing at the bowl */
+.tip { position: absolute; left: 152px; top: 44px; width: 12px; height: 12px; border-radius: 3px 0 3px 0; background: rgba(30,42,60,.5); transform: rotate(45deg) scale(0); transition: transform .4s var(--spring) .2s; }
+:root.light .tip { background: rgba(255,255,255,.6); }
+#o.on .tip { transform: rotate(45deg); } #o.out .tip { transform: rotate(45deg) scale(0); transition-delay: 0s; }
+#in { position: relative; z-index: 1; padding: 9px 13px 11px; }
+#in > * { transition: opacity .35s var(--ease), transform .45s var(--ease); }
+.cap { display: flex; align-items: center; gap: 7px; font: 600 10.5px/1 var(--fd); letter-spacing: .2em; text-transform: uppercase; color: var(--text); opacity: .94; }
+.cap i { flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent), 0 0 12px var(--accent); }
+#o:not([data-s=done]) .cap i { animation: pulse 1.6s ease-in-out infinite; }
+#o.miss .cap i { background: var(--warn); box-shadow: 0 0 0 3px color-mix(in srgb, var(--warn) 22%, transparent), 0 0 12px var(--warn); }
+.cap::after { content: ""; flex: 1; max-width: 56px; height: 1px; background: linear-gradient(90deg, var(--hair), transparent); }
+@keyframes pulse { 50% { opacity: .35 } }
+.said, .reply { margin-top: 8px; padding-top: 7px; border-top: 1px solid var(--hair); }
+.lbl { display: flex; align-items: center; gap: 6px; font: 600 9px/1 var(--fd); letter-spacing: .2em; text-transform: uppercase; color: var(--dim); margin-bottom: 5px; }
+.lbl svg { width: 10px; height: 10px; opacity: .9; }
+#said { font: 400 14.5px/1.36 var(--font); color: var(--text); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+#said::before { content: "\201C"; } #said::after { content: "\201D"; }
+.said.ph #said { color: var(--dim); font-style: italic; } .said.ph #said::before, .said.ph #said::after { content: none; }
+#o[data-s=listening] .said.ph, #o[data-s=listening] .said .lbl { display: none; }
+#o[data-s=listening] #said { display: flex; flex-direction: column-reverse; max-height: calc(2 * 1.36em); -webkit-line-clamp: none; }
+#o[data-s=listening] #said::before, #o[data-s=listening] #said::after { content: none; }
+#o[data-s=speaking] #said, #o[data-s=working] #said, #o[data-s=done].hasreply #said { font-size: 12.5px; color: var(--dim); -webkit-line-clamp: 2; }
+.reply { position: relative; }
+.reply .lbl { color: color-mix(in srgb, var(--accent) 80%, var(--text)); }
+#reply { position: relative; max-height: 104px; overflow: hidden; font: 400 14px/1.45 var(--font); padding-left: 10px; scroll-behavior: smooth; }
+#reply::before { content: ""; position: absolute; left: 0; top: 4px; bottom: 4px; width: 2px; border-radius: 2px; background: linear-gradient(var(--accent), color-mix(in srgb, var(--accent) 10%, transparent)); }
+#reply.long { -webkit-mask: linear-gradient(transparent, #000 10px, #000 calc(100% - 16px), transparent); }
+#reply w { opacity: .38; transition: opacity .35s ease, text-shadow .35s ease; }
+#reply w.lit { opacity: 1; }
+#reply w.now { opacity: 1; text-shadow: 0 0 14px color-mix(in srgb, var(--accent) 70%, transparent); }
+:root.light #reply w.now { text-shadow: none; color: color-mix(in srgb, var(--accent) 60%, var(--text)); }
+.hide { display: none; }
+.rise { animation: rise .5s var(--ease) both; }
+@keyframes rise { from { opacity: 0; transform: translateY(6px) } }
+/* done: a hairline drains along the bottom of the bubble while it waits to leave */
+.tmr { position: absolute; left: 16px; right: 16px; bottom: 0; height: 2px; border-radius: 2px; z-index: 2; opacity: 0; transform-origin: left;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 30%, transparent), var(--accent)); }
+#o.draining .tmr { opacity: .8; animation: drain 4s linear forwards; }
+@keyframes drain { from { transform: scaleX(1) } to { transform: scaleX(0) } }
+</style></head>
+<body>
+<div id="o" data-s="done">
+  <div class="bowl">
+    <i class="halo"></i><i class="arc"></i><i class="rip"></i><i class="rip"></i>
+    <div id="orb"></div>
+    <span class="badge"><svg viewBox="0 0 12 12"><path id="bdg" d="M2.6 6.3l2.2 2.2 4.6-4.9" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></span>
+  </div>
+  <i class="tip"></i>
+  <div class="card">
+    <div class="tmr"></div>
+    <div id="in">
+      <div class="cap"><i></i><span id="st">Listening</span></div>
+      <section class="said ph" id="saidBox">
+        <div class="lbl"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M4 21c1-4.5 4.4-7 8-7s7 2.5 8 7" fill="currentColor"/></svg>You</div>
+        <div id="said"></div>
+      </section>
+      <section class="reply hide" id="replyBox">
+        <div class="lbl"><svg viewBox="0 0 24 24"><path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4z" fill="currentColor"/></svg>Marina</div>
+        <div id="reply"></div>
+      </section>
+    </div>
+  </div>
+</div>
+<script src="motion/orb.js"></script>
+<script>
+const $ = id => document.getElementById(id), Q = new URLSearchParams(location.search);
+const o = $("o"), card = document.querySelector(".card"), saidBox = $("saidBox"), said = $("said"), replyBox = $("replyBox"), reply = $("reply"), st = $("st");
+const STOP = /^(stop|cancel|never ?mind|be quiet|quiet)\W*$/i, WAKE = "Hey Marina";   // keep WAKE in step with Voice.cs Name
+const LAT = +(Q.get("lat") ?? 52.23), LON = +(Q.get("lon") ?? 21.01);   // Overlay.cs passes config.json's place
+let fade = 0, gone = 0, lastLevel = 0, speakAt = 0, words = [], heard = false, preview = false;
+
+/* ---- the bowl: the same reef bowl as the rail orb, its sky live for this place; bubbles go between Marina and the glass ---- */
+const ORB = $("orb"), redrawOrb = Orb.mount(ORB, { size: 132, home: true, lat: LAT, lon: LON });
+const BUBS = document.createElement("div"); BUBS.id = "bubs"; ORB.insertBefore(BUBS, ORB.lastChild);
+
+/* ---- the sun phase: the desktop's own colours (theme.json phases; light phases get frosted white glass) ---- */
+let PH = null, FORCE = null;   // FORCE: a phase index for the browser preview
+fetch("live/theme.json").then(r => r.json()).then(j => { PH = j.phases; tint(); }).catch(() => {});
+function tint() {
+  if (!PH) return;
+  const s = FORCE ?? Orb.sky(new Date(), LAT, LON).s;
+  const p = PH[Math.round(s) % 8] ?? PH[7], tc = p.tc ?? {};
+  const lum = h => { const n = parseInt(h.slice(1), 16); return ((n >> 16) * .3 + (n >> 8 & 255) * .59 + (n & 255) * .11) / 255; };
+  document.documentElement.classList.toggle("light", tc.window ? lum(tc.window) > .5 : false);
+  const r = document.documentElement.style;
+  if (tc.accent) r.setProperty("--accent", tc.accent);
+  if (tc.warning) r.setProperty("--warn", tc.warning);
+}
+
+/* ---- states ---- */
+const COPY = { listening: "Listening", thinking: "Thinking", working: "Working", speaking: "Speaking", done: "Done" };
+function morph(fn) {   // the bubble glides to its new height instead of jumping
+  const h0 = card.offsetHeight; fn(); const h1 = card.offsetHeight;
+  if (o.classList.contains("on") && Math.abs(h1 - h0) > 1) card.animate([{ height: h0 + "px" }, { height: h1 + "px" }], { duration: 420, easing: "cubic-bezier(.2,.9,.3,1)" });
+}
+function set(m) {
+  if (m.level !== undefined) { lastLevel = performance.now(); feed(+m.level); return; }
+  clearTimeout(fade); clearTimeout(gone); o.classList.remove("out", "draining");
+  const s = m.state || "done", was = o.dataset.s, entering = !o.classList.contains("on");
+  if (entering) { tint(); redrawOrb(); }
+  morph(() => {
+    o.dataset.s = s;
+    if (s === "listening" && (was !== "listening" || !m.said)) { heard = false; saidBox.className = "said ph"; said.textContent = "Say what you need…"; reply.textContent = ""; words = []; o.classList.remove("miss", "hasreply"); }
+    else if (m.said) { if (s !== "listening") heard = true; if (saidBox.classList.contains("ph") || said.textContent !== m.said) { saidBox.className = "said rise"; said.textContent = m.said; } }
+    else if (saidBox.classList.contains("ph")) said.textContent = `Nothing heard after “${WAKE}”`;
+    if (m.reply) { o.classList.add("hasreply"); setReply(m.reply, s === "speaking"); if (was !== s) replyBox.classList.add("rise"); }
+    replyBox.classList.toggle("hide", !reply.textContent);
+    saidBox.classList.toggle("hide", s === "done" && !heard && !!reply.textContent);
+    const miss = s === "done" && !heard, halt = s === "done" && STOP.test(said.textContent);
+    o.classList.toggle("miss", miss); o.classList.toggle("halt", halt);
+    $("bdg").setAttribute("d", miss || halt ? "M3.6 3.6l4.8 4.8M8.4 3.6l-4.8 4.8" : "M2.6 6.3l2.2 2.2 4.6-4.9");
+    const c = miss ? "Missed" : halt ? "Stopped" : COPY[s] ?? COPY.done;
+    if (st.textContent !== c) { st.textContent = c; st.classList.remove("rise"); void st.offsetWidth; st.classList.add("rise"); }
+    if (miss) setTimeout(() => blow(.3), 500);   // one slow, puzzled bubble
+  });
+  if (s === "speaking") speakAt = performance.now();
+  if (s === "done") lightAll();
+  if (entering) { void o.offsetWidth; o.classList.add("on"); start(); }
+  if (s === "done")   // a few seconds to read it (the hairline drains), then the bowl shrinks back to the orb and the host hides the window
+    fade = setTimeout(() => { o.classList.add("draining"); fade = setTimeout(() => {
+      o.classList.remove("draining"); o.classList.add("out");
+      gone = setTimeout(() => { o.classList.remove("on", "out"); stop(); window.chrome?.webview?.postMessage("gone"); }, 700); }, 4000); }, 20);
+}
+window.chrome?.webview?.addEventListener("message", e => set(e.data || {}));
+
+/* ---- the reply: all of it at once, with a read-along light that follows the voice's rough pace ---- */
+function setReply(t, live) {
+  if (reply.dataset.t === t) return; reply.dataset.t = t;
+  reply.innerHTML = ""; words = []; let at = .25;
+  for (const part of t.split(/(\s+)/)) {
+    if (!part) continue;
+    if (/^\s+$/.test(part)) { reply.append(part.includes("\n") ? document.createElement("br") : " "); continue; }   // working: the agent's current step on its own line
+    const w = document.createElement("w"); w.textContent = part; reply.append(w);
+    words.push({ el: w, at }); at += .11 + .052 * part.length + (/[.!?]$/.test(part) ? .32 : /[,;:]$/.test(part) ? .14 : 0);   // ~ the Natural voice at rate 1.05
+  }
+  reply.scrollTop = 0; reply.classList.toggle("long", reply.scrollHeight > reply.clientHeight + 2);
+  if (!live) lightAll();
+}
+function lightAll() { for (const w of words) { w.el.classList.add("lit"); w.el.classList.remove("now"); } words = []; }
+let lastLine = -1;
+function readAlong(now) {
+  if (!words.length || o.dataset.s !== "speaking") return;
+  const t = (now - speakAt) / 1000; let cur = null;
+  for (const w of words) { const on = w.at <= t; w.el.classList.toggle("lit", on); if (on) cur = w; w.el.classList.remove("now"); }
+  if (cur) { cur.el.classList.add("now"); const y = cur.el.offsetTop; if (y !== lastLine && reply.classList.contains("long")) { lastLine = y; reply.scrollTop = Math.max(0, y - 30); } }
+}
+
+/* ---- one small loop while the bowl is up: your voice swells the halo, her made-up voice envelope works her mouth and lets bubbles go ---- */
+let raf = 0, smooth = 0, env = 0, envT = 0, envGoal = 0, lv = 0, bubAt = 0;
+const mouth = ORB.querySelector(".mouth");
+function feed(peak) {   // dB scale: room noise sits low, normal speech fills most of the range
+  const db = 20 * Math.log10(Math.max(peak, 1e-5)), v = Math.min(1, Math.max(0, (db + 54) / 42));
+  smooth = v > smooth ? v : smooth * .6 + v * .4;
+}
+function start() { if (!raf) raf = requestAnimationFrame(frame); }
+function stop() { cancelAnimationFrame(raf); raf = 0; }
+function frame(now) {
+  raf = requestAnimationFrame(frame);
+  const s = o.dataset.s, t = now / 1000;
+  if (s === "listening" && (preview || now - lastLevel > 400)) feed(preview ? fakeVoice(t) : .0004);   // no mic levels (preview, or the host isn't sending): quiet
+  if (t > envT) { const gap = Math.random() < .1; envGoal = gap ? .12 : .4 + Math.random() * .6; envT = t + (gap ? .16 + Math.random() * .14 : .09 + Math.random() * .1); }
+  env += (envGoal - env) * .28;
+  if (mouth) mouth.style.transform = s === "speaking" ? `scale(${.7 + env * .5}, ${.25 + env * 1.05})` : "";
+  if (s === "speaking" && env > .72 && now - bubAt > 300) { bubAt = now; blow(env); }   // Marina's words leave as bubbles
+  lv += ((s === "listening" ? smooth : s === "speaking" ? env * .6 : 0) - lv) * .25;
+  document.documentElement.style.setProperty("--lv", lv.toFixed(3));
+  readAlong(now);
+}
+function blow(e) {   // one bubble from Marina's mouth, wherever she is right now; removed when it has risen out
+  const m = mouth?.getBoundingClientRect(), b = ORB.getBoundingClientRect(); if (!m || !m.width) return;
+  const d = document.createElement("i"), r = 3 + e * 4;
+  d.className = "bub"; d.style.cssText = `width:${r}px;height:${r}px;left:${m.right - b.left - r / 2 + Math.random() * 2}px;top:${m.top - b.top - r}px`;
+  d.addEventListener("animationend", () => d.remove()); BUBS.append(d);
+}
+let fv = 0; function fakeVoice(t) { fv += ((Math.sin(t * 2.1) > -.3 ? .04 + .3 * Math.pow(Math.abs(Math.sin(t * 7.3)), 2) * Math.random() : .0006) - fv) * .7; return fv; }
+
+if (location.hash) {   // browser preview: #listening, #live, #thinking, #speaking, #done, #missed, #stopped; -<phase 0..7> picks a sun phase (3 = midday)
+  const [s, ph] = location.hash.slice(1).split("-"); preview = true; if (ph) FORCE = +ph;
+  const R = "Playing your Liked Songs on Spotify now. It's a long list, so I put it on shuffle. Want me to turn it up a bit, or leave it where it is?";
+  const go = () => { set({ state: "listening" });
+    if (s === "missed") set({ state: "done", said: "", reply: `Didn't catch that. Say “${WAKE}”, then what you want.` });
+    else if (s === "stopped") set({ state: "done", said: "Never mind" });
+    else if (s === "live") set({ state: "listening", said: "Open Spotify and play my liked songs on shuffle, and turn it up a bit" });   // live text mid-ask
+    else if (s !== "listening") set({ state: s, said: "Open Spotify and play my liked songs", reply: s === "speaking" || s === "done" ? R : "" });
+    clearTimeout(fade); };
+  let n = 0; const tryTint = () => PH || ++n > 10 ? (tint(), go()) : setTimeout(tryTint, 50); tryTint();
+}
+</script>
+</body></html>

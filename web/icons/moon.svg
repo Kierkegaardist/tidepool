@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><!-- Quiet hours moon, drawn in code by Alyosha -->
+<defs><radialGradient id="m" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#fffbe6"/><stop offset=".6" stop-color="#f2d27a"/><stop offset="1" stop-color="#b98a2a"/></radialGradient></defs>
+<path d="M84 14a52 52 0 1 0 30 76A44 44 0 0 1 84 14z" fill="url(#m)" stroke="#7a5a14" stroke-width="3"/>
+<circle cx="98" cy="30" r="4" fill="#fff"/><circle cx="110" cy="52" r="2.5" fill="#fff"/></svg>

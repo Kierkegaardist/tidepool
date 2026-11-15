@@ -1,0 +1,875 @@
+{
+ "_about": "Claude restyles Tidepool here. The page reads this at start and again when the host says it changed. See live/README.md.",
+ "vars": {
+  "--f-cap": "600 12.5px/1 Bahnschrift, var(--font)",
+  "--f-small": "400 15px/1.35 var(--font)",
+  "--f-body": "400 18px/1.45 var(--font)",
+  "--f-lead": "400 24px/1.3 var(--font)",
+  "--f-h2": "300 40px/1.1 var(--font)",
+  "--f-h1": "200 56px/1 var(--font)",
+  "--f-display": "200 80px/1 var(--font)",
+  "--glass-top": "rgba(34,46,60,.6)",
+  "--glass-bottom": "rgba(8,14,22,.78)",
+  "--glass-blur": "22px",
+  "--glass-edge": "rgba(255,255,255,.22)"
+ },
+ "rail": {
+  "home": [
+   "Home",
+   "orb.svg",
+   null
+  ],
+  "games": [
+   "Games",
+   "games.png",
+   [
+    [
+     "Skyrim (modded)",
+     "Mod Organizer 2 · played Tuesday",
+     {
+      "act": "game"
+     }
+    ],
+    [
+     "Steam",
+     "Open your library · 2 updates installed",
+     {
+      "ic": "@steam.svg"
+     }
+    ],
+    [
+     "Battle.net",
+     "Open the launcher · 3 friends online",
+     {
+      "ic": "@bnet.svg"
+     }
+    ],
+    [
+     "Epic",
+     "Open the launcher · a free game this week",
+     {
+      "ic": "@epic.svg"
+     }
+    ],
+    [
+     "Emulators",
+     "RetroArch and standalone cores",
+     {
+      "ic": "@emu.svg"
+     }
+    ],
+    [
+     "All games",
+     "Every library in one list, A to Z",
+     {
+      "ic": "@allgames.svg"
+     }
+    ]
+   ]
+  ],
+  "music": [
+   "Music",
+   "music.png",
+   [
+    [
+     "Now playing",
+     "",
+     {
+      "act": "music",
+      "run": 1
+     }
+    ],
+    [
+     "Sun mix",
+     "Picked for {p}",
+     {
+      "ic": "@mix.svg"
+     }
+    ],
+    [
+     "Playlists",
+     "Browse 11 playlists · 640 tracks",
+     {
+      "ic": "@playlist.svg"
+     }
+    ],
+    [
+     "Winamp skin",
+     "",
+     {
+      "act": "skin",
+      "ic": "@skin.svg"
+     }
+    ],
+    [
+     "Radio",
+     "Internet stations",
+     {
+      "ic": "@radio.svg"
+     }
+    ]
+   ]
+  ],
+  "video": [
+   "Video",
+   "@video.svg",
+   [
+    [
+     "Search",
+     "Search all of YouTube",
+     {
+      "act": "ytsearch",
+      "ic": "@search.svg"
+     }
+    ]
+   ]
+  ],
+  "studio": [
+   "Studio",
+   "studio.png",
+   [
+    [
+     "night drive v4.flp",
+     "FL Studio · yesterday 23:40",
+     {
+      "ic": "@flp.svg"
+     }
+    ],
+    [
+     "New project",
+     "Empty template",
+     {
+      "ic": "@newproj.svg"
+     }
+    ],
+    [
+     "Samples",
+     "E:\\Studio",
+     {
+      "ic": "@samples.svg"
+     }
+    ],
+    [
+     "Plugins",
+     "VST folders and presets",
+     {
+      "ic": "@plugins.svg"
+     }
+    ]
+   ]
+  ],
+  "web": [
+   "Web",
+   "web.png",
+   [
+    [
+     "Firefox",
+     "Back to your 6 tabs",
+     {
+      "run": 1
+     }
+    ],
+    [
+     "Mail",
+     "Read 2 new messages",
+     {
+      "ic": "@mail.svg"
+     }
+    ],
+    [
+     "YouTube",
+     "Subscriptions",
+     {
+      "ic": "@video.svg"
+     }
+    ],
+    [
+     "News",
+     "Today's headlines",
+     {
+      "ic": "@news.svg"
+     }
+    ]
+   ]
+  ],
+  "files": [
+   "Files",
+   "folder.png",
+   [
+    [
+     "Projects",
+     "E:\\Projects"
+    ],
+    [
+     "Downloads",
+     "3 new today",
+     {
+      "ic": "download.png"
+     }
+    ],
+    [
+     "User folders",
+     "E:\\Home · documents, pictures, music"
+    ],
+    [
+     "This PC",
+     "C: 41 GB free · E: 1.2 TB free"
+    ]
+   ]
+  ],
+  "settings": [
+   "Settings",
+   "@gear.svg",
+   [
+    [
+     "Scenes",
+     "",
+     {
+      "act": "scene",
+      "ic": "@scene"
+     }
+    ],
+    [
+     "Winamp skin",
+     "",
+     {
+      "act": "skin",
+      "ic": "@skin.svg"
+     }
+    ],
+    [
+     "Location and sun",
+     "Oslo · 59.91° N, 10.75° E",
+     {
+      "ic": "@pin.svg"
+     }
+    ],
+    [
+     "Quiet hours",
+     "At night · sounds off, glass dimmed",
+     {
+      "ic": "@moon.svg"
+     }
+    ],
+    [
+     "Controller",
+     "Connected",
+     {
+      "ic": "games.png"
+     }
+    ],
+    [
+     "Classic desktop",
+     "Back to stock Windows",
+     {
+      "act": "hatch",
+      "ic": "@window.svg"
+     }
+    ]
+   ]
+  ]
+ },
+ "scenes": [
+  {
+   "id": "lake",
+   "name": "Lake",
+   "where": "Lake McDonald, Montana",
+   "img": "assets/img/hero.jpg",
+   "hz": 385,
+   "water": 420,
+   "under": true,
+   "title": {
+    "b": 790
+   }
+  },
+  {
+   "id": "hill",
+   "name": "Hill",
+   "where": "Spaichingen, Germany",
+   "img": "assets/img/hill.jpg",
+   "hz": 565,
+   "ff": [
+    380,
+    620,
+    1000,
+    380
+   ],
+   "mask": "hill-sky.png"
+  },
+  {
+   "id": "meadow",
+   "name": "Meadow",
+   "where": "Gauteng, South Africa",
+   "img": "assets/img/meadow.jpg",
+   "hz": 770,
+   "ff": [
+    380,
+    800,
+    1000,
+    220
+   ]
+  },
+  {
+   "id": "shore",
+   "name": "Shore",
+   "where": "Free State, South Africa",
+   "img": "assets/img/shore.jpg",
+   "hz": 500,
+   "water": 566,
+   "title": {
+    "x": 470
+   }
+  },
+  {
+   "id": "valley",
+   "name": "Valley",
+   "where": "Graubünden, Switzerland",
+   "img": "assets/img/valley.jpg",
+   "hz": 575,
+   "ff": [
+    380,
+    640,
+    1000,
+    380
+   ]
+  }
+ ],
+ "phases": [
+  {
+   "id": "late_night",
+   "label": "Late night",
+   "base": "dark",
+   "scene": {
+    "skyTop": "#030814",
+    "skyMid": "#07162B",
+    "horizon": "#0C2A3A",
+    "water": "#03211F",
+    "waterDeep": "#010B0C",
+    "hill": "#0B3326",
+    "hillDeep": "#041A12",
+    "sun": "#FFD7A0",
+    "glow": "#3FE0D0",
+    "cloud": "#1A2A3A",
+    "cloudA": 0.35,
+    "stars": 1,
+    "bio": 1,
+    "caustic": 0.04,
+    "bubbles": 0.25,
+    "fireflies": 0.9,
+    "motion": 0.4
+   },
+   "glass": {
+    "rgb": [
+     184,
+     255,
+     224
+    ],
+    "a": 0.1,
+    "edge": 0.3
+   },
+   "tc": {
+    "window": "#020E0A",
+    "panel": "#071A17",
+    "surface": "#0B2A24",
+    "surface_hover": "#103630",
+    "surface_active": "#16453D",
+    "outline": "#1F5A4F",
+    "text": "#DFFBF3",
+    "secondary": "#9FD8C8",
+    "dim": "#6E9E92",
+    "accent": "#3FE0D0",
+    "accent_hover": "#66E8DB",
+    "on_accent": "#02130F",
+    "danger": "#FF6B6B",
+    "warning": "#E8FF8A"
+   },
+   "ui": {
+    "select": "studio",
+    "greet": "It's late. Sunrise is at {rise}.",
+    "track": "Lantern Fish (sleep mix)",
+    "note": "Downloads wait for morning"
+   },
+   "grade": {
+    "b": 0.22,
+    "s": 0.6,
+    "c": 1.15,
+    "hue": 0,
+    "skyA": 0.9,
+    "light": "#0E3A3C",
+    "lightA": 0.6,
+    "waterA": 0.7,
+    "rays": 0,
+    "city": 0.85
+   }
+  },
+  {
+   "id": "dawn",
+   "label": "Dawn",
+   "base": "light",
+   "scene": {
+    "skyTop": "#2B3A78",
+    "skyMid": "#B98AC9",
+    "horizon": "#FFB4A2",
+    "water": "#4E6E9E",
+    "waterDeep": "#1E2F55",
+    "hill": "#5E8F6A",
+    "hillDeep": "#2F5A45",
+    "sun": "#FFD1B0",
+    "glow": "#FF9FB0",
+    "cloud": "#F7C6D0",
+    "cloudA": 0.85,
+    "stars": 0.2,
+    "bio": 0.15,
+    "caustic": 0.12,
+    "bubbles": 0.6,
+    "fireflies": 0.15,
+    "motion": 0.6
+   },
+   "glass": {
+    "rgb": [
+     255,
+     240,
+     245
+    ],
+    "a": 0.32,
+    "edge": 0.7
+   },
+   "tc": {
+    "window": "#FFF1F0",
+    "panel": "#FBE3EA",
+    "surface": "#FFFFFF",
+    "surface_hover": "#FFF0F3",
+    "surface_active": "#F6D6E2",
+    "outline": "#E3B7C9",
+    "text": "#2A2350",
+    "secondary": "#5A4E86",
+    "dim": "#8E84B0",
+    "accent": "#E86FA0",
+    "accent_hover": "#F087B1",
+    "on_accent": "#FFFFFF",
+    "danger": "#D9455F",
+    "warning": "#E89B3C"
+   },
+   "ui": {
+    "select": "music",
+    "greet": "Good morning. The sun comes up at {rise}; today has {daylen} of daylight.",
+    "track": "First Light",
+    "note": "Quiet hours are over"
+   },
+   "grade": {
+    "b": 0.78,
+    "s": 0.9,
+    "c": 1,
+    "hue": 0,
+    "skyA": 0.7,
+    "light": "#E6A2C6",
+    "lightA": 0.42,
+    "waterA": 0.4,
+    "rays": 0.12,
+    "city": 0.3
+   }
+  },
+  {
+   "id": "morning",
+   "label": "Morning",
+   "base": "light",
+   "scene": {
+    "skyTop": "#4FB8FF",
+    "skyMid": "#A8E4FF",
+    "horizon": "#F2FBFF",
+    "water": "#19A3D1",
+    "waterDeep": "#00628F",
+    "hill": "#8CE068",
+    "hillDeep": "#3AA548",
+    "sun": "#FFF6D8",
+    "glow": "#FFF2B0",
+    "cloud": "#FFFFFF",
+    "cloudA": 0.9,
+    "stars": 0,
+    "bio": 0,
+    "caustic": 0.3,
+    "bubbles": 1,
+    "fireflies": 0,
+    "motion": 1
+   },
+   "glass": {
+    "rgb": [
+     255,
+     255,
+     255
+    ],
+    "a": 0.3,
+    "edge": 0.75
+   },
+   "tc": {
+    "window": "#EEFAFF",
+    "panel": "#DDF4FF",
+    "surface": "#FFFFFF",
+    "surface_hover": "#EEF9FF",
+    "surface_active": "#CBEFFF",
+    "outline": "#A3DCF5",
+    "text": "#06324A",
+    "secondary": "#2C6280",
+    "dim": "#6B97B0",
+    "accent": "#00B4E6",
+    "accent_hover": "#22C2EE",
+    "on_accent": "#FFFFFF",
+    "danger": "#E5484D",
+    "warning": "#F5A524"
+   },
+   "ui": {
+    "select": "web",
+    "greet": "Morning. Sunset today is at {set}.",
+    "track": "Bubble Dream",
+    "note": "2 updates installed overnight"
+   },
+   "grade": {
+    "b": 1,
+    "s": 1.05,
+    "c": 1,
+    "hue": -4,
+    "skyA": 0.12,
+    "light": "#FFF4E0",
+    "lightA": 0.12,
+    "waterA": 0.08,
+    "rays": 0.35,
+    "city": 0
+   }
+  },
+  {
+   "id": "midday",
+   "label": "Midday",
+   "base": "light",
+   "scene": {
+    "skyTop": "#2E9BFF",
+    "skyMid": "#7FD0FF",
+    "horizon": "#E3F7FF",
+    "water": "#0096C7",
+    "waterDeep": "#004E7A",
+    "hill": "#7ED957",
+    "hillDeep": "#2E9E3E",
+    "sun": "#FFFFFF",
+    "glow": "#FFF8D0",
+    "cloud": "#FFFFFF",
+    "cloudA": 0.95,
+    "stars": 0,
+    "bio": 0,
+    "caustic": 0.38,
+    "bubbles": 1,
+    "fireflies": 0,
+    "motion": 1.1
+   },
+   "glass": {
+    "rgb": [
+     255,
+     255,
+     255
+    ],
+    "a": 0.28,
+    "edge": 0.8
+   },
+   "tc": {
+    "window": "#E9FAFF",
+    "panel": "#D3F1FF",
+    "surface": "#FFFFFF",
+    "surface_hover": "#EAF8FF",
+    "surface_active": "#C6ECFF",
+    "outline": "#9BD8F2",
+    "text": "#06324A",
+    "secondary": "#2C6280",
+    "dim": "#6B97B0",
+    "accent": "#00A8E8",
+    "accent_hover": "#22B8F0",
+    "on_accent": "#FFFFFF",
+    "danger": "#E5484D",
+    "warning": "#F5A524"
+   },
+   "ui": {
+    "select": "games",
+    "greet": "Midday. The sun is as high as it gets today. Sunset at {set}.",
+    "track": "Bubble Dream (2003 mix)",
+    "note": "Steam · 2.1 GB · 4 min left"
+   },
+   "grade": {
+    "b": 1.05,
+    "s": 1.12,
+    "c": 1.04,
+    "hue": 0,
+    "skyA": 0,
+    "light": "#FFFFFF",
+    "lightA": 0,
+    "waterA": 0,
+    "rays": 0.5,
+    "city": 0
+   }
+  },
+  {
+   "id": "afternoon",
+   "label": "Afternoon",
+   "base": "light",
+   "scene": {
+    "skyTop": "#4AA8F0",
+    "skyMid": "#A6DAF5",
+    "horizon": "#F5F1DC",
+    "water": "#1792B8",
+    "waterDeep": "#075478",
+    "hill": "#8BCF55",
+    "hillDeep": "#3D8F35",
+    "sun": "#FFF3C4",
+    "glow": "#FFE59A",
+    "cloud": "#FFFBEE",
+    "cloudA": 0.9,
+    "stars": 0,
+    "bio": 0,
+    "caustic": 0.32,
+    "bubbles": 0.9,
+    "fireflies": 0,
+    "motion": 0.9
+   },
+   "glass": {
+    "rgb": [
+     250,
+     255,
+     248
+    ],
+    "a": 0.3,
+    "edge": 0.75
+   },
+   "tc": {
+    "window": "#F4FAF7",
+    "panel": "#E6F3EE",
+    "surface": "#FFFFFF",
+    "surface_hover": "#F1F9F6",
+    "surface_active": "#D3EDE4",
+    "outline": "#A9D6C6",
+    "text": "#0A3442",
+    "secondary": "#2F6474",
+    "dim": "#6F98A4",
+    "accent": "#19A974",
+    "accent_hover": "#2DBB86",
+    "on_accent": "#FFFFFF",
+    "danger": "#E5484D",
+    "warning": "#F5A524"
+   },
+   "ui": {
+    "select": "games",
+    "greet": "Afternoon. Golden hour starts at {golden}. Want some music for it?",
+    "track": "Lazy Current",
+    "note": "Everything is up to date"
+   },
+   "grade": {
+    "b": 1,
+    "s": 1.06,
+    "c": 1.02,
+    "hue": 0,
+    "skyA": 0.15,
+    "light": "#FFEFC8",
+    "lightA": 0.2,
+    "waterA": 0.1,
+    "rays": 0.4,
+    "city": 0
+   }
+  },
+  {
+   "id": "golden",
+   "label": "Golden hour",
+   "base": "light",
+   "scene": {
+    "skyTop": "#3E6FB8",
+    "skyMid": "#F2B36B",
+    "horizon": "#FFD98A",
+    "water": "#C9844A",
+    "waterDeep": "#3E3F6A",
+    "hill": "#9AA83E",
+    "hillDeep": "#4E6A2A",
+    "sun": "#FFE7A0",
+    "glow": "#FFB347",
+    "cloud": "#FFD0A0",
+    "cloudA": 0.95,
+    "stars": 0,
+    "bio": 0,
+    "caustic": 0.25,
+    "bubbles": 0.7,
+    "fireflies": 0.1,
+    "motion": 0.7
+   },
+   "glass": {
+    "rgb": [
+     255,
+     236,
+     205
+    ],
+    "a": 0.32,
+    "edge": 0.7
+   },
+   "tc": {
+    "window": "#FFF6E8",
+    "panel": "#FCE9CF",
+    "surface": "#FFFDF8",
+    "surface_hover": "#FFF3E0",
+    "surface_active": "#F7DDB5",
+    "outline": "#E5BE87",
+    "text": "#3A2410",
+    "secondary": "#6E4A26",
+    "dim": "#9E7E5C",
+    "accent": "#FF8A1E",
+    "accent_hover": "#FF9E45",
+    "on_accent": "#FFFFFF",
+    "danger": "#D9452B",
+    "warning": "#E8A100"
+   },
+   "ui": {
+    "select": "music",
+    "greet": "Golden hour. Sunset at {set}; the light turns amber now.",
+    "track": "Amber Lake",
+    "note": "Everything is up to date"
+   },
+   "grade": {
+    "b": 0.95,
+    "s": 1.18,
+    "c": 1.05,
+    "hue": -8,
+    "skyA": 0.62,
+    "light": "#FFB060",
+    "lightA": 0.45,
+    "waterA": 0.3,
+    "rays": 0.3,
+    "city": 0.05
+   }
+  },
+  {
+   "id": "dusk",
+   "label": "Dusk",
+   "base": "dark",
+   "scene": {
+    "skyTop": "#1C2659",
+    "skyMid": "#6A4C9C",
+    "horizon": "#F08A6B",
+    "water": "#3B3F7A",
+    "waterDeep": "#141A3E",
+    "hill": "#2F5A4E",
+    "hillDeep": "#15302B",
+    "sun": "#FF9A7A",
+    "glow": "#FF7A8A",
+    "cloud": "#B07AA8",
+    "cloudA": 0.8,
+    "stars": 0.35,
+    "bio": 0.3,
+    "caustic": 0.1,
+    "bubbles": 0.5,
+    "fireflies": 0.5,
+    "motion": 0.6
+   },
+   "glass": {
+    "rgb": [
+     220,
+     200,
+     255
+    ],
+    "a": 0.16,
+    "edge": 0.45
+   },
+   "tc": {
+    "window": "#120F2A",
+    "panel": "#1B1840",
+    "surface": "#262256",
+    "surface_hover": "#2F2A66",
+    "surface_active": "#3A347A",
+    "outline": "#4A4290",
+    "text": "#F3E9FF",
+    "secondary": "#C7B5E8",
+    "dim": "#9286B8",
+    "accent": "#FF8FB1",
+    "accent_hover": "#FFA6C1",
+    "on_accent": "#1B0F2A",
+    "danger": "#FF6B6B",
+    "warning": "#FFC46B"
+   },
+   "ui": {
+    "select": "studio",
+    "greet": "Dusk. The glass has gone to evening. Sunrise tomorrow is at {rise}.",
+    "track": "Violet Shore",
+    "note": "1 download queued"
+   },
+   "grade": {
+    "b": 0.56,
+    "s": 0.85,
+    "c": 1.05,
+    "hue": 0,
+    "skyA": 0.8,
+    "light": "#7A5AB0",
+    "lightA": 0.52,
+    "waterA": 0.55,
+    "rays": 0,
+    "city": 0.7
+   }
+  },
+  {
+   "id": "night",
+   "label": "Night",
+   "base": "dark",
+   "scene": {
+    "skyTop": "#06102A",
+    "skyMid": "#10245A",
+    "horizon": "#2A3F7A",
+    "water": "#0A2A4A",
+    "waterDeep": "#031426",
+    "hill": "#123A36",
+    "hillDeep": "#07201C",
+    "sun": "#FFD7A0",
+    "glow": "#6FA8FF",
+    "cloud": "#2C3E66",
+    "cloudA": 0.5,
+    "stars": 0.85,
+    "bio": 0.65,
+    "caustic": 0.06,
+    "bubbles": 0.35,
+    "fireflies": 0.8,
+    "motion": 0.5
+   },
+   "glass": {
+    "rgb": [
+     160,
+     190,
+     255
+    ],
+    "a": 0.13,
+    "edge": 0.35
+   },
+   "tc": {
+    "window": "#060E22",
+    "panel": "#0B1833",
+    "surface": "#12244A",
+    "surface_hover": "#1A2F5A",
+    "surface_active": "#223C6E",
+    "outline": "#2D4A80",
+    "text": "#E3ECFF",
+    "secondary": "#A9BCE6",
+    "dim": "#7489B5",
+    "accent": "#6FC3FF",
+    "accent_hover": "#8FD2FF",
+    "on_accent": "#04112A",
+    "danger": "#FF6B7A",
+    "warning": "#FFD27A"
+   },
+   "ui": {
+    "select": "games",
+    "greet": "Good evening. Sunrise tomorrow is around {rise}.",
+    "track": "Moon Pool",
+    "note": "3 friends online"
+   },
+   "grade": {
+    "b": 0.32,
+    "s": 0.7,
+    "c": 1.1,
+    "hue": 0,
+    "skyA": 0.85,
+    "light": "#2A3F80",
+    "lightA": 0.58,
+    "waterA": 0.6,
+    "rays": 0,
+    "city": 1
+   }
+  }
+ ]
+}
