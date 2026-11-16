@@ -18,6 +18,9 @@ static class Program
     [STAThread]
     static int Main(string[] args)
     {
+        // Started once from a VS Code / Claude terminal, the desktop inherits ELECTRON_RUN_AS_NODE=1 and hands it to everything it launches,
+        // so VS Code (and any Electron app) starts as bare Node and quits at once. Nothing here needs it.
+        Environment.SetEnvironmentVariable("ELECTRON_RUN_AS_NODE", null);
         var mode = args.FirstOrDefault() ?? "";
         if (mode == "--selftest") return Sun.SelfTest() & Library.SelfTest() ? 0 : 1;
         if (mode == "--spotify")

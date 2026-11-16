@@ -11,13 +11,16 @@ namespace ConsoleDesktop;
 ///  - a new one opens where the last one was left (screen, size, maximized; app\.popout.json);
 ///  - flick: let go of the title bar mid-throw toward another screen and it glides there and fills it; thrown up, it fills its own screen;
 ///  - the page can open it filling a given screen (`to`: the other screen, or the one it was flicked toward in the menu);
-///  - in the window: F / double-click = full screen on its screen, S = to the next screen, T = on top or not, Ctrl+W = close.
-/// It stays on top while floating (picture in picture) but not once it fills a screen, so windows dragged over to that screen are not hidden
-/// under it. A pop-out that fills a screen counts as covering it (Host.CheckCovers), so that screen's desktop pauses like under any window.
+///  - in the window: F / double-click = full screen on its screen, S = to the next screen, 1-9 / the screen picker = to that screen, T = on top or not,
+///    ▭ Page view = back into the Video tab (watch page, Up next) at the same second, Ctrl+W = close.
+/// It stays on top only while floating and pinned (picture in picture). Filling a screen or full screen it is part of that screen's desktop
+/// (user, 16 Nov: "more your desktop than a window above it"), so any window can cover it. A pop-out that fills a screen counts as covering it (Host.CheckCovers), so that screen's desktop pauses like under any window.
 /// The page hands it the stream urls it already has (host.yt.pop), so it starts without another yt-dlp run.</summary>
 sealed class PopOut : Form
 {
     const int Most = 4;
+    /// <summary>▭ Page view: (the point the window was on, { id, t }); Host lifts the menu there and the page plays it in the Video tab.</summary>
+    public static Action<Point, object>? Back;
     static readonly List<PopOut> all = new();
     static string StateFile => Path.Combine(Paths.App, ".popout.json");
     record Place(int x, int y, int w, int h, bool max, bool pin);
@@ -92,15 +95,25 @@ sealed class PopOut : Form
             w.Settings.AreDefaultContextMenusEnabled = false; w.Settings.IsStatusBarEnabled = false; w.Settings.IsZoomControlEnabled = false;
             w.SetVirtualHostNameToFolderMapping("app.local", Paths.Web, CoreWebView2HostResourceAccessKind.Allow);
             w.DocumentTitleChanged += (_, _) => Text = w.DocumentTitle;
+            w.ContainsFullScreenElementChanged += (_, _) => Full(w.ContainsFullScreenElement);   // YouTube's own player (embed) asked for full screen: the window goes full screen with it
             w.NavigationCompleted += (_, _) => { ready = true; if (pending != null) w.PostWebMessageAsJson(pending); pending = null; Tell(); };
             w.WebMessageReceived += (_, e) =>
             {
-                string op = ""; try { using var d = JsonDocument.Parse(e.WebMessageAsJson); op = d.RootElement.GetProperty("op").GetString() ?? ""; } catch { }
+                string op = ""; int i = -1; double t = 0;
+                try
+                {
+                    using var d = JsonDocument.Parse(e.WebMessageAsJson); var r = d.RootElement; op = r.GetProperty("op").GetString() ?? "";
+                    if (r.TryGetProperty("i", out var iv)) i = iv.GetInt32();
+                    if (r.TryGetProperty("t", out var tv)) t = tv.GetDouble();
+                }
+                catch { }
                 switch (op)
                 {
                     case "full": Full(!full); break;
                     case "unfull": if (full) Full(false); break;
                     case "next": Next(); break;
+                    case "to": if (i >= 0 && i < Screens.Length) MoveTo(Screens[i]); break;
+                    case "back": var at = new Point(Bounds.X + Bounds.Width / 2, Bounds.Y + Bounds.Height / 2); Close(); Back?.Invoke(at, new { id, t }); break;
                     case "pin": pin = !pin; OnTop(); Save(); break;
                     case "close": Close(); break;
                 }
@@ -118,10 +131,15 @@ sealed class PopOut : Form
         if (all.Count > 1) BringToFront();
     }
 
-    /// <summary>On top while floating (or pinned full screen); not once it fills a screen, unless T pinned it there too.</summary>
     string ScreenName() => Screen.FromControl(this).DeviceName;
-    void OnTop() { TopMost = full || (pin && WindowState == FormWindowState.Normal); Tell(); }
-    void Tell() { if (ready) try { view.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new { state = new { pin, full, max = WindowState == FormWindowState.Maximized } })); } catch { } }
+    /// <summary>On top only while floating and pinned (T); filling a screen or full screen it sits in that screen's desktop, coverable like any window.</summary>
+    void OnTop() { TopMost = !full && pin && WindowState == FormWindowState.Normal; Tell(); }
+    void Tell()
+    {
+        if (!ready) return;
+        var ss = Screens; int scr = Array.FindIndex(ss, s => s.DeviceName == ScreenName());
+        try { view.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new { state = new { pin, full, max = WindowState == FormWindowState.Maximized, scr, n = ss.Length } })); } catch { }
+    }
 
     // ---- moving between screens ----
     static Screen[] Screens => Screen.AllScreens.OrderBy(s => s.Bounds.X).ThenBy(s => s.Bounds.Y).ToArray();
@@ -137,11 +155,17 @@ sealed class PopOut : Form
         if (glide && Visible) Glide(to.WorkingArea, done); else { Bounds = Centered(to.WorkingArea, Size); done(); }
     }
 
-    /// <summary>S / the ⇆ button: to the next screen, as it is (full screen stays full screen, filling stays filling, floating keeps its spot).</summary>
+    /// <summary>S: to the next screen.</summary>
     void Next()
     {
         var ss = Screens; if (ss.Length < 2) return;
-        var here = Screen.FromControl(this); var to = ss[(Array.FindIndex(ss, s => s.DeviceName == here.DeviceName) + 1) % ss.Length];
+        MoveTo(ss[(Array.FindIndex(ss, s => s.DeviceName == ScreenName()) + 1) % ss.Length]);
+    }
+
+    /// <summary>The screen picker / 1-9: to that screen, as it is (full screen stays full screen, filling stays filling, floating keeps its spot).</summary>
+    void MoveTo(Screen to)
+    {
+        var here = Screen.FromControl(this); if (here.DeviceName == to.DeviceName) return;
         if (full) { Bounds = to.Bounds; Save(); return; }
         if (WindowState == FormWindowState.Maximized) { Fill(to); return; }
         var r = Bounds; r.Offset(to.WorkingArea.X - here.WorkingArea.X, to.WorkingArea.Y - here.WorkingArea.Y);
@@ -220,6 +244,7 @@ sealed class PopOut : Form
     // ---- where it was left ----
     void Save()
     {
+        Tell();   // the screen picker follows where it went
         if (full || WindowState == FormWindowState.Minimized) { if (full && saved != null) saved = saved with { pin = pin }; return; }
         var max = WindowState == FormWindowState.Maximized; var r = max ? RestoreBounds : Bounds;
         if (max) { var wa = Screen.FromControl(this).WorkingArea; r = Centered(wa, r.Size); }   // restore it on the screen it filled

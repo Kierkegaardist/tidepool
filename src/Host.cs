@@ -64,6 +64,7 @@ sealed class Host : ApplicationContext
         spotify = new Spotify((t, v) => scenes[0].BeginInvoke(() => Broadcast(t, v)));
         voice = new Voice((t, v) => { if (t == "wake") Tts.Warm(); scenes[0].BeginInvoke(() => Broadcast(t, v)); }) { Level = l => overlay.BeginInvoke(() => overlay.Level(l)) };   // "Hey Marina": load the read-aloud voice (Tts.cs) while the ask is still being said
         input = new Input(() => scenes[0].BeginInvoke(() => ToggleMenu("PS button")), keys => scenes[0].BeginInvoke(() => lifted?.Send("pad", keys)));
+        PopOut.Back = (at, v) => { if (lifted == null) Lift(scenes.FirstOrDefault(s => s.Screen.Bounds.Contains(at))); lifted!.Send("yt-back", v); };   // the video window's ▭ Page view: back into the Video tab, on its screen
         spectrum = new Spectrum(v => { try { scenes[0].BeginInvoke(() => { foreach (var s in scenes) if (s.WantSpectrum && !s.Covered) s.Send("spectrum", v); }); } catch { } });   // the horizon visualizer (Spectrum.cs, web/horizon.js)
 
         WatchWindows();

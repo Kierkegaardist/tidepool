@@ -52,14 +52,31 @@
     const warm = Math.min(1, Math.max(0, (glow[0] - glow[2]) / 120)) * Math.min(1, Math.max(0, (1.04 - gb) / .25));   // golden hour and dusk: a warm glow on a sky that is no longer midday-bright
     return { night, warm, day: Math.max(0, 1 - night - warm), glow, acc };
   }
-  function makeSprite(L) {   // one vertical strip of light, bottom bright to top clear; stretched per column (no per-frame gradients)
-    const key = L.glow + "|" + L.acc + "|" + L.warm.toFixed(2);
+  /* the palettes: real aurora washes between hues along the arc (green core, red/magenta tops, violet and pink fringes). Each time of day has
+     its own four {foot, mid, top} washes, blended by the phase weights; columns drift between them (user, 16 Nov: "too monocoloured"). */
+  const PAL = {
+    night: [[[90,255,150],[60,230,140],[230,60,110]], [[70,240,200],[60,170,220],[150,80,240]], [[120,255,120],[200,90,220],[255,70,150]], [[110,140,255],[150,90,255],[255,90,170]]],
+    dawn:  [[[255,200,170],[255,140,170],[180,110,230]], [[255,225,150],[255,170,120],[255,110,150]], [[200,255,210],[150,220,255],[200,140,255]], [[255,170,210],[230,120,220],[140,110,255]]],
+    dusk:  [[[255,190,110],[255,120,90],[200,70,160]], [[255,150,170],[230,90,170],[120,70,220]], [[255,220,130],[255,160,80],[230,80,90]], [[240,120,200],[170,90,230],[80,90,220]]],
+    day:   [[[230,250,255],[170,220,255],[140,180,255]], [[255,245,220],[200,240,235],[150,210,240]], [[235,225,255],[190,190,255],[150,160,255]], [[220,255,240],[160,235,225],[130,200,250]]],
+  };
+  const K = 4;
+  function makeSprite(L) {   // an atlas of K vertical strips (one per wash), bottom bright to top clear; stretched per column (no per-frame gradients)
+    const dawn = new Date().getHours() < 12, key = L.glow + "|" + L.night.toFixed(2) + "|" + L.warm.toFixed(2) + "|" + dawn;
     if (key === spriteKey) return sprite;
-    spriteKey = key; sprite ??= document.createElement("canvas"); sprite.width = 4; sprite.height = 128;
-    const g = sprite.getContext("2d"), gr = g.createLinearGradient(0, 0, 0, 128), c = (a, k) => `rgba(${a[0]},${a[1]},${a[2]},${k})`;
-    const top = L.acc.map((x, i) => x * .6 + L.glow[i] * .4), pale = L.glow.map(x => x + (255 - x) * (.35 + .35 * L.warm));   // golden hour's pillars burn whiter at the foot
-    gr.addColorStop(0, c(top, 0)); gr.addColorStop(.22, c(top, .4)); gr.addColorStop(.55, c(L.glow, .9)); gr.addColorStop(.85, c(pale, 1)); gr.addColorStop(1, c(pale, .9));   // most of the foot is behind the ridge: the body has to carry
-    g.clearRect(0, 0, 4, 128); g.fillStyle = gr; g.fillRect(0, 0, 4, 128);
+    spriteKey = key; sprite ??= document.createElement("canvas"); sprite.width = 4 * K; sprite.height = 128;
+    const g = sprite.getContext("2d"), c = (a, k) => `rgba(${a.map(Math.round)},${k})`, warmP = dawn ? PAL.dawn : PAL.dusk;
+    g.clearRect(0, 0, 4 * K, 128);
+    for (let k = 0; k < K; k++) {
+      const mix = j => [0, 1, 2].map(i => {   // phase weights, plus a fifth of the scene's own glow so the light still belongs to the picture
+        const v = (PAL.night[k][j][i] * L.night + warmP[k][j][i] * L.warm + PAL.day[k][j][i] * L.day) / (L.night + L.warm + L.day || 1);
+        return v * .8 + L.glow[i] * .2;
+      });
+      const foot = mix(0), mid = mix(1), top = mix(2), pale = foot.map(x => x + (255 - x) * .25 * L.warm);   // golden hour's pillars burn whiter at the foot
+      const gr = g.createLinearGradient(0, 0, 0, 128);
+      gr.addColorStop(0, c(top, 0)); gr.addColorStop(.22, c(top, .45)); gr.addColorStop(.5, c(mid, .9)); gr.addColorStop(.82, c(foot, 1)); gr.addColorStop(1, c(pale, .9));   // most of the foot is behind the ridge: the body has to carry
+      g.fillStyle = gr; g.fillRect(4 * k, 0, 4, 128);
+    }
     return sprite;
   }
 
@@ -119,9 +136,10 @@
       const a = a0 * env * (L.night * (.35 + .65 * fold) * ray + pil * (.08 + .92 * pillar) + L.day * (.4 + .6 * fold)) / mixw;
       const h = CH * Math.min(1, (.14 + .95 * v) * (.75 + .25 * env)) * ((pil * (.5 + .6 * pillar) + L.day * .8 + L.night) / mixw);
       if (a < .004 || h < 1) continue;
-      g.globalAlpha = Math.min(1, a * (.45 + .55 * v));
-      const y = Math.round(CH - h - 3 * Math.sin(wx * .0025 + t * .3));
-      g.drawImage(S, 0, 0, S.width, 128, x, y, step, CH + 6 - y);
+      const al = Math.min(1, a * (.45 + .55 * v)), y = Math.round(CH - h - 3 * Math.sin(wx * .0025 + t * .3));
+      const p = (.5 + .5 * Math.sin(wx * .0016 + t * .06 + 1.6 * Math.sin(wx * .00055 - t * .045))) * (K - 1), k0 = Math.floor(p), f = p - k0;   // the wash drifts slowly along the arc
+      g.globalAlpha = al * (1 - f); g.drawImage(S, 4 * k0, 0, 4, 128, x, y, step, CH + 6 - y);
+      if (f > .02) { g.globalAlpha = al * f; g.drawImage(S, 4 * Math.min(K - 1, k0 + 1), 0, 4, 128, x, y, step, CH + 6 - y); }
     }
     g.globalAlpha = 1; g.globalCompositeOperation = "source-over";
     if (T.rg) {   // the water's copy: upside down and squashed, each row shifted by a ripple

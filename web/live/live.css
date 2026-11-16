@@ -261,3 +261,29 @@
 .s1:not(.s2cov) .ui:not(.cl-on):not(.m-idle) .npcap.on{display:flex}
 .ui[data-base=light] .npcap{color:var(--text);background:linear-gradient(180deg,rgba(255,255,255,.75),rgba(255,255,255,.45));box-shadow:inset 0 0 0 1px rgba(255,255,255,.9),0 0 0 1px rgba(0,40,70,.08),0 12px 30px -12px rgba(0,30,60,.35)}
 .ui[data-base=light] .npcap span{text-shadow:none}
+
+/* ---- Aero gel buttons (user 16 Nov: the flat ring-outlined pills read 2020s, not Frutiger Aero) ----
+   glossy top half, accent glow pooled at the bottom, bright top rim, small drop shadow; the active/primary ones are full accent gel */
+.ui :is(.deck .chips.spa i,.deck .chips i.pick,.deck .npc i:not(.big),.sorts .chip:not(.on),.cl .chip,.cl .compose .cib,.ytp .ytb,.ytp #ytx,.deck .ytcn){
+  color:#fff;text-shadow:0 1px 2px rgba(0,15,30,.7);border:1px solid rgba(255,255,255,.3);border-top-color:rgba(255,255,255,.75);
+  background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,.14) 48%,rgba(255,255,255,0) 52%),
+    radial-gradient(110% 70% at 50% 115%,color-mix(in srgb,var(--accent) 55%,transparent),transparent 70%),
+    linear-gradient(180deg,rgba(60,95,130,.5),rgba(8,24,44,.6));
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.55),inset 0 -1px 2px color-mix(in srgb,var(--accent) 40%,transparent),0 2px 5px rgba(0,10,25,.45);
+  transition:filter .15s,box-shadow .15s,transform .1s}
+.ui :is(.deck .npc i.big,.sorts .chip.on,.cl .send){
+  color:#fff;text-shadow:0 1px 2px rgba(0,25,45,.55);border:1px solid color-mix(in srgb,var(--accent) 45%,#fff);
+  background:linear-gradient(180deg,rgba(255,255,255,.65),rgba(255,255,255,.2) 48%,rgba(255,255,255,0) 52%),
+    radial-gradient(100% 60% at 50% 105%,color-mix(in srgb,var(--accent) 50%,#fff),transparent 70%),
+    linear-gradient(180deg,color-mix(in srgb,var(--accent) 75%,#000),var(--accent));
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.8),0 0 14px color-mix(in srgb,var(--accent) 55%,transparent),0 2px 5px rgba(0,10,25,.4);
+  transition:filter .15s,box-shadow .15s,transform .1s}
+.ui :is(.deck .chips.spa i,.deck .chips i.pick,.deck .npc i,.sorts .chip,.cl .chip,.cl .compose .cib,.cl .send,.ytp .ytb,.ytp #ytx,.deck .ytcn):hover{
+  filter:brightness(1.18) saturate(1.1);transform:none;box-shadow:inset 0 1px 1px rgba(255,255,255,.7),0 0 16px color-mix(in srgb,var(--accent) 60%,transparent),0 2px 5px rgba(0,10,25,.4)}
+.ui :is(.deck .chips.spa i,.deck .chips i.pick,.deck .npc i,.sorts .chip,.cl .chip,.cl .compose .cib,.cl .send,.ytp .ytb,.ytp #ytx,.deck .ytcn):active{filter:brightness(.88);transform:translateY(1px)}
+/* light base: same gel, pale body */
+.ui[data-base=light] :is(.deck .chips.spa i,.deck .chips i.pick,.deck .npc i:not(.big),.sorts .chip:not(.on),.cl .chip,.cl .compose .cib,.ytp .ytb,.deck .ytcn){
+  color:var(--text);text-shadow:0 1px 0 rgba(255,255,255,.8);border-color:rgba(0,50,90,.22);border-top-color:rgba(255,255,255,.95);
+  background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,.6) 48%,rgba(255,255,255,.25) 52%),
+    radial-gradient(110% 70% at 50% 115%,color-mix(in srgb,var(--accent) 40%,transparent),transparent 70%),
+    linear-gradient(180deg,rgba(225,240,250,.8),rgba(180,210,232,.8))}

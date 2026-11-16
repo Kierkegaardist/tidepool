@@ -58,8 +58,19 @@ sealed class Claude : IChat
 
     public Claude(Action<string, object?> send) { this.send = send; lock (gate) { cur = new Chat(); chats.Add(cur); Boot(cur); } watch = new System.Threading.Timer(_ => Watch(), null, 10_000, 10_000); }
 
-    public static string? Exe => new[] { Environment.GetEnvironmentVariable("USERPROFILE") + @"\.local\bin\claude.exe" }
-        .Concat((Environment.GetEnvironmentVariable("PATH") ?? "").Split(';').Select(d => Path.Combine(d, "claude.exe"))).FirstOrDefault(File.Exists);
+    /// <summary>claude.exe (native installer, winget, PATH), else an npm install's own entry point (its bundled claude.exe, or cli.js run with node),
+    /// found next to the claude.cmd npm puts on PATH. The .cmd itself is never run: cmd.exe mangles the multi-line arguments.</summary>
+    public static string? Exe
+    {
+        get
+        {
+            var path = (Environment.GetEnvironmentVariable("PATH") ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries).Select(d => d.Trim()).ToList();
+            var npm = path.Append(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "npm")).Where(d => File.Exists(Path.Combine(d, "claude.cmd")))
+                .Select(d => Path.Combine(d, @"node_modules\@anthropic-ai\claude-code"));
+            return new[] { Environment.GetEnvironmentVariable("USERPROFILE") + @"\.local\bin\claude.exe" }.Concat(path.Select(d => Path.Combine(d, "claude.exe")))
+                .Concat(npm.SelectMany(p => new[] { Path.Combine(p, @"bin\claude.exe"), Path.Combine(p, "cli.js") })).FirstOrDefault(File.Exists);
+        }
+    }
 
     string Key(Chat c) => $"{model}/{c.Run}/{mode}/{c.Id}/{c.Used}";
 
@@ -199,8 +210,11 @@ sealed class Claude : IChat
     {
         var old = c.Warm; c.Warm = null; Kill(old);   // detached first, so its exit is not read as an ask's end
         if (Exe is not { } exe) return;
-        var psi = new ProcessStartInfo(exe) { WorkingDirectory = Home, UseShellExecute = false, CreateNoWindow = true, RedirectStandardInput = true, RedirectStandardOutput = true,
+        var js = exe.EndsWith(".js", StringComparison.OrdinalIgnoreCase);
+        if (js && Cfg.Tool("node") == null) { Log.Write("claude: npm install found but node.exe is not on PATH"); return; }
+        var psi = new ProcessStartInfo(js ? Cfg.Tool("node")! : exe) { WorkingDirectory = Home, UseShellExecute = false, CreateNoWindow = true, RedirectStandardInput = true, RedirectStandardOutput = true,
             RedirectStandardError = true, StandardOutputEncoding = System.Text.Encoding.UTF8, StandardInputEncoding = new System.Text.UTF8Encoding(false) };
+        if (js) psi.ArgumentList.Add(exe);
         foreach (var a in new[] { "-p", "--input-format", "stream-json", "--output-format", "stream-json", "--verbose", "--include-partial-messages",
                      "--permission-mode", mode, "--append-system-prompt", Rules, "--model", model, "--effort", c.Run,
                      c.Used ? "--resume" : "--session-id", c.Id }) psi.ArgumentList.Add(a);

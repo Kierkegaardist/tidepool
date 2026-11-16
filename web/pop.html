@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><title>Video</title>
 <!-- The Video tab's player window (src/PopOut.cs): a plain Windows window, so Windows drags, resizes, snaps and maximizes it; flick it by the
      title bar toward another screen and it goes there. The host posts { id, title, video, audio, t, vol, embed } to play, and { state: { pin, full, max } }
-     for the buttons. Keys: Space/K play, ←→ J L seek, ↑↓ volume, F or double-click full screen, Esc leaves it, S next screen, T on top, Ctrl+W close. -->
+     for the buttons. Keys: Space/K play, ←→ J L seek, ↑↓ volume, F or double-click full screen, Esc leaves it, S next screen, 1-9 that screen, B back to the Video tab, T on top, Ctrl+W close. -->
 <style>
   html,body{margin:0;height:100%;background:#000;overflow:hidden;font:15px/1.3 "Segoe UI",sans-serif;color:#fff}
   video,iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}
@@ -13,27 +13,34 @@
   .bar b{flex:1;min-width:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 3px #000}
   .bar input{width:110px;accent-color:#fff;cursor:pointer}
   .bar i{font-style:normal;font-size:13px;padding:4px 9px;border-radius:6px;background:rgba(255,255,255,.12);cursor:pointer;white-space:nowrap;user-select:none}
+  #scr{display:flex;gap:4px}#scr:empty{display:none}
   .bar i:hover{background:rgba(255,255,255,.25)}.bar i.on{background:rgba(255,255,255,.85);color:#000}
   .hint{position:absolute;left:50%;bottom:64px;transform:translateX(-50%);padding:8px 14px;border-radius:8px;background:rgba(0,0,0,.75);font-size:13px;opacity:0;transition:opacity .4s;pointer-events:none;white-space:nowrap}
   .hint.on{opacity:1}
   .msg{position:absolute;inset:0;display:grid;place-items:center;letter-spacing:.12em;font-size:13px;opacity:.75;pointer-events:none}
 </style></head><body class="paused">
-<video id="v" playsinline controls controlslist="nodownload nofullscreen noremoteplayback" disablepictureinpicture></video><iframe id="f" allow="autoplay; encrypted-media" title="YouTube"></iframe>
-<div class="bar"><b id="t"></b><input type="range" id="vol" min="0" max="1" step="0.05" title="Volume (↑↓, wheel)"><i id="bnext" title="To the other screen (S) · or flick the window there by its title bar">⇆ Other screen</i><i id="bfull" title="Full screen (F, double-click) · Esc leaves">⛶</i><i id="bpin" title="Stay on top of other windows (T)">📌</i></div><div class="hint" id="h"></div><div class="msg" id="m">WAITING FOR A VIDEO</div>
+<video id="v" playsinline controls controlslist="nodownload nofullscreen noremoteplayback" disablepictureinpicture></video><iframe id="f" allow="autoplay; encrypted-media; fullscreen" allowfullscreen title="YouTube"></iframe>
+<div class="bar"><b id="t"></b><input type="range" id="vol" min="0" max="1" step="0.05" title="Volume (↑↓, wheel)"><span id="scr"></span><i id="bback" title="Back into the Video tab: the watch page with Up next (B)">▭ Page view</i><i id="bfull" title="Full screen (F, double-click) · Esc leaves">⛶</i><i id="bpin" title="Stay on top of other windows (T)">📌</i></div><div class="hint" id="h"></div><div class="msg" id="m">WAITING FOR A VIDEO</div>
 <script src="ytav.js"></script>
 <script>
 const $ = id => document.getElementById(id), V = $("v"), A = new Audio();
 let split = false;
 avSync(V, A, () => split);
 const vol = x => { x = Math.max(0, Math.min(1, x)); A.volume = V.volume = $("vol").value = x; };
-const host = op => window.chrome?.webview?.postMessage({ op });
+const host = (op, x) => window.chrome?.webview?.postMessage({ op, ...x });
+const back = () => host("back", { t: document.body.classList.contains("emb") ? embT : V.currentTime });
+/* YouTube's own player (embed) reports its time once told we listen (the iframe API's postMessage handshake), so Page view resumes there too */
+let embT = 0;
+$("f").addEventListener("load", () => $("f").contentWindow?.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), "*"));
+addEventListener("message", e => { if (e.source !== $("f").contentWindow) return; try { const d = typeof e.data === "string" ? JSON.parse(e.data) : e.data; if (d?.info?.currentTime != null) embT = d.info.currentTime; } catch {} });
 let hintT = 0; const hint = t => { $("h").textContent = t; $("h").classList.add("on"); clearTimeout(hintT); hintT = setTimeout(() => $("h").classList.remove("on"), 2200); };
 let st = {};
 window.chrome?.webview?.addEventListener("message", e => {
   const d = e.data;
-  if (d.state) { st = d.state; $("bpin").classList.toggle("on", !!st.pin); $("bfull").classList.toggle("on", !!st.full); return; } document.title = d.title || "Video"; $("t").textContent = d.title || ""; $("m").textContent = "";
+  if (d.state) { st = d.state; $("bpin").classList.toggle("on", !!st.pin); $("bfull").classList.toggle("on", !!st.full);
+    $("scr").innerHTML = st.n > 1 ? Array.from({ length: st.n }, (_, i) => `<i data-i="${i}" class="${i === st.scr ? "on" : ""}" title="Screen ${i + 1} (${i + 1})">${i + 1}</i>`).join("") : ""; return; } document.title = d.title || "Video"; $("t").textContent = d.title || ""; $("m").textContent = "";
   V.pause(); A.pause(); split = !!d.audio && !d.embed; vol(d.vol ?? 1);
-  if (d.embed) { document.body.classList.add("emb"); V.removeAttribute("src"); A.removeAttribute("src"); $("f").src = `https://www.youtube-nocookie.com/embed/${d.id}?autoplay=1&rel=0&playsinline=1`; return; }
+  if (d.embed) { document.body.classList.add("emb"); V.removeAttribute("src"); A.removeAttribute("src"); embT = d.t || 0; $("f").src = `https://www.youtube-nocookie.com/embed/${d.id}?autoplay=1&rel=0&playsinline=1&enablejsapi=1&origin=${location.origin}${embT ? "&start=" + Math.floor(embT) : ""}`; return; }
   document.body.classList.remove("emb"); $("f").src = "about:blank";
   V.src = d.video; if (split) A.src = d.audio; else A.removeAttribute("src");
   V.muted = split; if (d.t) V.currentTime = d.t;
@@ -44,13 +51,15 @@ V.addEventListener("pause", () => document.body.classList.add("paused"));
 V.addEventListener("error", () => { if (V.getAttribute("src")) $("m").textContent = "THIS STREAM STOPPED · POP IT OUT AGAIN FROM THE MENU"; });   // googlevideo urls expire after some hours
 $("vol").oninput = e => vol(+e.target.value);
 addEventListener("wheel", e => { e.preventDefault(); vol(A.volume + (e.deltaY < 0 ? .05 : -.05)); }, { passive: false });
-$("bnext").onclick = () => host("next"); $("bfull").onclick = () => host("full"); $("bpin").onclick = () => { host("pin"); hint(st.pin ? "Not on top any more" : "Stays on top of other windows"); };
+$("scr").onclick = e => { const b = e.target.closest("[data-i]"); if (b) host("to", { i: +b.dataset.i }); }; $("bback").onclick = back; $("bfull").onclick = () => host("full"); $("bpin").onclick = () => { host("pin"); hint(st.pin ? "Not on top any more" : "Stays on top of other windows"); };
 V.addEventListener("dblclick", e => { e.preventDefault(); host("full"); });
 addEventListener("keydown", e => {
   if (e.ctrlKey && (e.key === "w" || e.key === "W")) { host("close"); e.preventDefault(); return; }
   if (e.key === "f" || e.key === "F") { host("full"); e.preventDefault(); return; }
   if (e.key === "Escape") { host("unfull"); return; }
   if (e.key === "s" || e.key === "S") { host("next"); e.preventDefault(); return; }
+  if (e.key === "b" || e.key === "B") { back(); e.preventDefault(); return; }
+  if (/^[1-9]$/.test(e.key) && +e.key <= (st.n ?? 0)) { host("to", { i: +e.key - 1 }); e.preventDefault(); return; }
   if (e.key === "t" || e.key === "T") { $("bpin").click(); e.preventDefault(); return; }
   const k = e.key, seek = s => { if (V.duration) V.currentTime = Math.max(0, Math.min(V.duration - .5, V.currentTime + s)); };
   if (k === " " || k === "k") V.paused ? V.play().catch(() => {}) : V.pause();

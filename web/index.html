@@ -53,8 +53,8 @@
   <div class="ovl" id="swi"><div class="h cap" id="swih">Open windows</div><div id="swirow"></div></div>
   <div class="ovl" id="srch"><input id="sq" autocomplete="off" spellcheck="false" aria-label="Search" placeholder="Search games, apps, files, sites… (Esc closes)"><span class="mic smic" id="smic" title="Speak (Ctrl+Space · △)" role="button"><img src="icons/mic.svg" alt=""></span><div id="sres" class="glassdark"></div></div>
   <div class="ovl" id="addp"><div class="aph" id="aph"></div><div id="alist" class="glassdark"></div></div>
-  <div class="ytp" id="ytp"><video id="ytv" playsinline controls controlslist="nodownload nofullscreen noremoteplayback" disablepictureinpicture></video><iframe id="ytf" allow="autoplay; encrypted-media" title="YouTube"></iframe>
-    <div class="yth"><div><b id="ytt"></b><small id="yts"></small></div><i class="ytb" data-yp="view" id="ytvw" title="Tab · pad: Create">▭ Page view</i><i class="ytb" data-yp="pop" title="Its own window: drag it anywhere, flick it to another screen by its title bar (P · or flick the video up)">⧉ Pop out</i><i class="ytb ytoth" data-yp="other" title="Its own window, filling the other screen (S · or flick the video sideways)">⇆ Other screen</i><input type="range" id="ytvol" min="0" max="1" step="0.1" tabindex="-1" title="Volume"><span id="ytx" title="Back (Esc)" role="button">✕</span></div><div class="ytm cap" id="ytm"></div><div id="ytinfo"></div><div id="ytrec"></div></div>
+  <div class="ytp" id="ytp"><video id="ytv" playsinline controls controlslist="nodownload nofullscreen noremoteplayback" disablepictureinpicture></video><iframe id="ytf" allow="autoplay; encrypted-media; fullscreen" allowfullscreen title="YouTube"></iframe>
+    <div class="yth"><div><b id="ytt"></b><small id="yts"></small></div><i class="ytb" data-yp="view" id="ytvw" title="Tab · pad: Create">▭ Page view</i><i class="ytb" data-yp="pop" title="Its own window: drag it anywhere, flick it to another screen by its title bar (P · or flick the video up)">⧉ Pop out</i><span class="ytscr" id="ytscr" title="Play it on that screen, in its own window (S · or flick the video sideways)"></span><input type="range" id="ytvol" min="0" max="1" step="0.1" tabindex="-1" title="Volume"><span id="ytx" title="Back (Esc)" role="button">✕</span></div><div class="ytm cap" id="ytm"></div><div id="ytinfo"></div><div id="ytrec"></div></div>
   <div class="ovl glassdark" id="notifs"><h3>Notifications<span class="cap" id="nclear">Clear all</span></h3><div id="nlist"></div>
     <div class="quiet"><span>Quiet hours at night<small id="qnow"></small></span><span class="tog"></span></div></div>
   <div class="ovl glassdark band" id="hatch"><img class="bic" src="icons/window.svg" alt="">
@@ -443,17 +443,21 @@ function keepOut() {
   }
 }
 // Idle: today's sun path drawn across the sky, sunrise to sunset, with a dot where the sun is now.
-// Same mapping core.js uses to place the sun (x 430-1340 across the day, 7 px per degree above the photo's horizon).
+// Traced through core.js sunPos, so the dot IS the sky's sun (it used the one-screen mapping and drew a second sun on two screens or over Shore's glitter).
 function drawArc(now, sun, ev) {
   if (ev.set && now > ev.set && evCache.ev2) ev = evCache.ev2;   // after sunset: tomorrow's path, so the dot waits at sunrise
-  const hz = SCENES[sceneAt(now).i].hz - 55, top = hz - Math.max(4, sun.maxE) * 7, el = $("arc");
-  if (!ev.rise || !ev.set) { el.style.display = "none"; return; }
-  el.style.display = "";
-  $("arcp").setAttribute("d", `M430 ${hz} Q885 ${2 * top - hz} 1340 ${hz}`);   // a quadratic through the noon peak
-  const f = Math.min(1, Math.max(0, (now - ev.rise) / (ev.set - ev.rise))), x = 430 + 910 * f, y = (1 - f) ** 2 * hz + 2 * f * (1 - f) * (2 * top - hz) + f * f * hz;
+  const el = $("arc"), S = SCENES[sceneAt(now).i];
+  if (!ev.rise || !ev.set) { el.style.visibility = "hidden"; return; }   // visibility: screen 2's display rule (ui.css) is !important
+  el.style.visibility = "";
+  const at = t => { const s = sunAt(new Date(t), loc.lat, loc.lon); return sunPos(S, s.H, Math.max(0, s.elev), s.Hs); };
+  const pts = Array.from({ length: 25 }, (_, k) => at(+ev.rise + (ev.set - ev.rise) * k / 24));
+  $("arcp").setAttribute("d", "M" + pts.map(p => p.map(v => v.toFixed(1)).join(" ")).join(" L"));
+  const [x, y] = now < ev.rise ? pts[0] : sunPos(S, sun.H, Math.max(0, sun.elev), sun.Hs);
   $("arcd").setAttribute("cx", x); $("arcd").setAttribute("cy", y); $("arcd").style.opacity = sun.elev > -1 ? 1 : 0;
-  Object.assign($("arcr"), { textContent: "↑ " + hm(ev.rise) }); $("arcr").setAttribute("x", 430); $("arcr").setAttribute("y", hz + 34);
-  Object.assign($("arcs"), { textContent: hm(ev.set) + " ↓" }); $("arcs").setAttribute("x", 1340); $("arcs").setAttribute("y", hz + 34);
+  [["arcr", "↑ " + hm(ev.rise), pts[0]], ["arcs", hm(ev.set) + " ↓", pts[24]]].forEach(([id, t, [px, py]]) => {
+    const e = $(id); e.textContent = t; e.setAttribute("x", px); e.setAttribute("y", py + 34);
+    e.style.display = px < 40 || px > 1880 ? "none" : "";   // that end of the day is on the other screen
+  });
 }
 function light(sun) {
   const src = document.querySelector(`.scn.on ${sun.elev > -2 ? ".sun" : ".moon"}`), x = parseFloat(src?.style.left) || 960;
@@ -1391,6 +1395,7 @@ function fromHost(type, value) {
   if (type === "yt-stream" && value?.id) ytStreamGot(value);
   if (type === "yt-list" && value?.id) ytListGot(value);
   if (type === "yt-feed" && value) ytFeedGot(value);
+  if (type === "yt-back" && value?.id) { const v = YT.seen.find(x => x.id === value.id); if (v) { if (value.t > 0) YT.at = { id: v.id, t: value.t }; YT.view = "page"; ytPlay(v); } }   // the video window's ▭ Page view: on in the watch page here, same second
   if (type === "sp-now") spNowGot(value);
   if (type === "folder" && value?.id) { BROWSE[value.id] = value; drawCol(); drawDeck(true); }   // a folder the column or card asked for (Places.Browse)
   if ((type === "covered" || type === "menu") && window.HOSTCOVERED) stopPreview();   // a window took the screen: the preview stops
@@ -1864,7 +1869,7 @@ function ytPlay(v, queue) {
   if (S.yt) ytStop();
   S.yt = { ...v, on: false, view: YT.view === "page" ? "page" : "full", queue: queue ?? null }; YT.seen = [ytSlim(v), ...YT.seen.filter(x => x.id !== v.id)].slice(0, 50); ytSave();
   stopPreview(); if (!YT.duck && S.music && !S.paused && H?.media) { YT.duck = true; H.media("playpause"); }   // the music steps aside, like a render preview
-  $("ytt").textContent = v.title; ytInfo(); document.querySelector(".ytoth").style.display = ytOther() ? "" : "none";   // one screen: no Other screen button $("ytm").textContent = "Getting the video…";
+  $("ytt").textContent = v.title; ytInfo(); ytScrPick();   // one screen: no picker $("ytm").textContent = "Getting the video…";
   if (v.live || ytFresh(YTS[v.id])) ytStart(); else ytAsk(v.id);
   ytPage(); ytWake(); drawCol(); sync();
 }
@@ -1879,7 +1884,8 @@ function ytStart() {
 }
 function ytEmbed(why) {   // live streams (HLS only) and anything yt-dlp could not open: YouTube's own player, without cookies
   $("ytp").classList.add("emb"); $("ytm").textContent = "";
-  $("ytf").src = `https://www.youtube-nocookie.com/embed/${S.yt.id}?autoplay=1&rel=0&playsinline=1`;
+  const at = YT.at?.id === S.yt.id ? Math.floor(YT.at.t) : 0; if (at) YT.at = null;   // resumes there (Page view from the video window, Play again)
+  $("ytf").src = `https://www.youtube-nocookie.com/embed/${S.yt.id}?autoplay=1&rel=0&playsinline=1${at ? "&start=" + at : ""}`;
   S.yt.q = why ? "YouTube's own player · " + why : "YouTube's own player"; ytInfo();
 }
 function ytStop() {
@@ -1900,6 +1906,11 @@ function ytOther(dir = 0) {
   return dir ? L.filter(x => dir > 0 ? x.x > me.x : x.x < me.x).sort((a, b) => Math.abs(a.x - me.x) - Math.abs(b.x - me.x))[0] ?? null
     : L.find(x => x.role === "partner") ?? L.find(x => x.role === "main") ?? L[0];   // "the other screen" with three or more: the partner (from the main one), else the main one
 }
+const ytScreens = () => [...(H?.screens ?? [])].sort((a, b) => a.x - b.x || a.y - b.y);   // numbered left to right, like the video window's picker
+function ytScrPick() {   // the player's screen picker: this page's screen lit, another one sends the video there in its own window
+  const L = ytScreens(), me = H?.screen;
+  $("ytscr").innerHTML = L.length < 2 ? "" : L.map((s, i) => `<i class="ytb${me && s.x === me.x && s.y === me.y ? " on" : ""}" data-yp="scr:${i}">${i + 1}</i>`).join("");
+}
 function ytSend(dir = 0, v = S.yt) {   // its own window, filling the other screen (S, the ⇆ button, a sideways flick of the video)
   if (!v) return;
   const to = ytOther(dir); if (!to) { if (dir) return; toast("@video.svg", "There's only one screen", "Popped out here instead"); ytPopOut(v); return; }
@@ -1913,7 +1924,7 @@ function ytPopOut(v = S.yt, to = null, quiet = false) {
   H.yt.pop({ id: v.id, title: v.title, video: c?.video ?? "", audio: c?.audio ?? "", t, vol: YT.vol ?? 1, embed: !!(live || c?.error || !c?.video), ...(to ? { to } : {}) });
   YT.seen = [ytSlim(v), ...YT.seen.filter(x => x.id !== v.id)].slice(0, 50); ytSave();
   if (here) { YT.duck = false; ytClose(); } else if (S.music && !S.paused && H.media) H.media("playpause");   // the music stays paused while the pop-out plays
-  if (!quiet) toast(v.thumb, to ? "On the other screen" : "Popped out", to ? "S in the window sends it back · F full screen" : "Drag it by its title bar, flick it toward a screen to send it there · F full screen");
+  if (!quiet) toast(v.thumb, to ? "On the other screen" : "Popped out", to ? "▭ Page view in the window brings it back · F full screen" : "Drag it by its title bar, flick it toward a screen to send it there · F full screen");
 }
 /* the watch page (view "page"): the video, its info under it, Up next on the right (the queue's rest, then YouTube's mix for it) */
 const ytDescHtml = d => esc(d).replace(/https?:\/\/[^\s<]+/g, u => `<a data-href="${u}">${u}</a>`)
@@ -1946,6 +1957,7 @@ function ytDo(k, v = S.yt, card) {   // the card's chips, the player's buttons a
   if (k === "play") ytPlay(v, card && S.col?.yt ? ytQueue(v) : null);
   else if (k === "pop") ytPopOut(v);
   else if (k === "other") ytSend(0, v);
+  else if (k.startsWith("scr:")) { const s = ytScreens()[+k.slice(4)], me = H?.screen; if (s && !(me && s.x === me.x && s.y === me.y)) ytPopOut(v, { x: s.x, y: s.y }); }
   else if (k === "fav") ytFavToggle(ch);
   else if (k === "add") ytPick(v);
   else if (k === "chan") { if (S.yt) ytClose(); ytOpenCol("ch:" + ch.id, ch.name, ch.thumb); }

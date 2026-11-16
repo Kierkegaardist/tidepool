@@ -11,7 +11,7 @@ All files were downloaded on 2026-11-12 and are stored under this folder.
 
 ## Scene photos (`img/`)
 
-Lake photo: see "Carried over from v3" below. The other four scenes are Blender renders of Poly Haven HDRIs. An HDRI is a real 360° photo stitched from camera shots. I put a camera at the centre of each and rendered one 16:9 view (settings in `blender/README.md`). Nothing was painted or generated. Poly Haven's FAQ says it does not make assets with AI. All four are CC0, so no credit is required, but they are listed here.
+Lake photo: see "Carried over from v3" below. The other four scenes are Blender renders of Poly Haven HDRIs. An HDRI is a real 360° photo stitched from camera shots. I put a camera at the centre of each and rendered one 16:9 view (settings in `blender/README.md`). Since 2026-11-16 they come from the 16k HDRIs, rendered at 4K with 16 samples and downscaled to 1920x1080; the lake and star photos were redone from the full-size Commons originals. Nothing was painted or generated. Poly Haven's FAQ says it does not make assets with AI. All four are CC0, so no credit is required, but they are listed here.
 
 | File | HDRI | Photographer | Shot | Licence |
 |---|---|---|---|---|

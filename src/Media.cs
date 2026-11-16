@@ -22,13 +22,13 @@ sealed class Media
     public static readonly Player[] Players =
     {
         new("spotifast", "Spotifast", new[] { "spotifast" }, null, () => File.Exists(SpotifastExe)),
-        new("spotify", "Spotify", new[] { "spotify" }, "spotify:search:{q}", () => File.Exists(Path.Combine(Roaming, @"Spotify\Spotify.exe")) || Store("SpotifyAB.SpotifyMusic")),
-        new("tidal", "TIDAL", new[] { "tidal" }, "https://listen.tidal.com/search?q={q}", () => File.Exists(Path.Combine(Local, @"TIDAL\TIDAL.exe")) || Store("WiMPMusic")),
+        new("spotify", "Spotify", new[] { "spotify" }, "spotify:search:{q}", () => File.Exists(Path.Combine(Roaming, @"Spotify\Spotify.exe")) || Store("SpotifyAB.SpotifyMusic") || Studio.Listed("Spotify")),
+        new("tidal", "TIDAL", new[] { "tidal" }, "https://listen.tidal.com/search?q={q}", () => File.Exists(Path.Combine(Local, @"TIDAL\TIDAL.exe")) || Store("WiMPMusic") || Studio.Listed("TIDAL")),
         new("apple", "Apple Music", new[] { "applemusic", "itunes" }, "https://music.apple.com/search?term={q}", () => Store("AppleInc.AppleMusicWin") || Store("AppleInc.iTunes")),
         new("ytmusic", "YouTube Music", new[] { "youtube music", "youtubemusic", "youtube-music", "ytmdesktop", "cinhimbnkkaeohfgghhklpknlkffjgod" }, "https://music.youtube.com/search?q={q}", () => false, loose: true),   // the long id = its Chrome/Edge web app
-        new("deezer", "Deezer", new[] { "deezer" }, "https://www.deezer.com/search/{q}", () => Store("Deezer.") || Directory.Exists(Path.Combine(Local, @"Programs\deezer-desktop"))),
-        new("amazon", "Amazon Music", new[] { "amazon music", "amazonmusic", "amazonmobilellc" }, "https://music.amazon.com/search/{q}", () => Directory.Exists(Path.Combine(Local, "Amazon Music")) || Store("AmazonMobileLLC.AmazonMusic")),
-        new("qobuz", "Qobuz", new[] { "qobuz" }, "https://play.qobuz.com/search?q={q}", () => Directory.Exists(Path.Combine(Local, "Qobuz"))),
+        new("deezer", "Deezer", new[] { "deezer" }, "https://www.deezer.com/search/{q}", () => Store("Deezer.") || Directory.Exists(Path.Combine(Local, @"Programs\deezer-desktop")) || Studio.Listed("Deezer")),
+        new("amazon", "Amazon Music", new[] { "amazon music", "amazonmusic", "amazonmobilellc" }, "https://music.amazon.com/search/{q}", () => Directory.Exists(Path.Combine(Local, "Amazon Music")) || Store("AmazonMobileLLC.AmazonMusic") || Studio.Listed("Amazon Music")),
+        new("qobuz", "Qobuz", new[] { "qobuz" }, "https://play.qobuz.com/search?q={q}", () => Directory.Exists(Path.Combine(Local, "Qobuz")) || Studio.Listed("Qobuz")),
         new("any", "Whatever is playing", Array.Empty<string>(), "https://music.youtube.com/search?q={q}", () => false, loose: true),
     };
     /// <summary>The player by id; an id not in the list is taken as a program's own name ("foobar2000", "musicbee"), shown as `name`.</summary>

@@ -16,16 +16,37 @@ static class Studio
     static string Docs => Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
     static string Music => Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
     static string Pf => Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+    static string AppData => Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+    static string Local => Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
     static bool AnyDir(string root, string pattern) { try { return Directory.Exists(root) && Directory.EnumerateDirectories(root, pattern).Any(); } catch { return false; } }
+
+    /// <summary>Windows' installed-programs list has an entry whose name starts with this (any drive, per-machine or per-user).</summary>
+    internal static bool Listed(string name)
+    {
+        foreach (var (hive, path) in new[] { (Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"), (Registry.LocalMachine, @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"), (Registry.CurrentUser, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall") })
+            try
+            {
+                using var k = hive.OpenSubKey(path); if (k == null) continue;
+                foreach (var sub in k.GetSubKeyNames()) { using var e = k.OpenSubKey(sub); if (e?.GetValue("DisplayName") is string n && n.StartsWith(name, StringComparison.OrdinalIgnoreCase)) return true; }
+            }
+            catch { }
+        return false;
+    }
+
+    /// <summary>Some program is registered to open this project type (installers and first runs register it).</summary>
+    static bool Opens(string ext) { try { using var k = Registry.ClassesRoot.OpenSubKey(ext); return k?.GetValue("") is string v && v != ""; } catch { return false; } }
+
+    /// <summary>Any sign the DAW is here, wherever and however it was installed: its installed-programs entry, its project file type, or one of its own folders.</summary>
+    static Func<bool> Found(string listed, string ext, params string[] dirs) => () => Listed(listed) || Opens(ext) || dirs.Any(Directory.Exists);
 
     public static readonly Daw[] Daws =
     {
-        new("fl", "FL Studio", new[] { ".flp" }, new[] { @"Image-Line\FL Studio\Projects" }, () => Registry.CurrentUser.OpenSubKey(@"Software\Image-Line") != null),
-        new("ableton", "Ableton Live", new[] { ".als" }, new[] { "Ableton", @"Ableton\Projects", "Ableton Projects" }, () => Directory.Exists(@"C:\ProgramData\Ableton")),
-        new("reaper", "REAPER", new[] { ".rpp" }, new[] { "REAPER Media", "REAPER Projects" }, () => File.Exists(Path.Combine(Pf, @"REAPER (x64)\reaper.exe")) || File.Exists(Path.Combine(Pf, @"REAPER\reaper.exe")) || Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "REAPER"))),
-        new("bitwig", "Bitwig Studio", new[] { ".bwproject" }, new[] { @"Bitwig Studio\Projects", "Bitwig Studio" }, () => AnyDir(Pf, "Bitwig Studio*")),
-        new("cubase", "Cubase", new[] { ".cpr" }, new[] { "Cubase Projects", "Steinberg" }, () => AnyDir(Path.Combine(Pf, "Steinberg"), "Cubase*")),
-        new("studioone", "Studio One", new[] { ".song" }, new[] { @"Studio One\Songs" }, () => AnyDir(Path.Combine(Pf, "PreSonus"), "Studio One*")),
+        new("fl", "FL Studio", new[] { ".flp" }, new[] { @"Image-Line\FL Studio\Projects" }, () => Registry.CurrentUser.OpenSubKey(@"Software\Image-Line") != null || Found("FL Studio", ".flp")()),
+        new("ableton", "Ableton Live", new[] { ".als" }, new[] { "Ableton", @"Ableton\Projects", "Ableton Projects" }, Found("Ableton Live", ".als", @"C:\ProgramData\Ableton", Path.Combine(AppData, "Ableton"), Path.Combine(Local, "Ableton"), Path.Combine(Docs, @"Ableton\User Library"), Path.Combine(Music, @"Ableton\User Library"))),
+        new("reaper", "REAPER", new[] { ".rpp" }, new[] { "REAPER Media", "REAPER Projects" }, () => File.Exists(Path.Combine(Pf, @"REAPER (x64)\reaper.exe")) || File.Exists(Path.Combine(Pf, @"REAPER\reaper.exe")) || Found("REAPER", ".rpp", Path.Combine(AppData, "REAPER"))()),
+        new("bitwig", "Bitwig Studio", new[] { ".bwproject" }, new[] { @"Bitwig Studio\Projects", "Bitwig Studio" }, () => AnyDir(Pf, "Bitwig Studio*") || Found("Bitwig Studio", ".bwproject", Path.Combine(Local, "Bitwig Studio"))()),
+        new("cubase", "Cubase", new[] { ".cpr" }, new[] { "Cubase Projects", "Steinberg" }, () => AnyDir(Path.Combine(Pf, "Steinberg"), "Cubase*") || Listed("Cubase")),
+        new("studioone", "Studio One", new[] { ".song" }, new[] { @"Studio One\Songs" }, () => AnyDir(Path.Combine(Pf, "PreSonus"), "Studio One*") || Listed("Studio One")),
         new("logic", "Logic Pro", new[] { ".logicx" }, Array.Empty<string>(), () => false),   // macOS only; listed so a shared config.json still reads
     };
 

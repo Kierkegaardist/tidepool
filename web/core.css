@@ -13,6 +13,8 @@ html,body{background:#000;overflow:clip;height:100%}   /* clip, not hidden: focu
 /* ===================== photographic scene ===================== */
 .photo{position:absolute;inset:0;filter:brightness(var(--gb)) saturate(var(--gs)) contrast(var(--gc)) hue-rotate(var(--gh))}
 .photo .hero{position:absolute;inset:0;width:1920px;height:1080px}
+.photo .glint{position:absolute;inset:0;mix-blend-mode:plus-lighter;transition:opacity 4s}   /* the photo's own sun shine (core.js glint): added back on the water, under the live sun */
+.photo .glint img{position:absolute;left:0;width:1920px;transition:transform 4s ease}
 .photo .city{position:absolute;width:180px;opacity:.9;filter:saturate(.75) contrast(.9) brightness(1.05) blur(.3px)}
 .sky{position:absolute;inset:0}
 .skytint{position:absolute;inset:0;background:linear-gradient(180deg,var(--skyTop) 0%,var(--skyMid) 18%,var(--horizon) 34%);mix-blend-mode:soft-light;opacity:var(--skyA)}

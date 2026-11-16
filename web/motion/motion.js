@@ -104,7 +104,7 @@ ${live}.tp-intro .item{animation:tp-cascade var(--dur-slide) var(--ease-surface)
 ${nth(live + ".tp-intro .item").replace(/(\d+)ms/g, (m, n) => 400 + 2 * n + "ms")}
 ${live}.tp-intro .clockline,${live}.tp-intro .pill,${live}.tp-intro .wa-dock,${live}.tp-intro .legend{animation:tp-fade var(--dur-slide) var(--ease-drift) .6s backwards}
 .tp-bump{animation:tp-bump var(--dur-move) var(--ease-spring)}.tp-shake{animation:tp-shake calc(var(--dur-move)*1.4) var(--ease-drift)}
-#scenes{will-change:transform}
+/* #scenes has no will-change (16 Nov): it froze the layer's raster at scale 1, so the parallax scale stretched a 1920 px bitmap (soft photos) */
 @keyframes tp-pop{from{transform:scale(.82)}}
 @keyframes tp-swap{from{opacity:0;transform:translateY(10px)}}
 @keyframes tp-cascade{from{opacity:0;transform:translateY(34px) scale(.92)}}
@@ -173,8 +173,12 @@ ${live}.tp-intro .clockline,${live}.tp-intro .pill,${live}.tp-intro .wa-dock,${l
     const sc = $("scenes"), dt = Math.min(64, t - (t0 || t)); t0 = t;
     if (!sc || !pOn || reduced() || screen().classList.contains("gaming")) { raf = 0; if (sc) sc.style.transform = ""; return; }
     const k = 1 - Math.exp(-dt / T.depth.ease); cx += (px - cx) * k; cy += (py - cy) * k;
-    sc.style.transform = `translate3d(${cx.toFixed(2)}px,${(cy + 20).toFixed(2)}px,0) scale(1.06)`;   // +20 / 1.06: room so no edge shows
-    raf = Math.abs(px - cx) + Math.abs(py - cy) > .05 ? requestAnimationFrame(frame) : 0;   // settles to zero work
+    const moving = Math.abs(px - cx) + Math.abs(py - cy) > .05;
+    // +20 / 127/120: room so no edge shows. 127/120 makes the 1920x1080 stage exactly 2032x1143 (the photos' own size) with its corner at (-56, -31.5) + the shift,
+    // so at rest the shift snaps to whole device pixels and every photo pixel lands on one screen pixel (16 Nov: 1.06 + sub-pixel rest blurred the sharp photos)
+    const tx = moving ? cx : Math.round(cx), ty = moving ? cy + 20 : Math.round(cy + 19.5) + .5;
+    sc.style.transform = `translate3d(${tx.toFixed(2)}px,${ty.toFixed(2)}px,0) scale(${127 / 120})`;
+    raf = moving ? requestAnimationFrame(frame) : 0;   // settles to zero work
   }
   const kick = () => { target(); if (!raf) { t0 = 0; raf = requestAnimationFrame(frame); } };
   addEventListener("pointermove", e => { mx = e.clientX / innerWidth * 2 - 1; my = e.clientY / innerHeight * 2 - 1; kick(); }, { passive: true });

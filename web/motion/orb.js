@@ -48,11 +48,24 @@
     return { sR, sS, w: cl(0.5 + Math.sin(H * RAD) * 3) };
   };
   const moonAge = d => ((((d - Date.UTC(2000, 0, 6, 18, 14)) / 864e5 / 29.530588853) % 1) + 1) % 1;   // mean synodic month from a known new moon
+  /* the real moon's place: low-precision lunar theory (main terms only, ~0.5 deg; ponytail: add Meeus' full series if a rise time ever needs to be exact to the minute)
+     -> { elev, H (hour angle, -180..180, 0 = due south), Hs (hour angle of moonset, as sunAt's Hs) } */
+  function moonAt(date, lat, lon) {
+    const n = date.getTime() / 86400000 + 2440587.5 - 2451545.0;
+    const L = 218.316 + 13.176396 * n, M = (134.963 + 13.064993 * n) * RAD, F = (93.272 + 13.229350 * n) * RAD;
+    const l = (L + 6.289 * Math.sin(M)) * RAD, b = 5.128 * Math.sin(F) * RAD, e = 23.4397 * RAD;   // ecliptic longitude / latitude
+    const ra = Math.atan2(Math.sin(l) * Math.cos(e) - Math.tan(b) * Math.sin(e), Math.cos(l)) / RAD;
+    const dec = Math.asin(Math.sin(b) * Math.cos(e) + Math.cos(b) * Math.sin(e) * Math.sin(l));
+    const H = ((280.46061837 + 360.98564736629 * n + lon - ra) % 360 + 540) % 360 - 180;
+    const geo = Math.asin(Math.sin(lat * RAD) * Math.sin(dec) + Math.cos(lat * RAD) * Math.cos(dec) * Math.cos(H * RAD)) / RAD;
+    const cosHs = (Math.sin(0.125 * RAD) - Math.sin(lat * RAD) * Math.sin(dec)) / (Math.cos(lat * RAD) * Math.cos(dec));   // +0.125 deg: parallax minus refraction, the moon's rise altitude
+    return { elev: geo - 0.95 * Math.cos(geo * RAD), H, Hs: Math.acos(cl(cosHs, -1, 1)) / RAD };   // seen from the ground, parallax drops it up to ~1 deg
+  }
   function sky(date = new Date(), lat = 59.91, lon = 10.75) {
     const sun = sunAt(date, lat, lon), { sR, sS, w } = phaseCoord(sun);
     const span = sun.Hs > 5 && sun.Hs < 175 ? sun.Hs : 90, xOf = H => cl(H / span, -1, 1);
-    const mH = ((sun.H + 360) % 360) - 180;   // ponytail: moon placed opposite the sun like core.js; its phase is real, its path is not
-    return { s: w > .5 ? sS : sR, sun: { elev: sun.elev, x: xOf(sun.H) }, moon: { age: moonAge(date), elev: -sun.elev * .8, x: xOf(mH) } };
+    const mo = moonAt(date, lat, lon), mspan = mo.Hs > 5 && mo.Hs < 175 ? mo.Hs : 90;
+    return { s: w > .5 ? sS : sR, sun: { elev: sun.elev, x: xOf(sun.H) }, moon: { age: moonAge(date), elev: mo.elev, x: cl(mo.H / mspan, -1, 1) } };
   }
 
   /* ---- drawing ---- */
@@ -142,6 +155,7 @@
     }
     if (FLOOR.complete && FLOOR.naturalWidth) {   // the reef fills the lower part and climbs to just under the surface at the back
       const w = W(2.3), h = w * FLOOR.naturalHeight / FLOOR.naturalWidth;
+      g.imageSmoothingQuality = "high";   // 900 px shrunk to ~100-300: the default (low) skipped pixels and the reef glittered (redrawn once a minute, so free)
       g.drawImage(FLOOR, x - w / 2, bot + W(.04) - h, w, h);
     }
     const hz2 = g.createLinearGradient(0, hz, 0, bot); hz2.addColorStop(0, css(wa, .12)); hz2.addColorStop(.5, css(wa, .03)); hz2.addColorStop(1, css(wd, 0));
@@ -190,5 +204,5 @@
     return redraw;
   }
 
-  window.Orb = { draw, sky, moonAge, mount, look };
+  window.Orb = { draw, sky, moonAge, moonAt, mount, look };
 })();
