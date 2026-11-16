@@ -1,6 +1,7 @@
 # Runs from the setup exe's temp folder (IExpress): installs Console Desktop for this Windows user, no admin needed.
 # %LOCALAPPDATA%\Programs\Console Desktop; Start menu shortcuts; Apps & features entry; WebView2 if missing; then Setup.
 # An update keeps the user's own files: config.json, the chat key and chats, web\live (their restyle), extras (yt-dlp, whisper).
+param([switch]$Update)   # -Update: from the desktop's updater (Update.cs), run quietly: no Setup at the end, the desktop starts again
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Windows.Forms
 function Fail($msg) { [System.Windows.Forms.MessageBox]::Show("Console Desktop could not be installed.`n`n$msg", "Console Desktop", 'OK', 'Error') | Out-Null; exit 1 }
@@ -53,6 +54,6 @@ try {
         Start-Process $boot '/silent /install' -Wait; Remove-Item $boot -ErrorAction SilentlyContinue
     }
 
-    Start-Process $exe '--setup' -WorkingDirectory "$dest\bin"
+    if ($Update -and (Test-Path "$dest\config.json")) { Start-Process $exe -WorkingDirectory "$dest\bin" } else { Start-Process $exe '--setup' -WorkingDirectory "$dest\bin" }
 }
 catch { Fail $_.Exception.Message }

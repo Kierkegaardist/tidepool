@@ -17,6 +17,7 @@ sealed class Host : ApplicationContext
 
     readonly List<Scene> scenes = new();
     readonly System.Windows.Forms.Timer tick = new() { Interval = 500 }, liveDebounce = new() { Interval = 250 };
+    readonly System.Windows.Forms.Timer updateTimer = new() { Interval = 60_000 }; Update.Found? update;   // Update.cs
     readonly MsgWindow ping = new("ConsoleDesktopHost");   // the watchdog pings this; it answers only if our UI thread is alive
     readonly FileSystemWatcher liveWatch;   // app/web/live: the page re-reads theme.json + live.css itself on a "live" event
     readonly Dictionary<uint, string> exeByPid = new();
@@ -70,6 +71,8 @@ sealed class Host : ApplicationContext
         WatchWindows();
         tick.Tick += (_, _) => Tick();
         tick.Start();
+        updateTimer.Tick += async (_, _) => { updateTimer.Interval = 24 * 3600_000; if (await Update.Check() is { } f && f.version != update?.version) { update = f; Log.Write($"update: {f.version} available"); Broadcast("update", f); } };
+        updateTimer.Start();   // first check a minute after start (out of the login rush), then daily
 
         liveWatch = new FileSystemWatcher(Paths.Live) { NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName, EnableRaisingEvents = true };
         FileSystemEventHandler changed = (_, e) => { if (!e.Name!.StartsWith(".")) scenes[0].BeginInvoke(() => { liveDebounce.Stop(); liveDebounce.Start(); }); };
@@ -276,6 +279,7 @@ sealed class Host : ApplicationContext
             case "openMenu": if (lifted == null) Lift(m.TryGetProperty("here", out var here) && here.GetBoolean() && !s.Covered ? s : null); break;   // here: the asking page (a click on screen 2's bell opens the menu there)
             case "closeMenu": CloseMenu(); break;
             case "setup": if (lifted != null) { lifted.NoStepBack(); Drop(); } _ = Env.Value.ContinueWith(t => scenes[0].BeginInvoke(() => Setup.Show(t.Result)), TaskScheduler.Default); break;   // Settings › Setup
+            case "update-install" when update != null: var uf = update; _ = Task.Run(async () => { try { await Update.Install(uf); } catch (Exception e) { Log.Write("update: " + e.Message); Broadcast("update-failed", e.Message); } }); break;
             case "close": PostMessage(Id(), 0x0010 /*WM_CLOSE*/, IntPtr.Zero, IntPtr.Zero); break;
             case "exitToStock":
                 // The watchdog does the leaving (kills us, restores, exits); without one, restore and quit ourselves.
@@ -297,6 +301,7 @@ sealed class Host : ApplicationContext
         s.Send("screen", all[s.Index]);  // the one this page is on
         s.Send("location", new { lat = Lat, lon = Lon, place = Place.name });
         s.Send("sun", SunNow());
+        if (update != null) s.Send("update", update);
         s.Send("windows", TopWindows());
         s.Send("covered", s.Covered);
         s.Send("nowPlaying", nowPlaying); s.Send("heard", media.HeardList()); s.Send("notifications", notes); foreach (var (k, v) in lists) s.Send(k, v);

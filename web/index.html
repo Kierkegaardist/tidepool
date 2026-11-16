@@ -266,7 +266,7 @@ function drawCol() {
   const html = `<div class="colh"><b>${esc(head)}</b><small class="cap">${count}</small>${c.yt?.startsWith("ch:") ? `<i class="ycs" data-ycs title="Sort, or show its playlists, Shorts, Live (L2 / R2)">${ytChSoName()} ▾</i>` : ""}</div><div class="cws">` + rows.map((r, k) => `<div class="cw${r.wait ? " wait" : ""}${r.play && PLAY === r.id || r.playing ? " playing" : ""}" data-k="${k}">${r.thumb ? `<img class="th" src="${fileUrl(r.id)}" loading="lazy" alt="">` : `<img${r.cover ? ` class="th${r.wide ? " wide" : ""}"` : r.fav ? ' class="fv"' : ""} src="${I(r.ic)}" alt="">`}<div><b>${r.fresh ? `<i class="nd" title="New today"></i>` : ""}${esc(r.n)}</b><small>${r.d}</small></div>${r.isDir ? `<i class="go">›</i>` : ""}</div>`).join("") + `</div>`;
   if ($("col").dataset.h !== html) { $("col").dataset.h = html; $("col").innerHTML = html; }   // window titles change often: rebuilding would reload every thumbnail
   $("col").querySelectorAll(".cw").forEach((el, k) => el.classList.toggle("cur", k === c.i));   // the pick is a class, not part of the html: a step down a 50-video list rebuilt every row
-  $("col").style.setProperty("--off", Math.max(0, c.i - 2) * -76 + "px");   // keep the current row in view; ponytail: fixed 76 px rows
+  $("col").style.setProperty("--off", (colTop ?? Math.max(0, c.i - 2)) * -76 + "px");   // keep the current row in view (mid-drag: where the hand has it); ponytail: fixed 76 px rows
 }
 function itemDesc(it) {
   if (it.d === "now playing" || it.act === "music") return S.music ? `${S.ph?.ui.track ?? ""} · ${S.paused ? "Paused" : "Playing"}${H?.nowPlaying?.dur ? ` at ${mmss(npPos(H.nowPlaying))} of ${mmss(H.nowPlaying.dur)}` : ""}` : window.host ? "Nothing playing · A resumes your player" : `Nothing playing · A plays the mix for ${phaseWord()}`;
@@ -485,6 +485,7 @@ window.onRender = ({ now, sel, ph, sun, ev }) => {
 };
 
 /* ===== actions ===== */
+if (CFG.startupProblem) setTimeout(() => toast("@gear.svg", "Not starting with Windows", CFG.startupProblem, true), 6000);   // Config.StartupProblem
 function toast(ic, t, b, keep) {
   $("toi").src = I(ic); $("tot").textContent = t; $("tob").textContent = b; $("toast").classList.add("on");
   if (keep) { S.notes.unshift([ic, t, b, hm(override ?? new Date())]); S.unread++; sync(); }
@@ -1150,7 +1151,7 @@ addEventListener("wheel", e => {
   if (Math.abs(wheelSum) < 60 || performance.now() - wheelAt < 70) return;
   const step = Math.sign(wheelSum) * Math.min(6, Math.floor(Math.abs(wheelSum) / 60)); wheelSum = 0; wheelAt = performance.now(); e.preventDefault(); hideTip(); S.hov = null;   // a fast spin moves several tiles, not one per tick
   if (e.target.closest("#rail")) goCat(KEYS[(KEYS.indexOf(S.cat) + Math.sign(step) + KEYS.length) % KEYS.length]);
-  else if (S.col) { const rows = colRows(); if (rows) { S.col.i = Math.max(0, Math.min(rows.length - 1, S.col.i + step)); drawCol(); } }
+  else if (S.col) { colLand(); const rows = colRows(); if (rows) { S.col.i = Math.max(0, Math.min(rows.length - 1, S.col.i + step)); drawCol(); } }
   else if (S.pos != null) { flingV += step * .004; return; }   // wheel during a fling adds to the spin
   else S.item = Math.max(0, Math.min(items(S.cat).length - 1, S.item + step));
   sync();
@@ -1178,7 +1179,7 @@ function spin() { let t = performance.now();
 addEventListener("keydown", () => { if (S.pos != null) land(); }, true);   // a key mid-spin takes over from the mouse
 addEventListener("dragstart", e => e.preventDefault(), true);   // no picture or link on the page is a file to drag (a click-wiggle dropped icons onto the Desktop)
 $("row").addEventListener("pointerdown", e => {
-  if (e.button !== 0 || S.mode !== "desk" || S.ov || S.col || (SCR === 2 && !SOLO)) return;
+  if (e.button !== 0 || S.mode !== "desk" || S.ov || (SCR === 2 && !SOLO)) return;
   if (e.ts == null) PTRSEQ = 0;   // its own mouse, not screen 2's relay
   const was = S.pos != null, at = m => m?.ts ?? m?.timeStamp ?? performance.now(); cancelAnimationFrame(flingRaf); flingV = 0;   // when the hand moved, not when the message arrived: relayed moves come in bursts and spiked the flick speed
   const x0 = e.clientX, p0 = was ? S.pos : S.item; let lx = x0, lt = at(e), dragging = was;
@@ -1186,7 +1187,7 @@ $("row").addEventListener("pointerdown", e => {
   const move = m => {
     if (!(m.buttons & 1)) return up(m);   // the button is already up (its release went elsewhere): the press is over, the row must not follow a bare pointer
     if (!dragging && Math.abs(m.clientX - x0) < 12) return;   // a wobble while clicking is still a click
-    if (!dragging) { dragging = true; S.flung = true; hideTip(); S.hov = null; document.querySelectorAll("#row .item.hov").forEach(x => x.classList.remove("hov")); }
+    if (!dragging) { dragging = true; S.flung = true; if (S.col) closeCol(); hideTip(); S.hov = null; document.querySelectorAll("#row .item.hov").forEach(x => x.classList.remove("hov")); }
     $("row").style.transition = "none";
     const now = at(m), v = -(m.clientX - lx) / zoom() / TILE / Math.max(1, now - lt);
     flingV = flingV * .6 + v * .4; lx = m.clientX; lt = now;   // smoothed hand speed, in tiles per ms
@@ -1261,7 +1262,36 @@ addEventListener("mousedown", e => { if (!e.target.closest("#ctx")) $("ctx").cla
 addEventListener("contextmenu", e => { if (!e.target.closest("#row, input")) e.preventDefault(); });   // no browser menu on the page; text boxes keep theirs (paste)
 addEventListener("keydown", e => { if (e.key === "Escape" && $("ctx").classList.contains("on")) { $("ctx").classList.remove("on"); e.preventDefault(); e.stopImmediatePropagation(); } }, true);
 addEventListener("wheel", () => $("ctx").classList.remove("on"), true);
-$("col").onclick = e => { if (e.target.closest("[data-ycs]")) { ytChSoMenu(e); return; } const r = e.target.closest(".cw"), rows = colRows(); if (!r || !rows) return; const k = +r.dataset.k;   // first click picks (and previews), a click on the picked row opens it
+/* drag the column: it follows the hand, a flick coasts and slows, then it settles. The pick rides the third row, as with the keys and the wheel */
+var colTop = null;   // var: drawCol reads it before this line runs
+let colV = 0, colRaf = 0, colDragged = false;
+function colAt(v) { const rows = colRows(); if (!S.col || !rows) return; const n = Math.max(0, rows.length - 3);
+  colTop = v < 0 ? v * .3 : v > n ? n + (v - n) * .3 : v;   // past either end it stretches
+  const t = Math.max(0, Math.min(n, Math.round(colTop))), i = t > 0 ? Math.min(rows.length - 1, t + 2) : Math.min(S.col.i, 2, rows.length - 1);
+  $("col").style.setProperty("--off", -colTop * 76 + "px");   // mid-drag only the offset and the pick's class change: rebuilding the column and the deck every move made it lag behind the hand
+  if (i !== S.col.i) { const cw = $("col").querySelectorAll(".cw"); cw[S.col.i]?.classList.remove("cur"); cw[i]?.classList.add("cur"); S.col.i = i; } }
+function colLand() { cancelAnimationFrame(colRaf); colTop = null; $("col").classList.remove("drag"); drawCol(); sync(); }
+$("col").addEventListener("pointerdown", e => {
+  if (e.button !== 0 || !S.col || e.target.closest("[data-ycs]")) return;
+  cancelAnimationFrame(colRaf); const was = colTop != null, y0 = e.clientY, v0 = was ? colTop : Math.max(0, S.col.i - 2); let ly = y0, lt = e.timeStamp, dragging = was; colV = 0;
+  const move = m => {
+    if (!(m.buttons & 1)) return up(m);
+    if (!dragging && Math.abs(m.clientY - y0) < 6) return;   // a wobble while clicking is still a click
+    dragging = true; $("col").classList.add("drag");
+    const v = -(m.clientY - ly) / zoom() / 76 / Math.max(1, m.timeStamp - lt); colV = colV * .6 + v * .4; ly = m.clientY; lt = m.timeStamp;   // rows per ms
+    colAt(v0 - (m.clientY - y0) / zoom() / 76); };
+  const up = u => { removeEventListener("pointermove", move); removeEventListener("pointerup", up); removeEventListener("pointercancel", up);
+    if (!dragging) return; colDragged = true; setTimeout(() => colDragged = false, 0);   // the release is not a click on a row
+    if (u.timeStamp - lt > 80) colV = 0;   // held still before letting go: no throw
+    let t = performance.now();
+    const f = now => { const dt = Math.min(40, now - t), n = Math.max(0, (colRows()?.length ?? 0) - 3); t = now; let p = colTop + colV * dt;
+      colV *= Math.exp(-dt / 330); if (p < 0 || p > n) { colV *= Math.exp(-dt / 40); p = Math.max(-.5, Math.min(n + .5, p)); }
+      colAt(p); if (Math.abs(colV) > .0015) colRaf = requestAnimationFrame(f); else colLand(); };
+    colRaf = requestAnimationFrame(f); };
+  addEventListener("pointermove", move); addEventListener("pointerup", up); addEventListener("pointercancel", up);
+});
+addEventListener("keydown", () => { if (colTop != null) colLand(); }, true);   // a key mid-coast takes over
+$("col").onclick = e => { if (colDragged) return; if (e.target.closest("[data-ycs]")) { ytChSoMenu(e); return; } const r = e.target.closest(".cw"), rows = colRows(); if (!r || !rows) return; const k = +r.dataset.k;   // first click picks (and previews), a click on the picked row opens it
   if (k === S.col.i) colDo(rows[k]); else S.col.i = k; drawCol(); sync(); };
 $("col").addEventListener("contextmenu", e => {   // a folder entry or project file: the same menu as the row's tiles
   const el = e.target.closest(".cw"), rows = colRows(); if (!el || !rows) return; e.preventDefault(); e.stopPropagation(); S.col.i = +el.dataset.k; drawCol(); sync();
@@ -1400,6 +1430,8 @@ function fromHost(type, value) {
   if (type === "folder" && value?.id) { BROWSE[value.id] = value; drawCol(); drawDeck(true); }   // a folder the column or card asked for (Places.Browse)
   if ((type === "covered" || type === "menu") && window.HOSTCOVERED) stopPreview();   // a window took the screen: the preview stops
   if (type === "live") loadLive(true);
+  if (type === "update") toast("@gear.svg", `Tidepool ${value.version} is out`, "Install it from Settings", true);
+  if (type === "update-failed") toast("@gear.svg", "Update failed", value ?? "", true);
   if (type?.startsWith("claude-") && HC()) claudeEv(type, value ?? {});
   if (type === "mics") drawMicPick(value);
   if (type === "voice") voiceEv(value ?? {});

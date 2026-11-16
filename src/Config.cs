@@ -101,6 +101,7 @@ static class Cfg
         modules = Modules.ToDictionary(m => m, On),
         names = new { player = Player.name, browser = Browser.name, daw = Daw?.name ?? "your DAW", ext = Daw?.ext[0] ?? "", ai = ChatName },
         music = new { player = Player.id, rich = Player.id is "spotifast" or "spotify" },
+        startupProblem = StartupProblem(),
         chat = new { provider = Chat, api = Get("chat.api") ?? "openai", model = Get("chat.model"), models = (Node("chat.models") as JsonArray)?.Select(m => m?.GetValue<string>()).Where(m => m != null) },
     };
 
@@ -109,7 +110,7 @@ static class Cfg
     {
         first = !Exists, saved = root,
         now = new { player = Player.id, browser = Browser.id, daw = Daw?.id, chat = Chat, chatName = ChatName, place = new { Place.lat, Place.lon, Place.name }, hasKey = ChatKey != null,
-                    projects = Daw == null ? null : Studio.ProjectsDir(Daw), home = Claude.Home, codex = ApiChat.Codex, modules = Modules.ToDictionary(m => m, m => Flag("modules." + m, true)), startup = File.Exists(StartupLink) },
+                    projects = Daw == null ? null : Studio.ProjectsDir(Daw), home = Claude.Home, codex = ApiChat.Codex, modules = Modules.ToDictionary(m => m, m => Flag("modules." + m, true)), startup = File.Exists(StartupLink), startupProblem = StartupProblem() },
         players = Media.Players.Select(p => new { p.id, p.name, installed = p.installed() }),
         browsers = Web.Browsers.Select(b => new { b.id, b.name, installed = b.Root != null }),
         daws = Studio.Daws.Select(d => new { d.id, d.name, installed = d.installed() }),
@@ -127,7 +128,20 @@ static class Cfg
     }
 
     // ---------- start with Windows ----------
-    static string StartupLink => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Startup), "Console Desktop.lnk");
+    const string LinkName = "Console Desktop.lnk", Approved = @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\StartupFolder";
+    static string StartupLink => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Startup), LinkName);
+
+    /// <summary>Why "Start with Windows" (config.json "startup", what Setup's box was saved as) won't happen, or null. Optimizer and cleanup apps
+    /// delete the shortcut or mark it disabled (bug 16 Nov: a friend's PC never started it at boot, and nothing said so).</summary>
+    public static string? StartupProblem()
+    {
+        if (!Flag("startup", false)) return null;
+        if (!File.Exists(StartupLink)) return "Its startup shortcut was removed, often by a cleanup or optimizer app. Tick Start with Windows in Setup to put it back, and allow Console Desktop in that app.";
+        using var k = Registry.CurrentUser.OpenSubKey(Approved);
+        if (k?.GetValue(LinkName) is byte[] b && b.Length > 0 && (b[0] & 1) == 1)   // 02 = enabled, 03 = disabled
+            return "It is disabled in Task Manager › Startup, often by an optimizer app. Enable it there, or tick Start with Windows in Setup, and allow Console Desktop in that app.";
+        return null;
+    }
     public static void SetStartup(bool on)
     {
         try
@@ -135,6 +149,7 @@ static class Cfg
             if (!on) { File.Delete(StartupLink); return; }
             dynamic sh = Activator.CreateInstance(Type.GetTypeFromProgID("WScript.Shell")!)!;
             var l = sh.CreateShortcut(StartupLink); l.TargetPath = Environment.ProcessPath; l.WorkingDirectory = AppContext.BaseDirectory; l.Save();
+            using var k = Registry.CurrentUser.OpenSubKey(Approved, true); k?.DeleteValue(LinkName, false);   // ticked again: undo a "Disabled" from Task Manager or an optimizer
         }
         catch (Exception e) { Log.Write("startup shortcut: " + e.Message); }
     }

@@ -16,6 +16,7 @@ const SHADE_TXT = { auto: "Collapsed except on Music", open: "Always open", clos
 function settingsItems() {
   const sk = Object.keys(SKINS), mine = sk.filter(k => SKINS[k].user).length, sc = H?.screens ?? [];
   return [
+    ...(H?.update ? [{ n: `Install update ${H.update.version}`, d: "Tidepool restarts in a minute · your settings and chats stay", ic: "@gear.svg", run: () => { H.installUpdate(); toast("@gear.svg", "Updating Tidepool…", "Downloading " + H.update.version); }, id: "set:update" }] : []),
     { n: "Winamp", d: `Wearing ${SKINS[WA.id]?.name ?? WA.id} · ${plural(sk.length, "skin")}${mine ? `, ${mine} yours` : ""}`, ic: "@skin.svg", set: "winamp", id: "set:winamp" },
     { n: "Scenes", d: ROT.pin == null ? `Follows the sun · now ${SCENES[sceneAt(new Date()).i].name}` : `Pinned to ${SCENES[ROT.pin].name}`, ic: "@scene", set: "scenes", id: "set:scenes" },
     { n: "Sound", d: window.Sound?.mute() ? "Desktop sounds off" : `Desktop sounds at ${Math.round((window.Sound?.volume() ?? .6) * 100)}%`, ic: "@speaker2.svg", set: "sound", id: "set:sound" },

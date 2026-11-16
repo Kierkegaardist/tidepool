@@ -228,7 +228,8 @@ function load() {
   $("wlead").textContent = FIRST ? "Pick the apps the desktop talks to. Every tab is optional; anything not on this PC stays off until it is. You can come back here any time from Settings › Setup."
     : "Change what the desktop talks to. Saving restarts the desktop (the taskbar shows for a second).";
   $("save").textContent = FIRST ? "Save and start" : "Save and restart";
-  $("startup").checked = FIRST ? true : now.startup;
+  $("startup").checked = FIRST ? true : now.startup || !!now.startupProblem;
+  if (now.startupProblem) { $("status").className = "grow note warn"; $("status").textContent = "Not starting with Windows: " + now.startupProblem; }
   $("spid").value = C.music.spotifyClientId ?? "";
   $("projects").value = C.studio.projects ?? ""; $("projects").placeholder = now.projects ?? "Not found yet · browse to it";
   $("home").value = C.chat.home ?? now.home ?? "";
@@ -367,7 +368,8 @@ function save() {
   C.files.places = places.filter(p => p.name && p.path);
   C._about ??= "Which tabs are on and what each one talks to. Setup (ConsoleDesktop.exe --setup) writes this file.";
   $("save").disabled = true; $("status").textContent = FIRST ? "Saved · starting the desktop" : "Saved · restarting the desktop";
-  send({ type: "save", config: C, key: keyTyped, startup: $("startup").checked, start: true });
+  C.startup = $("startup").checked;   // remembered, so the desktop can tell when something removes or disables it (Config.StartupProblem)
+  send({ type: "save", config: C, key: keyTyped, startup: C.startup, start: true });
 }
 
 /* ---------- browser preview only ---------- */

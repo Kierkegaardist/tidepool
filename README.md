@@ -108,7 +108,7 @@ You need the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
 dotnet build src -c Release -o bin
 bin\ConsoleDesktop.exe                 # starts the watchdog and the desktop
 bin\ConsoleDesktop.exe --stock         # the escape hatch from a shell
-powershell -ExecutionPolicy Bypass -File installer\build.ps1 -Version 0.2.4   # makes dist\ConsoleDesktop-Setup.exe
+powershell -ExecutionPolicy Bypass -File installer\build.ps1 -Version 0.2.5   # makes dist\ConsoleDesktop-Setup.exe
 ```
 
 - `src/` holds the C#/.NET 8 + WebView2 host, and `web/` holds the page (`web/index.html`).

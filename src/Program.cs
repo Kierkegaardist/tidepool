@@ -129,7 +129,7 @@ sealed class Watchdog : ApplicationContext
     readonly MsgWindow hotkeyWindow;
     readonly System.Windows.Forms.Timer timer = new() { Interval = 1000 };
     readonly DateTime started = DateTime.Now;
-    int misses;
+    int misses; bool answered;
 
     public Watchdog()
     {
@@ -146,8 +146,13 @@ sealed class Watchdog : ApplicationContext
     {
         if (host.HasExited) { Stop($"host exited (code {host.ExitCode})"); return; }
         var ping = FindWindowEx(HWND_MESSAGE, IntPtr.Zero, null, "ConsoleDesktopHost");
-        if (ping == IntPtr.Zero) { if (DateTime.Now - started > TimeSpan.FromSeconds(30)) Stop("host never came up"); return; }
+        var up = DateTime.Now - started;
+        if (ping == IntPtr.Zero) { if (up > TimeSpan.FromSeconds(90)) Stop("host never came up"); return; }
         bool alive = SendMessageTimeout(ping, WM_NULL, IntPtr.Zero, IntPtr.Zero, SMTO_ABORTIFHUNG, 1500, out _) != IntPtr.Zero;
+        if (alive) answered = true;
+        // The ping window exists before Host's constructor finishes, but it only answers once the message loop runs. At login on a slow PC
+        // that build takes well over 3 s, so misses count only after the first answer, or after 90 s of silence (bug 16 Nov: never started at boot).
+        if (!answered && up < TimeSpan.FromSeconds(90)) return;
         misses = alive ? 0 : misses + 1;
         if (misses >= 3) Stop("host not responding for 3 checks");
     }
