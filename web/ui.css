@@ -52,6 +52,7 @@
 .pill .vr{width:1px;height:28px;background:rgba(255,255,255,.28)}
 .pill .ti{gap:7px}.pill .ti img{width:20px;height:20px}
 .bell{position:relative;width:28px;height:28px;display:grid;place-items:center;cursor:pointer}.bell svg{width:24px;height:24px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.5))}
+.trayb{width:24px;height:28px;display:grid;place-items:center;cursor:pointer;opacity:.8}.trayb:hover{opacity:1}.trayb svg{width:20px;height:20px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.5))}
 .bell b{position:absolute;right:-8px;top:-6px;min-width:18px;height:18px;border-radius:9px;background:radial-gradient(circle at 35% 30%,#ffb3a6,#E5484D 55%,#9a1d22);font:700 11px/18px var(--font);text-align:center;padding:0 5px;box-shadow:0 0 0 2px rgba(10,16,22,.85)}
 .bell b:empty{display:none}
 .pill .off{display:none;color:#FFD08A}.offline .pill .off{display:inline-flex}
@@ -221,7 +222,8 @@
 .arc text{fill:#fff;text-anchor:middle;font:600 13px var(--font);letter-spacing:.22em;filter:drop-shadow(0 1px 2px rgba(0,16,28,.8))}
 
 /* ---- game running ---- */
-.covered #scenes{display:none}:is(.covered,.frozen) *{animation-play-state:paused!important}   /* perf.md: covered = GPU 0 %, every animation paused; frozen (a window over it) keeps the scene drawn, so it shows the moment the window moves */
+.covered #scenes{display:none}:is(.covered,.frozen) *,:is(.covered,.frozen) *::before,:is(.covered,.frozen) *::after{animation-play-state:paused!important;transition:none!important}   /* ::before/::after too: the phase dot's pulse kept a covered page drawing at 144 Hz; transitions too: the glint's 4 s glide, re-aimed every second, never finished (perf-states, 20 Nov) */
+.frozen #hs{visibility:hidden}   /* resting redraws once a minute (core.js): a second hand would sit stuck */   /* perf.md: covered = GPU 0 %, every animation paused; frozen (a window over it) keeps the scene drawn, so it shows the moment the window moves */
 /* two screens, the bezel handoff (index.html handoff/slideAway): during screen 2's view transition only the menu layer and its named pieces move */
 :root{view-transition-name:none}.s2 .ui,.solo .ui{view-transition-name:ui}
 ::view-transition-old(*):only-child,::view-transition-new(*):only-child{animation:none}   /* pieces in one layout only: the page flies them in or out itself */
@@ -373,7 +375,6 @@
    The carousel runs on across the bezel (no tile ever sits on it); screen 2 takes the clock, status pill and Winamp, and gives them back under s2cov. */
 .s2 .ui > *{display:none!important}
 .s2 #scrub,.s2 .skyt{display:none}
-.snapping .skyt{visibility:hidden!important}   /* while the glass snapshot is taken (snapGlass) */
 .s1:not(.s2cov):not(.pleft) .ui:not(.cl-on) .rowclip{-webkit-mask:none;mask:none}   /* notifications open on screen 2 now: screen 1 keeps its whole row */
 /* the Acer (24") has smaller pixels than the ASUS (27"): screen 2 scales the row by 27/24 so tiles look the same size on both. --s2-scale is the knob (live/theme.json vars) */
 .s2 .ui > .rowclip{display:block!important;scale:var(--s2-scale,1.125);transform-origin:0 440px;-webkit-mask:linear-gradient(90deg,#000 1320px,transparent 1650px);mask:linear-gradient(90deg,#000 1320px,transparent 1650px)}
@@ -424,6 +425,7 @@
 .col{position:absolute;left:200px;top:628px;width:620px;height:430px;overflow:hidden;pointer-events:none;opacity:0;translate:0 -14px;
   transition:opacity .22s var(--ease-surface,ease-out),translate .22s var(--ease-surface,ease-out);-webkit-mask:linear-gradient(#000 82%,transparent);mask:linear-gradient(#000 82%,transparent)}
 .col-on .col{opacity:1;translate:0 0;pointer-events:auto}
+.col{touch-action:pan-x}.col.drag .cw{transition:none;will-change:translate}.col.drag{cursor:grabbing}   /* dragged: rows follow the hand, no lag */
 .col-on .desc{opacity:0;pointer-events:none;transition:opacity .15s}   /* hidden under the column's top rows: it ate their clicks */
 .col .cw{position:relative;display:flex;align-items:center;gap:16px;height:64px;margin-bottom:12px;padding:0 18px;border-radius:18px;cursor:pointer;
   translate:0 var(--off,0);transition:translate .2s var(--ease-surface,ease-out),background .15s,opacity .15s;opacity:.62;
@@ -482,8 +484,8 @@
 .ctx{position:absolute;z-index:20;min-width:240px;padding:6px;border-radius:14px;display:none;font:400 16px/1 var(--font);color:#fff;box-shadow:0 14px 40px rgba(0,0,0,.55)}
 .ctx.on{display:block}
 .ctx .ch{padding:10px 12px 8px;font:600 12px/1.2 var(--font);letter-spacing:.08em;text-transform:uppercase;opacity:.65;max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ctx .ci{padding:12px 14px;border-radius:9px;cursor:pointer}.ctx .ci:hover{background:color-mix(in srgb,var(--accent) 35%,rgba(255,255,255,.08))}
-.ctx .ci.danger:hover{background:rgba(229,72,77,.45)}
+.ctx .ci{padding:12px 14px;border-radius:9px;cursor:pointer}.ctx .ci:is(:hover,.hov){background:color-mix(in srgb,var(--accent) 35%,rgba(255,255,255,.08))}
+.ctx .ci.danger:is(:hover,.hov){background:rgba(229,72,77,.45)}
 .ui[data-base=light] :is(.sbar,.fbox,.sorts .chip:not(.on)){color:var(--text);background:rgba(255,255,255,.55);border-color:rgba(0,40,70,.2)}
 .ui[data-base=light] .fbox input{color:var(--text)}.ui[data-base=light] .fbox input::placeholder{color:var(--dim)}
 :is(.m-idle) :is(.sbar,.tools,.scr,.paddle){opacity:0!important;pointer-events:none!important}
@@ -557,7 +559,8 @@
 .col .cw img.th{object-fit:cover;border-radius:6px;filter:none;box-shadow:0 2px 6px rgba(0,20,40,.45);outline:1px solid rgba(255,255,255,.35)}   /* a picture shows itself */
 .nd{display:inline-block;width:8px;height:8px;margin:0 8px 2px 0;border-radius:50%;vertical-align:middle;background:var(--accent);box-shadow:0 0 8px var(--accent)}   /* changed today */
 .deck .pvnone{display:flex;flex-direction:column;align-items:center;gap:14px;opacity:.75}
-.col .cw:not(.cur,.wait):hover{opacity:.9;border-color:rgba(255,255,255,.5)}   /* the mouse sees what it would pick */
+.col:not(.drag) .cw:not(.cur,.wait):hover{opacity:1;background:linear-gradient(180deg,rgba(255,255,255,.26),rgba(0,26,44,.2));border-color:color-mix(in srgb,var(--glow) 45%,#fff);box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 45%,transparent),0 0 14px color-mix(in srgb,var(--accent) 25%,transparent)}
+.ui[data-base=light] .col:not(.drag) .cw:not(.cur,.wait):hover{background:linear-gradient(180deg,#fff,rgba(235,246,252,.8))}   /* the mouse sees what it would pick */
 .deck .ents img.th{object-fit:cover;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.4)}
 
 /* Music cards: album art fills the square; the now-playing line under the facts; picks in a list or chip play like the player */
@@ -724,6 +727,9 @@
    yet each blur is redrawn with every scene frame and carousel step (the row is transformed, so paintGlass can't bake it). Every Video tile is a cover
    with a length badge; measured in headless Chrome with 24 of them: GPU process 2.7 -> 0.8 CPU-s per 3 s idle, renderer 1.6 -> 0.2. */
 .ui .item:has(> img.art),.ui .item:has(> img.art) .badge{backdrop-filter:none}
+/* Unblurred glass everywhere (user, 20 Nov): live blur over a moving scene re-blurred every panel each frame, ~150 % of a CPU core and ~12 GPU points
+   on a visible desk screen (tests/try-visible.ps1); the panels are dense enough that it looks the same. The id beats live.css's !important blurs. */
+#screen *,#screen *::before,#screen *::after{backdrop-filter:none!important}
 .deck .ytcn{font:inherit;display:inline-block;padding:2px 10px;border-radius:999px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25)}.deck .ytcn::after{content:" ›"}.deck .ytcn:hover{background:rgba(255,255,255,.26);text-decoration:none}   /* the card's channel name: a pill that opens the channel */
 
 /* Setup › Voice off (or no whisper.cpp): no mic buttons, no wake toggle (index.html CFG) */

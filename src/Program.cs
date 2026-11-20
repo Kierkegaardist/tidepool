@@ -83,6 +83,19 @@ static class Program
             for (int i = 0; i < 10 && Directory.Exists(udf); i++) { try { Directory.Delete(udf, true); } catch { Thread.Sleep(500); } }
             return 0;
         }
+        if (mode == "--dock")   // tests: the dock alone, held out, with the real open windows, for args[1] seconds (default 12); own WebView2 profile, deleted after
+        {
+            ApplicationConfiguration.Initialize();
+            var udf = Path.Combine(Paths.App, "obj-webtest", "dock-wv2");
+            var d = new Dock(CoreWebView2Environment.CreateAsync(null, udf)) { Pinned = args.Length < 3 || args[2] != "auto" };   // "auto": the real auto-hide
+            var t = new System.Windows.Forms.Timer { Interval = 500 }; var end = Environment.TickCount64 + 1000 * (args.Length > 1 && int.TryParse(args[1], out var sec) ? sec : 12);
+            t.Tick += (_, _) => { d.Windows(Host.TopWindows()); if (Environment.TickCount64 > end) Application.ExitThread(); };
+            t.Start();
+            Application.Run();
+            d.Dispose();
+            for (int i = 0; i < 10 && Directory.Exists(udf); i++) { try { Directory.Delete(udf, true); } catch { Thread.Sleep(500); } }
+            return 0;
+        }
         if (mode == "--stock") { StopOthers(); Shell.Restore("stock shortcut"); return 0; }
         if (mode == "--restart") { StopOthers(); Shell.Restore("restart after Setup"); Thread.Sleep(1000); mode = ""; }   // then a normal start below reads the new config.json
 

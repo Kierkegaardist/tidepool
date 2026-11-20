@@ -20,8 +20,8 @@ sealed class Host : ApplicationContext
     readonly System.Windows.Forms.Timer updateTimer = new() { Interval = 60_000 }; Update.Found? update;   // Update.cs
     readonly MsgWindow ping = new("ConsoleDesktopHost");   // the watchdog pings this; it answers only if our UI thread is alive
     readonly FileSystemWatcher liveWatch;   // app/web/live: the page re-reads theme.json + live.css itself on a "live" event
-    readonly Dictionary<uint, string> exeByPid = new();
-    readonly Dictionary<uint, string?> artByPid = new();
+    static readonly Dictionary<uint, string> exeByPid = new();
+    static readonly Dictionary<uint, string?> artByPid = new();
     readonly Input input;   // desktop clicks -> page, PS button -> menu (own thread)
     readonly Media media; Media.Playing? nowPlaying;
     readonly IChat claude;   // the chat panel: the user's Claude Code, or any chat API (config.json "chat", ApiChat.cs)
@@ -30,12 +30,14 @@ sealed class Host : ApplicationContext
     readonly Overlay overlay;   // "Hey Marina": what was heard and the reply, over whatever app is in front (Overlay.cs)
     readonly MsgWindow menuKey;   // Win+Esc: lift the menu out of the desktop layer
     readonly Switcher switcher;   // the one Alt+Tab entry (Switcher.cs)
+    readonly Dock? dock;   // Tidepool's own auto-hiding taskbar (Dock.cs); config.json modules.dock = false switches it off
     readonly Spectrum spectrum;   // what the PC plays, as bands (Spectrum.cs): runs while an uncovered page asks for it
     Dictionary<string, object> lists = new(); readonly Dictionary<string, string> listJson = new();   // games, apps, files, studio, web
     Scene? lifted;
     internal IntPtr startFg;   // the user's window at start: WebView2 grabs focus while loading, we hand it back
     string lastWindows = "";
     DateTime lastSun = DateTime.MinValue;
+    bool? browserUp;
     List<Notes.Note> notes = new(); string notesJson = ""; int noteTick;
 
     public Host()
@@ -54,6 +56,7 @@ sealed class Host : ApplicationContext
         overlay = new Overlay(Env.Value);
         var main = scenes.First(s => s.Role == "main");
         switcher = new Switcher(ShowDesktop, main.Shot);
+        if (Cfg.On("dock")) dock = new Dock(Env.Value) { Menu = () => ToggleMenu("dock"), GiveBack = startFg };
         Shell.HideShell();
 
         menuKey = new MsgWindow("ConsoleDesktopMenu", m => { if (m.Msg == WM_HOTKEY) ToggleMenu("Win+Esc"); });
@@ -87,6 +90,7 @@ sealed class Host : ApplicationContext
         var wins = CheckCovers();
         var json = JsonSerializer.Serialize(wins);
         if (json != lastWindows) { lastWindows = json; Broadcast("windows", wins); }
+        var br = wins.Any(w => Cfg.Browser.procs.Contains(w.app)); if (br != browserUp) { if (browserUp != null) Rescan(); browserUp = br; }   // the browser opened or closed: the Web row's open tabs ("is closed", switch vs. reopen) follow now, not at the next menu open
         if (DateTime.UtcNow - lastSun > TimeSpan.FromSeconds(60)) { lastSun = DateTime.UtcNow; Broadcast("sun", SunNow()); }
         if (++noteTick % 4 == 0 && Notes.ReadIfChanged() is { } n)   // every 2 s, and only when the store's file changed
         {
@@ -98,8 +102,11 @@ sealed class Host : ApplicationContext
     List<Win> CheckCovers()
     {
         var wins = TopWindows();
-        foreach (var s in scenes) s.SetCovered(wins.FirstOrDefault(w => !w.minimized && Covers(w, s.Screen.Bounds)) ?? PopOut.Cover(s.Screen.Bounds));   // our own video window filling a screen counts too
+        var none = locked ? "the PC being locked" : displayOff ? "the display being off" : ScreensaverRunning() ? "the screensaver" : null;   // nothing of ours can be seen on any screen
+        foreach (var s in scenes) s.SetCovered(none ?? CoverOf(wins, s.Screen.Bounds));
+        var rest = AppInFront(); if (rest != lastRest) { lastRest = rest; Broadcast("rest", rest); }   // the page holds still while an app has the focus (Settings › Scenes › Rest while you work)
         input.Targets = scenes.Select(s => new Input.Target(s.Screen.Bounds, s.Handle, !s.Covered)).ToArray();
+        dock?.Windows(wins);
         SpectrumCheck();
         return wins;
     }
@@ -115,7 +122,26 @@ sealed class Host : ApplicationContext
         };
         SetWinEventHook(0x000B, 0x0017, IntPtr.Zero, winHook, 0, 0, 0);   // MOVESIZEEND .. MINIMIZEEND (out of context: runs on this UI thread)
         SetWinEventHook(0x800B, 0x800B, IntPtr.Zero, winHook, 0, 0, 0);
+        SetWinEventHook(0x0003, 0x0003, IntPtr.Zero, winHook, 0, 0, 0);   // FOREGROUND: an app vs the desktop in front (rest)
+
+        // Nothing can be seen at all: locked (or switched away), or the display asleep. Lock first, so a locked PC whose display stays on rests too.
+        Microsoft.Win32.SystemEvents.SessionSwitch += (_, e) =>
+        {
+            bool? l = e.Reason switch { Microsoft.Win32.SessionSwitchReason.SessionLock or Microsoft.Win32.SessionSwitchReason.ConsoleDisconnect or Microsoft.Win32.SessionSwitchReason.RemoteDisconnect => true,
+                                        Microsoft.Win32.SessionSwitchReason.SessionUnlock or Microsoft.Win32.SessionSwitchReason.ConsoleConnect or Microsoft.Win32.SessionSwitchReason.RemoteConnect => false, _ => null };
+            if (l is bool v) scenes[0].BeginInvoke(() => { if (locked == v) return; locked = v; Log.Write(v ? $"session: {e.Reason} -> everything paused" : $"session: {e.Reason}"); CheckCovers(); });
+        };
+        power = new MsgWindow("ConsoleDesktopPower", m =>
+        {
+            if (m.Msg != 0x0218 /*WM_POWERBROADCAST*/ || (int)m.WParam != 0x8013 /*PBT_POWERSETTINGCHANGE*/) return;
+            var off = System.Runtime.InteropServices.Marshal.ReadInt32(m.LParam, 20) == 0;   // POWERBROADCAST_SETTING: Guid, DataLength, then the DWORD: 0 off, 1 on, 2 dimmed
+            if (off == displayOff) return;
+            displayOff = off; Log.Write(off ? "display: off -> everything paused" : "display: on"); CheckCovers();
+        }, messageOnly: false);
+        var display = new Guid("6FE69556-704A-47A0-8F24-C28D936FDA47");   // GUID_CONSOLE_DISPLAY_STATE (every screen asleep, as the console sees it)
+        if (RegisterPowerSettingNotification(power.Handle, ref display, 0 /*DEVICE_NOTIFY_WINDOW_HANDLE*/) == IntPtr.Zero) Log.Write("display state: not watched");
     }
+    bool locked, displayOff; bool? lastRest; MsgWindow? power;
     WinEventProc? winHook;   // kept alive: the hook holds only a pointer to it
 
     /// <summary>Alt+Tab to "Tidepool": every window over the desktop goes down (without activating anything else), like Win+D.</summary>
@@ -125,6 +151,29 @@ sealed class Host : ApplicationContext
         foreach (var w in up) ShowWindow(new IntPtr(w.id), 7 /*SW_SHOWMINNOACTIVE*/);
         Log.Write($"alt-tab to Tidepool: {up.Count} window(s) minimized");
         CheckCovers();
+    }
+
+    /// <summary>What hides this screen, for the log, or null: one window (Covers), our own video window filling it, or several windows together.</summary>
+    static string? CoverOf(List<Win> wins, Rectangle screen) =>
+        (wins.FirstOrDefault(w => !w.minimized && Covers(w, screen)) ?? PopOut.Cover(screen)) is { } w ? $"{w.app} \"{w.title}\""
+        : MostlyCovered(wins, screen) ? "windows over most of it" : null;
+
+    /// <summary>Windows that between them hide at least 90 % of the screen (a big unmaximised editor and a browser beside it): what shows is a sliver.</summary>
+    static bool MostlyCovered(List<Win> wins, Rectangle screen)
+    {
+        using var region = new Region(Rectangle.Empty);
+        foreach (var w in wins) if (!w.minimized) region.Union(Rectangle.Intersect(screen, Rectangle.FromLTRB(w.rect.Left, w.rect.Top, w.rect.Right, w.rect.Bottom)));
+        using var m = new System.Drawing.Drawing2D.Matrix();
+        return region.GetRegionScans(m).Sum(r => (double)r.Width * r.Height) >= 0.9 * screen.Width * screen.Height;
+    }
+
+    /// <summary>An app has the focus: not the desktop, the shell or Tidepool itself.</summary>
+    static bool AppInFront()
+    {
+        var fg = GetForegroundWindow();
+        if (fg == IntPtr.Zero) return false;
+        GetWindowThreadProcessId(fg, out uint pid);
+        return pid != Environment.ProcessId && ClassOf(fg) is not ("Progman" or "WorkerW" or "Shell_TrayWnd" or "Shell_SecondaryTrayWnd" or "NotifyIconOverflowWindow");
     }
 
     /// <summary>Lively's rule: a maximised window on that screen, or any window covering the whole screen (full screen, borderless games).</summary>
@@ -138,7 +187,7 @@ sealed class Host : ApplicationContext
     public record Win(long id, string title, string app, bool maximized, bool minimized, string? art) { [System.Text.Json.Serialization.JsonIgnore] public RECT rect; }
 
     /// <summary>The switcher's list: visible, unowned, not tool windows, not cloaked, titled, not ours, not the shell.</summary>
-    List<Win> TopWindows()
+    internal static List<Win> TopWindows()
     {
         var list = new List<Win>();
         EnumWindows((h, _) =>
@@ -200,10 +249,11 @@ sealed class Host : ApplicationContext
         switch (type)
         {
             case "ready": SendInitial(s); break;
+            case "drawn": s.Drawn(); break;   // shown again after parking, and painted (bridge.js)
             case "focus": var h = Id(); if (IsIconic(h)) ShowWindow(h, 9 /*SW_RESTORE*/); ForceForeground(h); break;   // Force: a desktop click went to Explorer, not us, so a plain SetForegroundWindow is refused
             case "launch":
                 var id = m.GetProperty("id").GetString() ?? "";
-                if (Library.Launch(id)) { if (lifted != null) { lifted.NoStepBack(); Drop(); } }   // the launched thing takes the front; the menu steps back
+                if (Library.Launch(id, s.Screen)) { if (lifted != null) { lifted.NoStepBack(); Drop(); } }   // the launched thing takes the front; the menu steps back
                 break;
             case "snapshot": s.Snapshot(m.TryGetProperty("blur", out var b) && b.TryGetDouble(out var bv) ? bv : 12); break;
             case "claude-ask": claude.Ask(m.GetProperty("text").GetString() ?? "", m.TryGetProperty("images", out var imgs) ? imgs : null); break;
@@ -211,7 +261,9 @@ sealed class Host : ApplicationContext
             case "claude-sessions": _ = Task.Run(claude.Sessions); break;
             case "claude-resume": var rid = m.GetProperty("id").GetString() ?? ""; _ = Task.Run(() => claude.Resume(rid)); break;
             case "claude-files": var fq = m.GetProperty("q").GetString() ?? ""; _ = Task.Run(() => claude.Files(fq)); break;
-            case "voiceSettings": Process.Start(new ProcessStartInfo("ms-settings:privacy-speech") { UseShellExecute = true }); if (lifted != null) { lifted.NoStepBack(); Drop(); } break;   // the mic needs Windows' online speech recognition on
+            case "shellMenu": Input.ShellMenu(); break;   // the page's right-click menu › Windows menu: Explorer's own desktop menu
+            case "tray": Shell.OpenTray(Cursor.Position); break;   // the pill's ^ button: the tray icons Tidepool's hidden taskbar would show
+            case "voiceSettings":Process.Start(new ProcessStartInfo(m.TryGetProperty("page", out var pg) && pg.GetString() == "home" ? "ms-settings:" : "ms-settings:privacy-speech") { UseShellExecute = true }); if (lifted != null) { lifted.NoStepBack(); Drop(); } break;   // the mic needs Windows' online speech recognition on
             case "voice" or "wake" when !Cfg.On("voice"): break;   // Setup: Voice off, or whisper.cpp not installed
             case "voice": if (m.GetProperty("on").GetBoolean()) voice.Start(m.TryGetProperty("quiet", out var vq) && vq.ValueKind == System.Text.Json.JsonValueKind.Number ? vq.GetDouble() : 5); else voice.Stop(); break;
             case "overlay": overlay.Set(m.GetRawText()); break;
@@ -270,7 +322,7 @@ sealed class Host : ApplicationContext
                 if (media.HeardList().FirstOrDefault(x => x.at == hat) is { } hh && Media.ReplayWords(hh, m.GetProperty("kind").GetString() ?? "track") is { } words) Spotify.Best(words, m.GetProperty("kind").GetString() ?? "track");
                 break;
             case "reveal": if (Library.Reveal(m.GetProperty("id").GetString() ?? "") && lifted != null) { lifted.NoStepBack(); Drop(); } break;   // Explorer takes the front
-            case "openUrl": Library.OpenUrl(m.GetProperty("url").GetString() ?? ""); if (lifted != null) { lifted.NoStepBack(); Drop(); } break;
+            case "openUrl": Library.OpenUrl(m.GetProperty("url").GetString() ?? "", s.Screen); if (lifted != null) { lifted.NoStepBack(); Drop(); } break;
             case "browse":   // a folder's entries for the Files column and preview card (Places.Browse); answered to the asking page only
                 var bid = m.GetProperty("id").GetString() ?? "";
                 var th = new Thread(() => { var r = Places.Browse(bid); s.BeginInvoke(() => s.Send("folder", r)); }) { IsBackground = true };
@@ -303,7 +355,7 @@ sealed class Host : ApplicationContext
         s.Send("sun", SunNow());
         if (update != null) s.Send("update", update);
         s.Send("windows", TopWindows());
-        s.Send("covered", s.Covered);
+        s.Send("covered", s.Covered); s.Send("rest", lastRest ?? false);
         s.Send("nowPlaying", nowPlaying); s.Send("heard", media.HeardList()); s.Send("notifications", notes); foreach (var (k, v) in lists) s.Send(k, v);
         s.Send("menu", new { open = lifted == s });
         _ = Task.Run(() => spotify.SendState(true));
@@ -378,7 +430,7 @@ sealed class Host : ApplicationContext
     }
 
     internal static readonly Lazy<Task<CoreWebView2Environment>> Env = new(() => CoreWebView2Environment.CreateAsync(null, Path.Combine(Paths.App, ".wv2"),
-        new CoreWebView2EnvironmentOptions("--autoplay-policy=no-user-gesture-required" + (Environment.GetEnvironmentVariable("CD_DEBUG_PORT") is { } port ? $" --remote-debugging-port={port}" : ""))));   // the pad's keys are synthetic: no "user gesture", so render previews would never play
+        new CoreWebView2EnvironmentOptions("--autoplay-policy=no-user-gesture-required" + (Environment.GetEnvironmentVariable("CD_DEBUG_PORT") is { } port ? $" --remote-debugging-port={port}" : ""))));   // (--frame-throttle-fps=60 measured 20 Nov: no saving)   // the pad's keys are synthetic: no "user gesture", so render previews would never play
 
     internal sealed class Scene : Form
     {
@@ -402,7 +454,7 @@ sealed class Host : ApplicationContext
             {
                 var old = view; view = new() { Dock = DockStyle.Fill, DefaultBackgroundColor = Color.Black, Visible = old.Visible };
                 Controls.Remove(old); try { old.Dispose(); } catch { }
-                Controls.Add(view); _ = InitView();
+                Controls.Add(view); cover.BringToFront(); _ = InitView();
             });
         }
         public readonly Screen Screen;
@@ -421,7 +473,8 @@ sealed class Host : ApplicationContext
             this.host = host; Screen = screen; Index = index; this.layer = layer;
             FormBorderStyle = FormBorderStyle.None; ShowInTaskbar = false; StartPosition = FormStartPosition.Manual;
             BackColor = Color.Black; Text = $"ConsoleDesktop scene {index}";
-            Controls.Add(view);
+            Controls.Add(view); Controls.Add(cover); cover.BringToFront();
+            parkTimer.Tick += (_, _) => Park(); coverTimer.Tick += (_, _) => Drawn();
             CreateHandle();
             // Child of the desktop layer; its coordinates start at the virtual screen's top-left.
             Visible = true;
@@ -459,6 +512,7 @@ sealed class Host : ApplicationContext
         public void Lift()
         {
             up = true; liftedAt = Environment.TickCount64; before = GetForegroundWindow(); stepBack = true;
+            parkTimer.Stop(); Unpark();   // the menu shows over the windows that cover this screen
             SetParent(Handle, IntPtr.Zero);
             SetWindowPos(Handle, HWND_TOP, Screen.Bounds.X, Screen.Bounds.Y, Screen.Bounds.Width, Screen.Bounds.Height, 0x0040 /*SHOWWINDOW*/);
             view.Visible = true;
@@ -471,11 +525,12 @@ sealed class Host : ApplicationContext
         public void Drop()
         {
             bool was = up; up = false;
-            SetParent(Handle, layer);
+            SetParent(Handle, layer);   // (measured 20 Nov: a bottom-most top-level window costs the same, so the layer is not what makes the page expensive)
             var v = SystemInformation.VirtualScreen;
             SetWindowPos(Handle, IntPtr.Zero, Screen.Bounds.X - v.X, Screen.Bounds.Y - v.Y, Screen.Bounds.Width, Screen.Bounds.Height, 0x0040 /*SHOWWINDOW*/);
             if (was && stepBack && before != IntPtr.Zero && IsWindowVisible(before)) ForceForeground(before);
             if (was) Log.Write($"scene {Index}: menu closed (back in the desktop layer)");
+            if (was && Covered) parkTimer.Start();
         }
 
         protected override bool ShowWithoutActivation => true;   // never take focus at start; only the menu does
@@ -484,6 +539,7 @@ sealed class Host : ApplicationContext
         /// <summary>The page as it is now, full size (the Alt+Tab picture).</summary>
         public async Task<Bitmap?> Shot()
         {
+            if (parked && still != null) return new Bitmap(still);   // a hidden view has no fresh frame to give
             try { using var png = new MemoryStream(); await view.CoreWebView2.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png, png); png.Position = 0; using var b = new Bitmap(png); return new Bitmap(b); }   // copied: a Bitmap read from a stream needs that stream for life
             catch { return null; }
         }
@@ -529,15 +585,53 @@ sealed class Host : ApplicationContext
             try { view.CoreWebView2?.PostWebMessageAsJson(JsonSerializer.Serialize(new { type, value })); } catch { }
         }
 
-        /// <summary>Covered: the page freezes itself (animations paused, nothing redraws), but the view stays shown, so a window moved,
-        /// restored or minimized reveals the desktop at once instead of black while WebView2 wakes up (user, 15 Nov).</summary>
-        public void SetCovered(Win? by)
+        /// <summary>Covered: the page freezes itself at once (animations paused), and after 3 s the view parks (Park).</summary>
+        public void SetCovered(string? by)
         {
             bool now = by != null;
             if (now == Covered) return;
             Covered = now;
-            Log.Write(now ? $"scene {Index}: covered by {by!.app} \"{by.title}\" -> paused" : $"scene {Index}: uncovered -> running");
+            Log.Write(now ? $"scene {Index}: covered by {by} -> paused" : $"scene {Index}: uncovered -> running");
             Send("covered", now);
+            if (now) { if (!up) parkTimer.Start(); } else { parkTimer.Stop(); Unpark(); }
+        }
+        static readonly bool NoPark = Environment.GetEnvironmentVariable("CD_NOPARK") == "1";   // tests: measure with and without parking
+
+        readonly System.Windows.Forms.Timer parkTimer = new() { Interval = 3000 };   // a quick Alt+Tab or a window dragged across never parks
+        readonly System.Windows.Forms.Timer coverTimer = new() { Interval = 1500 };  // the still comes off by then even if "drawn" never arrives
+        readonly PictureBox cover = new() { Dock = DockStyle.Fill, SizeMode = PictureBoxSizeMode.StretchImage, BackColor = Color.Black, Visible = false };   // the page's last frame, over the view
+        Bitmap? still; bool parked;
+
+        /// <summary>Covered for a while: the view hides, so Chromium draws nothing and throttles its timers (a page that only paused itself still cost
+        /// ~20 % GPU; parked + resting = 0 %, perf-states / try-park 20 Nov). Its last frame shows in its place, so a window moved or minimized reveals
+        /// that picture, never black (user, 15 Nov).</summary>
+        async void Park()
+        {
+            parkTimer.Stop();
+            if (!Covered || up || parked || NoPark) return;
+            var shot = await Shot();
+            if (!Covered || up || parked || shot == null) { shot?.Dispose(); return; }   // uncovered meanwhile, or no picture: stay shown rather than risk black
+            coverTimer.Stop(); cover.Image = null; still?.Dispose(); still = shot;
+            cover.Image = still; cover.Visible = true; cover.BringToFront();
+            view.Visible = false; parked = true;
+            Log.Write($"scene {Index}: parked (view hidden behind its last frame)");
+        }
+
+        /// <summary>The view comes back under the still, which stays on top until the page has drawn (Drawn): shown at once, Chromium's first
+        /// frames were black for ~200 ms (try-park 20 Nov: Notepad's close faded over black).</summary>
+        void Unpark()
+        {
+            if (!parked) return;
+            parked = false; view.Visible = true; coverTimer.Start();
+            Log.Write($"scene {Index}: unparked");
+        }
+
+        /// <summary>The page drew its first frames since it was shown again (bridge.js "drawn"), or the fallback timer: the still comes off.</summary>
+        public void Drawn()
+        {
+            coverTimer.Stop();
+            if (parked || !cover.Visible) return;
+            cover.Visible = false; cover.Image = null; still?.Dispose(); still = null;
         }
     }
 }

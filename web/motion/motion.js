@@ -201,8 +201,50 @@ ${live}.tp-intro .clockline,${live}.tp-intro .pill,${live}.tp-intro .wa-dock,${l
   }
   document.readyState === "loading" ? addEventListener("DOMContentLoaded", watch) : watch();
 
+  /* ---- ambient clock: the never-ending motion (fireflies, Marina, the floating tile...) moved along a few times a second ----
+     While any CSS animation runs, Chromium redraws the whole scene every vsync (144 Hz here): 24 % GPU on a visible desk. Paused and stepped
+     by this clock it draws only when the clock ticks: 15/s = 7.7 % (tests/try-visible.ps1 -Tick, 20 Nov; the user picked 15 by eye).
+     Only infinite animations are taken over; one-off motion (rail, panels, the handoff) keeps the full rate. Ambient time runs only while
+     the page may move (not frozen, covered, hidden, reduced), so nothing jumps when it wakes. Settings › Scenes › Ambient motion:
+     tp-ambient = 15 (default) | 20 | 30 | full. Going back to full reloads: an animation once paused by script ignores the stylesheet's
+     play-state for good. */
+  const AMB = { fps: 15, tracked: new Map(), t: 0, last: 0, timer: 0, scan: true };
+  const ambRead = v => v === "full" ? 0 : +v || 15;
+  try { AMB.fps = ambRead(localStorage.getItem("tp-ambient")); } catch {}
+  const still = () => document.hidden || reduced() || screen().matches(".frozen,.covered");
+  function ambientTick() {
+    const now = performance.now(), dt = Math.min(250, now - (AMB.last || now)); AMB.last = now;
+    if (still()) return;
+    AMB.t += dt;
+    if (AMB.scan) {   // take over the ambient animations that started since the last look
+      AMB.scan = false;
+      for (const a of document.getAnimations()) {
+        if (a.playState !== "running" || AMB.tracked.has(a) || a.effect?.getTiming?.().iterations !== Infinity) continue;
+        a.pause(); AMB.tracked.set(a, a.currentTime - AMB.t);   // keeps its own phase
+      }
+    }
+    for (const [a, off] of AMB.tracked) {
+      const el = a.effect?.target;
+      if (!el?.isConnected) { AMB.tracked.delete(a); continue; }
+      if (el.closest?.(".scn:not(.on)")) continue;   // a scene not on show
+      a.currentTime = AMB.t + off;
+    }
+  }
+  const ambientStart = () => { clearInterval(AMB.timer); AMB.timer = AMB.fps ? setInterval(ambientTick, 1000 / AMB.fps) : 0; };
+  function ambient(fps) {
+    if (fps === undefined) return AMB.fps || "full";
+    const v = ambRead(String(fps));
+    try { localStorage.setItem("tp-ambient", v ? String(v) : "full"); } catch {}
+    if (!v && AMB.fps) { location.reload(); return "full"; }
+    AMB.fps = v; ambientStart(); return v || "full";
+  }
+  addEventListener("animationstart", () => { AMB.scan = true; });   // CSS animations announce themselves; a look once a second catches the rest
+  setInterval(() => { AMB.scan = true; }, 1000);
+  addEventListener("storage", e => { if (e.key !== "tp-ambient") return; const v = ambRead(e.newValue); if (!v && AMB.fps) location.reload(); else { AMB.fps = v; ambientStart(); } });   // the other screen's page follows
+  ambientStart();
+
   window.Motion = {
-    tokens: T, run, bump,
+    tokens: T, run, bump, ambient,
     reduced(on) { if (on === undefined) return reduced(); forced = on === null ? null : !!on; setReduced(); kick(); },
     parallax(on) { if (on === undefined) return pOn; pOn = !!on; kick(); },
   };

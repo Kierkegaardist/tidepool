@@ -35,7 +35,6 @@ html,body{background:#000;overflow:clip;height:100%}   /* clip, not hidden: focu
 .hviz,.hrefl{position:absolute;pointer-events:none;mix-blend-mode:screen;display:none}.hviz{inset:0}.hviz.live,.hrefl.live{display:block}
 .hviz canvas,.hrefl canvas{position:absolute;left:0;width:1920px}
 .hrefl{left:0;width:1920px;height:200px;opacity:.4;-webkit-mask:linear-gradient(#000 0,#0008 40%,transparent 90%);mask:linear-gradient(#000 0,#0008 40%,transparent 90%)}
-.snapping :is(.hviz,.hrefl){visibility:hidden!important}   /* not baked into the glass snapshot (snapGlass) */
 .watertint{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(180deg,var(--water),var(--waterDeep));mix-blend-mode:color;opacity:var(--waterA);
   -webkit-mask-image:linear-gradient(transparent,#000 70px)}
 .rays{position:absolute;left:-200px;right:-200px;bottom:0;mix-blend-mode:screen;opacity:var(--rays);will-change:transform;
@@ -225,3 +224,5 @@ html,body{background:#000;overflow:clip;height:100%}   /* clip, not hidden: focu
 .ti{display:inline-flex;align-items:center;gap:5px}.ti img{width:18px;height:18px}
 .hatch img{width:18px;height:18px;vertical-align:-4px;margin-right:5px}
 .boot,.boot *{transition:none!important}   /* first frame: place things without sliding in */
+
+.photo .city,.citylights,.mast{display:none}   /* blocky skyline overlay read as artifacts on every scene (2026-11-17) */

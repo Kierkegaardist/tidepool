@@ -56,7 +56,7 @@ static partial class Web
     static Browser B => Cfg.Browser;
 
     /// <summary>Opens a page in the picked browser (else Windows' default); http and https only.</summary>
-    public static void Open(string url)
+    public static void Open(string url, Screen? on = null)
     {
         if (!Uri.TryCreate(url, UriKind.Absolute, out var u) || u.Scheme is not ("https" or "http")) { Log.Write("openUrl refused: " + url); return; }
         try
@@ -64,7 +64,30 @@ static partial class Web
             if (B.Exe is { } exe) { var si = new ProcessStartInfo(exe) { UseShellExecute = false }; si.ArgumentList.Add(u.AbsoluteUri); Process.Start(si); }
             else Process.Start(new ProcessStartInfo(u.AbsoluteUri) { UseShellExecute = true });
         }
-        catch (Exception e) { Log.Write($"open {url} failed: {e.Message}"); }
+        catch (Exception e) { Log.Write($"open {url} failed: {e.Message}"); return; }
+        if (on != null) _ = Task.Run(() => MoveTo(on));
+    }
+
+    /// <summary>The page lands in the browser's last window, which may sit on another screen: once the browser takes the front, its window moves to
+    /// the screen the click came from (same spot on that screen, kept maximised if it was). ponytail: moves the whole window, tabs and all; a new window per screen if that annoys.</summary>
+    static void MoveTo(Screen on)
+    {
+        for (int i = 0; i < 40; i++, Thread.Sleep(100))
+        {
+            var h = GetForegroundWindow(); GetWindowThreadProcessId(h, out var pid);
+            string name; try { name = Process.GetProcessById((int)pid).ProcessName.ToLowerInvariant(); } catch { continue; }
+            if (!B.procs.Contains(name)) continue;
+            var from = Screen.FromHandle(h);
+            if (from.DeviceName == on.DeviceName) return;
+            bool max = IsZoomed(h); if (max) ShowWindow(h, 9 /*SW_RESTORE*/);
+            GetWindowRect(h, out var r);
+            Rectangle a = from.WorkingArea, b = on.WorkingArea;
+            int w = Math.Min(r.Right - r.Left, b.Width), ht = Math.Min(r.Bottom - r.Top, b.Height);
+            int x = b.X + Math.Clamp(r.Left - a.X, 0, b.Width - w), y = b.Y + Math.Clamp(r.Top - a.Y, 0, b.Height - ht);
+            SetWindowPos(h, IntPtr.Zero, x, y, w, ht, 0x14 /*NOZORDER|NOACTIVATE*/);
+            if (max) ShowWindow(h, 3 /*SW_MAXIMIZE*/);
+            Log.Write($"browser window moved to {on.DeviceName}"); return;
+        }
     }
 
     record Tab(string url, string title);

@@ -57,6 +57,7 @@ dawn blushes pink, noon goes bright aqua, golden hour glows, and at night the st
 | 🌄 **Living scenes** | Five photo scenes, tinted by the real sun where you live. Music draws a glowing visualizer over the horizon. |
 | 📼 **Winamp skins** | Hand-picked classic skins for the music player. Yes, really. |
 | 🪟 **Window switcher** | Glossy cards for every open window. Works across two screens. |
+| 🧭 **Dock** | Tidepool's own taskbar. It hides until you rest the mouse on a screen edge, and stays down during full-screen games. Drag it to any edge of any screen. Holds the menu, your open windows, the tray and the clock. |
 
 <table>
 <tr>

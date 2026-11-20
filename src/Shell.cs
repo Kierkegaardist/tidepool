@@ -39,6 +39,25 @@ static class Shell
         foreach (var s in Screen.AllScreens) if (s.WorkingArea != s.Bounds) SetWorkArea(s.Bounds);
     }
 
+    /// <summary>The tray (Windows' hidden-icons flyout): clicks the hidden taskbar's chevron, then moves the flyout from the top-left corner (where it lands
+    /// with no taskbar) to just under the click, or beside it away from the dock's edge (Dock.cs). ponytail: no chevron when "always show all icons" is on; then nothing opens.</summary>
+    public static void OpenTray(Point at, string edge = "top")
+    {
+        var chev = FindWindowEx(FindWindowEx(FindWindow("Shell_TrayWnd", null), IntPtr.Zero, "TrayNotifyWnd", null), IntPtr.Zero, "Button", null);
+        if (chev == IntPtr.Zero) { Log.Write("tray: no chevron"); return; }
+        PostMessage(chev, 0x00F5 /*BM_CLICK*/, IntPtr.Zero, IntPtr.Zero);
+        Task.Run(async () =>
+        {
+            var o = IntPtr.Zero;
+            for (int i = 0; i < 20 && !(IsWindowVisible(o = FindWindow("NotifyIconOverflowWindow", null))); i++) await Task.Delay(25);
+            if (!IsWindowVisible(o)) return;
+            GetWindowRect(o, out var r);
+            var s = Screen.FromPoint(at).Bounds; int w = r.Right - r.Left, h = r.Bottom - r.Top, gap = 40;
+            var (x, y) = edge switch { "bottom" => (at.X - w / 2, at.Y - gap - h), "left" => (at.X + gap, at.Y - h / 2), "right" => (at.X - gap - w, at.Y - h / 2), _ => (at.X - w / 2, at.Y + 24) };
+            SetWindowPos(o, IntPtr.Zero, Math.Clamp(x, s.Left, s.Right - w), Math.Clamp(y, s.Top, s.Bottom - h), 0, 0, 0x0001 | 0x0004 | 0x0010 /*NOSIZE|NOZORDER|NOACTIVATE*/);
+        });
+    }
+
     public static void ShowShell()
     {
         foreach (var h in Taskbars()) ShowWindow(h, SW_SHOWNA);
@@ -85,12 +104,16 @@ static class Shell
         return worker != IntPtr.Zero ? worker : progman;
     }
 
-    /// <summary>Re-applies the current wallpaper (same file, not saved), so no frame of ours stays painted behind the icons.</summary>
+    /// <summary>Re-applies the current wallpaper (same file, not saved), so no frame of ours stays painted behind the icons.
+    /// The saved path can point at a file that was moved since (user, 20 Nov: black desktop after every restore); then Explorer's own cached copy is used.</summary>
     public static void RepaintWallpaper()
     {
         var sb = new StringBuilder(1024);
-        if (SystemParametersInfo(0x0073 /*SPI_GETDESKWALLPAPER*/, (uint)sb.Capacity, sb, 0) && sb.Length > 0)
-            SystemParametersInfo(0x0014 /*SPI_SETDESKWALLPAPER*/, 0, sb, 0);
+        if (!SystemParametersInfo(0x0073 /*SPI_GETDESKWALLPAPER*/, (uint)sb.Capacity, sb, 0) || sb.Length == 0) return;   // a solid colour: nothing to repaint
+        var path = sb.ToString();
+        if (!File.Exists(path)) path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), @"Microsoft\Windows\Themes\TranscodedWallpaper");
+        if (File.Exists(path)) SystemParametersInfo(0x0014 /*SPI_SETDESKWALLPAPER*/, 0, new StringBuilder(path), 0);
+        else Log.Write("wallpaper file missing, left as it is: " + sb);
     }
 
     /// <summary>Stock Windows: taskbars, desktop icons and work area back, wallpaper repainted. Safe to call any number of times.</summary>

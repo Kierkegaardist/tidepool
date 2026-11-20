@@ -24,7 +24,9 @@ static class Notes
             c.Open();
             var cmd = c.CreateCommand();
             cmd.CommandText = @"select n.Id, h.PrimaryId, (select AssetValue from HandlerAssets a where a.HandlerId = h.RecordId and a.AssetKey = 'DisplayName'), n.Payload, n.ArrivalTime
-                from Notification n join NotificationHandler h on h.RecordId = n.HandlerId where n.Type = 'toast' order by n.ArrivalTime desc limit 20";
+                from Notification n join NotificationHandler h on h.RecordId = n.HandlerId where n.Type = 'toast'
+                and h.PrimaryId <> 'app.legcord.Legcord' order by n.ArrivalTime desc limit 20";
+            // Legcord toasts are on (banners off) only so the Kindle desk dashboard can read them (E:\Projects\tools\kindle-dashboard); the user doesn't want them here.
             using var r = cmd.ExecuteReader();
             while (r.Read())
             {

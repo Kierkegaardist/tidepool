@@ -158,9 +158,9 @@ const CORE = new URL(".", document.currentScript.src).href;
 const skyEdge = S => S.mask ? `-webkit-mask:url('${CORE + S.mask}') 0 0/1920px 1080px;mask:url('${CORE + S.mask}') 0 0/1920px 1080px` : `clip-path:path('${S.sky}')`;
 /* Horizon visualizer (horizon.js), and since 15 Nov the sky layer too (the traced paths ran into the land; light showed it): a tight sky mask per photo (assets/hviz/<id>[-r].png, made from the photos by concepts/horizon/hvizmask.py, which also
    prints these baselines: the light's foot, just under the lowest ridge point in the middle of the view). */
-const HVZ = { lake: 327, "lake-r": 327, hill: 612, meadow: 808, shore: 500, valley: 587, "hill-r": 805, "meadow-r": 716, "valley-r": 365, "shore-r": 566 };
+const HVZ = { lake: 326, "lake-r": 326, hill: 612, meadow: 807, shore: 499, valley: 586, "hill-r": 805, "meadow-r": 716, "valley-r": 364, "shore-r": 566 };
 const HRX = { shore: 820 }, HRY = { shore: 580, "shore-r": 566 };   // the reflection's open water: from x (shore: trees and rocks to the left), from y (below the far hills)
-const hvizEdge = k => `-webkit-mask:url('${CORE}assets/hviz/${k}.png') 0 0/1920px 1080px;mask:url('${CORE}assets/hviz/${k}.png') 0 0/1920px 1080px`;
+const hvizEdge = k => `-webkit-mask:url('${CORE}assets/hviz/${k}.png?v=2') 0 0/1920px 1080px;mask:url('${CORE}assets/hviz/${k}.png?v=2') 0 0/1920px 1080px`;
 function sceneHTML(S) {
   if (SCR === 2) S = { ...S, title: null, city: null, under: false, ...(SCREEN2[S.id] ?? {}) };
   if (S.flip) S = { ...S, sky: S.sky.replace(/(\d+),(\d+)/g, (m, x, y) => `${1920 - x},${y}`) };
@@ -223,9 +223,9 @@ function buildWinamp(id) {
   waSprite("monoster.png", 29, 12, 27, 12, 212, 41); waSprite("monoster.png", 0, 0, 29, 12, 239, 41);
   waText("320", 111, 43); waText("44", 156, 43);
   WA.digits = [48, 60, 78, 90].map(x => waSprite(S.nums, 0, 0, 9, 13, x, 26));
-  WA.volBg = waSprite("volume.png", 0, 0, 68, 13, 107, 57); WA.volKnob = waSprite("volume.png", 15, 422, 14, 11, 107, 58);   // the system volume (host.sys); drag or click it
+  WA.volBg = waSprite("volume.png", 0, 0, 68, 13, 107, 57); WA.volKnob = waSprite("volume.png", 15, 422, 14, 11, 107, 58);   // the music player's own volume (host.sys pvol), not the speakers'; drag or click it
   WA.volBg.dataset.wt = WA.volKnob.dataset.wt = "vol"; WA.volBg.style.cursor = WA.volKnob.style.cursor = "pointer"; waVol(WA.vol ?? .64);
-  window.host?.sys?.("vol")?.then(r => { if (r) waVol(r.vol / 100); });
+  window.host?.sys?.("pvol")?.then(r => { if (r) waVol(r.vol / 100); });
   waSprite(S.balance, 9, 0, 38, 13, 177, 57); waSprite(S.balance, 15, 422, 14, 11, 189, 58);
   waSprite("shufrep.png", 0, 61, 23, 12, 219, 58); waSprite("shufrep.png", 23, 61, 23, 12, 242, 58);
   WA.pos = waSprite("posbar.png", 0, 0, 248, 10, 16, 72); WA.thumb = waSprite("posbar.png", 248, 0, 29, 10, 16, 72);
@@ -265,18 +265,19 @@ setInterval(() => {   // transform: no layout
   WA.mqPos = (WA.mqPos + 5) % (WA.mqText.length * 5);
   if (big) WA.mqIn.style.transform = `translateX(${-WA.mqPos}px)`; if (small) WA.shMqIn.style.transform = `translateX(${-WA.mqPos}px)`;
 }, 220);
+let visDrawn = "";   // what the canvas shows now: an unchanged picture is not redrawn (each redraw is a new frame of the whole page, glass re-blurred)
 (function vis() {                                            // spectrum bars in the skin's own viscolor.txt colours
   const g = WA.vis, V = SKINS[WA.id]?.vis, t = performance.now() / 1000;
-  if (g && V && waShown() && WA.visOff) { g.fillStyle = V[0]; g.fillRect(0, 0, 76, 16); }   // Settings › Winamp › Visualizer off
-  else if (g && V && waShown()) {
-    g.fillStyle = V[0]; g.fillRect(0, 0, 76, 16);
+  if (g && V && waShown()) {
     const HB = window.Horizon, real = !!window.host;   // with the host: what the PC plays (Spectrum.cs via horizon.js), flat in silence; a plain browser keeps the made-up bars
-    for (let b = 0; b < 19; b++) {
-      const h = real ? (HB?.fresh() ? Math.round(Math.min(16, HB.bands[Math.round(b * 31 / 18)] * 16)) : 0)
-        : Math.round(Math.max(1, Math.min(16, (0.55 + 0.45 * Math.sin(t * 2.1 + b * 0.8)) * (0.5 + 0.5 * Math.abs(Math.sin(t * 5.3 + b * 2.7))) * (17 - b * 0.35))));
-      for (let y = 16 - h; y < 16; y++) { g.fillStyle = V[2 + y] ?? V[V.length - 1]; g.fillRect(b * 4, y, 3, 1); }
+    const hs = WA.visOff ? [] : Array.from({ length: 19 }, (_, b) => real ? (HB?.fresh() ? Math.round(Math.min(16, HB.bands[Math.round(b * 31 / 18)] * 16)) : 0)
+      : Math.round(Math.max(1, Math.min(16, (0.55 + 0.45 * Math.sin(t * 2.1 + b * 0.8)) * (0.5 + 0.5 * Math.abs(Math.sin(t * 5.3 + b * 2.7))) * (17 - b * 0.35)))));   // Settings › Winamp › Visualizer off: no bars
+    const key = WA.id + V[0] + hs.join();
+    if (key !== visDrawn) {   // silence or Visualizer off: drawn once, then left alone
+      visDrawn = key; g.fillStyle = V[0]; g.fillRect(0, 0, 76, 16);
+      hs.forEach((h, b) => { for (let y = 16 - h; y < 16; y++) { g.fillStyle = V[2 + y] ?? V[V.length - 1]; g.fillRect(b * 4, y, 3, 1); } });
     }
-  }
+  } else visDrawn = "";   // hidden: draw afresh when it shows again (the canvas may have been rebuilt with a new skin)
   setTimeout(() => requestAnimationFrame(vis), 100);   // 10 fps (perf.md: was 25). Each redraw re-blurs every glass panel on screen, so it is the idle GPU cost
 })();
 $("waskins").innerHTML = Object.keys(SKINS).map(k => `<button data-s="${k}" title="${SKINS[k].name}">${SKINS[k].label ?? k.toUpperCase()}</button>`).join("");   // labels come from skins.js (tools/skin-hunt/install.ps1)
@@ -341,7 +342,8 @@ function render() {
     }
     const gt = SCENES[i].glint && el.querySelector(".glint img");   // the shine on the water sits under whichever light is up: sun by day, a faint moon path at night
     if (gt) { const day = sun.elev > -1, src = day ? sn : mo;
-      gt.style.transform = `translateX(${(parseFloat(src.style.left) - SCENES[i].glint.x).toFixed(0)}px)`;
+      const gx = Math.round(parseFloat(src.style.left) - SCENES[i].glint.x), gx0 = +gt.dataset.x;
+      if (gx !== gx0) { gt.style.transition = Math.abs(gx - gx0) > 20 ? "" : "none"; gt.dataset.x = gx; gt.style.transform = `translateX(${gx}px)`; }   // glides only on a jump (sun to moon, a new scene): the sun's pixel-a-few-seconds creep restarted a 4 s glide forever, a full-width blended layer drawn every frame
       const low = day ? Math.max(0, Math.min(1, (12 - sun.elev) / 12)) : 0;   // a low sun lays the brightest path, and a golden one (it faded out here before: invisible by the time the sun reached screen 2)
       gt.parentNode.style.opacity = day ? Math.min(1, (sun.elev + 1) / 1.5).toFixed(2) : (+mo.style.opacity * (.15 + .3 * lit)).toFixed(2);   // moonlight: a full moon lays a real path, a crescent only a hint
       gt.parentNode.style.filter = low ? `brightness(${(1 + .9 * low).toFixed(2)}) sepia(${(.45 * low).toFixed(2)}) saturate(${(1 + low).toFixed(2)})` : ""; }
@@ -414,7 +416,12 @@ function fit() {   // any screen shape: the stage is 1920x1080 scaled to fit, th
   st.setProperty("--cov", s); st.setProperty("--covx", 960 * (s - 1) + "px"); st.setProperty("--covy", 540 * (s - 1) + "px");
 }
 addEventListener("resize", fit); fit();
-render(); setInterval(() => { if (!override && !window.HOSTCOVERED) render(); }, 1000);   // HOSTCOVERED: the host says a window covers this screen (bridge in index.html)
+let renderedMin = -1;
+render(); setInterval(() => {   // HOSTCOVERED: the host says a window covers this screen (bridge in index.html)
+  if (override || window.HOSTCOVERED) return;
+  const m = new Date().getMinutes(); if (m === renderedMin && $("screen").matches(".frozen")) return;   // resting (an app in front): once a minute; every redraw is a frame
+  renderedMin = m; render();
+}, 1000);
 
 function selfTest() {
   const near = (d, hhmm) => Math.abs(d.getHours() * 60 + d.getMinutes() - (+hhmm.slice(0, 2) * 60 + +hhmm.slice(3))) <= 6;

@@ -58,9 +58,11 @@
     tts: (text, voice, speed) => new Promise(res => { const id = ++ttsN, f = v => { if (v.id !== id) return; (listeners.tts || []).splice((listeners.tts || []).indexOf(f), 1); res(v.url); }; host.on("tts", f); send({ type: "tts", id, text, voice, speed }); }),
     listMics: () => send({ type: "listMics" }),     // answered by a "mics" event (kept as host.mics): [{ id, name, on }] (on = Windows' default mic, the one speech listens through)
     setMic: id => send({ type: "setMic", id }),     // makes that mic Windows' default; a fresh "mics" event follows
-    voiceSettings: () => send({ type: "voiceSettings" }),   // opens Windows Settings › Privacy › Speech   // Windows speech recognition: "voice" events { state: listening | partial | end | error, text, privacy? }
+    voiceSettings: () => send({ type: "voiceSettings" }), winSettings: () => send({ type: "voiceSettings", page: "home" }),   // opens Windows Settings › Privacy › Speech   // Windows speech recognition: "voice" events { state: listening | partial | end | error, text, privacy? }
     openMenu: (here) => send({ type: "openMenu", here: !!here }),   // here: on this page's screen (a click on it), not the usual menu screen
     closeMenu: () => send({ type: "closeMenu" }),
+    tray: () => send({ type: "tray" }),   // Windows' tray icons (hidden-icons flyout), opened under the mouse
+    shellMenu: () => send({ type: "shellMenu" }),   // Explorer's own desktop menu (View, Sort by, New, Display settings…), under the mouse
     setup: () => send({ type: "setup" }),   // Setup's window (config.json); saving restarts the desktop
     close: id => send({ type: "close", id }),
     exitToStock: () => send({ type: "exitToStock" }),
@@ -86,6 +88,8 @@
   window.cancelAnimationFrame = id => { caf(ids.get(id)); ids.delete(id); };
   const pace = () => { const s = host.screen, top = Math.max(...host.screens.map(x => x.hz || 0)); gap = s && s.hz && s.hz < top ? 1000 / s.hz : 0; };
 
+  // Parked (hidden while covered) and shown again: two frames later the host takes the still picture off (Host.Scene.Drawn). Real rAF, unpaced.
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) raf(() => raf(() => setTimeout(() => send({ type: "drawn" }), 30))); });
   window.chrome.webview.addEventListener("message", e => {
     const { type, value } = e.data;
     if (type !== "live" && type !== "snapshot" && type !== "tts" && type !== "sys" && type !== "spectrum" && type !== "skin-result" && type !== "voice" && type !== "wake" && !type.startsWith("claude-")) host[type] = value;

@@ -4,8 +4,8 @@ using static ConsoleDesktop.Native;
 namespace ConsoleDesktop;
 
 /// <summary>Input while the menu is closed, on its own thread so a hung host never lags the mouse:
-/// left clicks and moves on the bare desktop go to the page under them (as real mouse messages, the way Lively does it),
-/// and the DualSense PS button toggles the menu.</summary>
+/// left clicks, moves and right clicks on the bare desktop go to the page under them (as real mouse messages, the way Lively does it;
+/// right clicks are taken from Explorer so the page shows its own menu, and an injected one, Host's "shellMenu", gets Explorer's), and the DualSense PS button toggles the menu.</summary>
 sealed class Input
 {
     /// <summary>What the hook needs per screen; the UI thread swaps in a new array, the hook thread only reads it.</summary>
@@ -43,9 +43,17 @@ sealed class Input
     }
 
     IntPtr held;   // the scene a forwarded press went to: it gets the moves and the release too, wherever they happen
+    IntPtr rHeld;   // the scene a taken right press went to: its release is taken too
     IntPtr Hook(int code, IntPtr msg, IntPtr info)
     {
-        if (MenuOpen) held = IntPtr.Zero;   // lifted: the scene gets real mouse messages now
+        if (MenuOpen) held = rHeld = IntPtr.Zero;   // lifted: the scene gets real mouse messages now
+        else if (code >= 0 && (int)msg is 0x0204 or 0x0205 /*RBUTTONDOWN, RBUTTONUP*/ && (Marshal.ReadInt32(info, 12) & 1 /*LLMHF_INJECTED*/) == 0)
+        {
+            var pt = Marshal.PtrToStructure<POINT>(info);
+            if ((int)msg == 0x0205) { if (rHeld == IntPtr.Zero) return CallNextHookEx(IntPtr.Zero, code, msg, info); Forward(rHeld, 0x0205, pt); rHeld = IntPtr.Zero; return 1; }
+            var t = Targets.FirstOrDefault(x => x.live && x.bounds.Contains(pt.X, pt.Y));
+            if (t != null && OnDesktop(pt)) { rHeld = t.scene; Forward(t.scene, 0x0204, pt); return 1; }   // Explorer never sees it: the page's menu instead
+        }
         else if (code >= 0 && (int)msg is 0x0200 or 0x0201 or 0x0202 or 0x020A /*MOVE, LBUTTONDOWN, LBUTTONUP, WHEEL*/)
         {
             var pt = Marshal.PtrToStructure<POINT>(info);
@@ -77,7 +85,7 @@ sealed class Input
         if (r == IntPtr.Zero) return;
         if (msg == 0x020A) { PostMessage(r, msg, (IntPtr)(wheel << 16), (IntPtr)((pt.Y << 16) | (pt.X & 0xFFFF))); return; }   // the wheel keeps screen coordinates
         ScreenToClient(r, ref pt);
-        var down = msg == 0x0201 || (msg == 0x0200 && held != IntPtr.Zero) ? 1 /*MK_LBUTTON*/ : 0;   // moves while pressed say so: the page ends a drag on a move without the button
+        var down = msg == 0x0201 || (msg == 0x0200 && held != IntPtr.Zero) ? 1 /*MK_LBUTTON*/ : msg == 0x0204 ? 2 /*MK_RBUTTON*/ : 0;   // moves while pressed say so: the page ends a drag on a move without the button
         PostMessage(r, msg, (IntPtr)down, (IntPtr)((pt.Y << 16) | (pt.X & 0xFFFF)));
     }
 
@@ -137,6 +145,10 @@ sealed class Input
     [DllImport("user32.dll", SetLastError = true)] static extern bool RegisterRawInputDevices(RAWINPUTDEVICE[] d, uint n, uint size);
     [DllImport("user32.dll")] static extern uint GetRawInputData(IntPtr h, uint cmd, byte[] data, ref uint size, uint header);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern uint GetRawInputDeviceInfo(IntPtr h, uint cmd, byte[] data, ref uint size);
+
+    /// <summary>Explorer's own desktop menu, under the mouse: an injected right click, which the hook lets through.</summary>
+    public static void ShellMenu() { mouse_event(0x0008 /*RIGHTDOWN*/, 0, 0, 0, IntPtr.Zero); mouse_event(0x0010 /*RIGHTUP*/, 0, 0, 0, IntPtr.Zero); }
+    [DllImport("user32.dll")] static extern void mouse_event(uint flags, int dx, int dy, uint data, IntPtr extra);
 
     [StructLayout(LayoutKind.Sequential)] public struct POINT { public int X, Y; }
     [StructLayout(LayoutKind.Sequential)] struct MSG { public IntPtr h; public uint msg; public IntPtr w, l; public uint time; public POINT pt; }

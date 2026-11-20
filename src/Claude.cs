@@ -54,7 +54,9 @@ sealed class Claude : IChat
     readonly List<Chat> chats = new();      // cur, plus chats working in the background
     readonly HashSet<string> fresh = new(); // background chats that finished since they were last shown
     Chat cur;
-    sealed class Turn { public string Reply = "", Error = ""; public bool Stopped; public System.Threading.Timer? Killer, Late; public int Extra; public long Ctx; public long Window; public double Cost; }
+    static readonly string WindowFile = Path.Combine(Paths.App, ".ctx-window");
+    static long window = long.TryParse(File.Exists(WindowFile) ? File.ReadAllText(WindowFile) : "", out var w0) ? w0 : 0;   // the context window the last finished ask reported (transcripts don't record it); kept on disk so a restart still shows %
+    sealed class Turn { public string Reply = "", Error = ""; public bool Stopped; public System.Threading.Timer? Killer, Late; public int Extra; public long Ctx, Cached; public long Window; public double Cost; }
 
     public Claude(Action<string, object?> send) { this.send = send; lock (gate) { cur = new Chat(); chats.Add(cur); Boot(cur); } watch = new System.Threading.Timer(_ => Watch(), null, 10_000, 10_000); }
 
@@ -157,7 +159,7 @@ sealed class Claude : IChat
             if (!working && (c.Warm == null || c.Warm.HasExited || c.Booted != Key(c))) Boot(c);
             Busy();
         }
-        var msgs = new List<object>();
+        var msgs = new List<object>(); long ctx = 0;
         if (File.Exists(file))
             foreach (var m in Lines(file))
             {
@@ -165,15 +167,19 @@ sealed class Claude : IChat
                 if (m.TryGetProperty("isSidechain", out var sc) && sc.ValueKind == JsonValueKind.True) continue;
                 if (ty == "user" && UserText(m) is { } u) msgs.Add(new { role = "me", text = u });
                 else if (ty == "assistant" && m.TryGetProperty("message", out var am) && am.TryGetProperty("content", out var ac) && ac.ValueKind == JsonValueKind.Array)
+                {
+                    if (am.TryGetProperty("usage", out var u2) && u2.ValueKind == JsonValueKind.Object)   // the last one = how full the context is now (as t.Ctx)
+                        ctx = new[] { "input_tokens", "cache_read_input_tokens", "cache_creation_input_tokens" }.Sum(k => u2.TryGetProperty(k, out var v) && v.TryGetInt64(out var n) ? n : 0);
                     foreach (var b in ac.EnumerateArray())
                     {
                         var bt = b.TryGetProperty("type", out var x) ? x.GetString() : null;
                         if (bt == "text" && b.GetProperty("text").GetString() is { Length: > 0 } tx) msgs.Add(new { role = "ai", text = tx });
                         else if (bt == "tool_use") msgs.Add(new { role = "tool", name = b.GetProperty("name").GetString(), file = Detail(b.GetProperty("input")) });
                     }
+                }
             }
         Log.Write($"claude: showing {id} ({msgs.Count} messages{(working ? ", working" : "")})");
-        send("claude-history", new { id, messages = msgs.TakeLast(120), working });
+        send("claude-history", new { id, messages = msgs.TakeLast(120), working, usage = ctx > 0 ? new { ctx, window } : null });
         object? info; lock (gate) info = c.Info; if (info != null) send("claude-init", info);
         if (working) Send(c, "claude-start", new { text = "", followUp = true, attach = true });
     }
@@ -388,6 +394,7 @@ sealed class Claude : IChat
                                 Send(c, "claude-tool", new { id = x.GetProperty("id").GetString(), name = (sub ? "↳ " : "") + x.GetProperty("name").GetString(), file = Detail(x.GetProperty("input")), input = Trim(x.GetProperty("input")), sub });
                         if (!sub && m.GetProperty("message").TryGetProperty("usage", out var u))   // how full the context is now: everything this call read
                             t.Ctx = new[] { "input_tokens", "cache_read_input_tokens", "cache_creation_input_tokens" }.Sum(k => u.TryGetProperty(k, out var v) && v.TryGetInt64(out var n) ? n : 0);
+                        if (!sub && m.GetProperty("message").TryGetProperty("usage", out var u2) && u2.TryGetProperty("cache_read_input_tokens", out var cachedEl) && cachedEl.TryGetInt64(out var crn)) t.Cached = crn;   // prompt cache hits
                         break;
                     case "user" when m.GetProperty("message").TryGetProperty("content", out var uc) && uc.ValueKind == JsonValueKind.Array:
                         foreach (var x in uc.EnumerateArray())
@@ -403,7 +410,7 @@ sealed class Claude : IChat
                         if (m.TryGetProperty("is_error", out var ie) && ie.GetBoolean()) t.Error = t.Reply == "" ? "Claude Code reported an error." : t.Reply;
                         if (m.TryGetProperty("total_cost_usd", out var tc) && tc.TryGetDouble(out var cost)) t.Cost = cost;
                         if (m.TryGetProperty("modelUsage", out var mu) && mu.ValueKind == JsonValueKind.Object)
-                            foreach (var x in mu.EnumerateObject()) if (x.Value.TryGetProperty("contextWindow", out var cw) && cw.TryGetInt64(out var w)) t.Window = Math.Max(t.Window, w);
+                            { foreach (var x in mu.EnumerateObject()) if (x.Value.TryGetProperty("contextWindow", out var cw) && cw.TryGetInt64(out var w)) t.Window = Math.Max(t.Window, w); if (t.Window > 0 && t.Window != window) { window = t.Window; try { File.WriteAllText(WindowFile, window.ToString()); } catch { } } }
                         lock (gate) if (t.Extra > 0 && t.Error == "" && !t.Stopped)   // something was slipped in: if Claude Code had not read it yet, a follow-up turn starts now
                             { t.Late?.Dispose(); var tt = t; t.Late = new System.Threading.Timer(_ => Finish(c, tt), null, 2500, Timeout.Infinite); break; }
                         Finish(c, t);
@@ -441,7 +448,7 @@ sealed class Claude : IChat
         if (t.Stopped) t.Error = "Stopped.";
         Log.Write($"claude: done{(shown ? "" : " (in the background)")}{(t.Error != "" ? ", error: " + t.Error : "")}");
         if (shown && t.Error != "") send("claude-error", new { message = t.Error });
-        else if (shown) send("claude-done", new { text = t.Reply, usage = new { ctx = t.Ctx, window = t.Window, cost = t.Cost } });
+        else if (shown) send("claude-done", new { text = t.Reply, usage = new { ctx = t.Ctx, window = t.Window > 0 ? t.Window : window, cached = t.Cached, cost = t.Cost } });
         if (!anyBusy && File.Exists(RestartFlag))   // a rebuild asked for during a reply: run it once no chat is working (the restart ends them all)
         {
             try { File.Delete(RestartFlag); } catch { }

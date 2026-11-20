@@ -153,7 +153,7 @@
 .key{font:700 12px/1 var(--fd);letter-spacing:.04em;border-radius:7px;height:26px;background:linear-gradient(180deg,#fff,#e6edf3);box-shadow:0 1px 0 #93a2ae,0 2px 5px rgba(0,0,0,.35),inset 0 -2px 0 rgba(0,30,50,.08)}
 .ui .pill{background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.03)),rgba(6,14,26,.4);border:0;backdrop-filter:blur(22px) saturate(1.5);
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),inset 0 1px 0 rgba(255,255,255,.22),var(--depth)}
-.pill .run img{transition:transform .2s var(--ease)}.pill .run i:hover img{transform:translateY(-2px) scale(1.08)}
+.pill .run img{transition:transform .2s var(--ease)}.pill .run i:is(:hover,.hov) img{transform:translateY(-2px) scale(1.08)}
 .pill .run i::after{left:10px;right:10px;height:2px;bottom:-8px}
 
 /* tile labels: a tight shadow instead of the 18 px halo that drew a dark box behind each name */
@@ -287,3 +287,7 @@
   background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,.6) 48%,rgba(255,255,255,.25) 52%),
     radial-gradient(110% 70% at 50% 115%,color-mix(in srgb,var(--accent) 40%,transparent),transparent 70%),
     linear-gradient(180deg,rgba(225,240,250,.8),rgba(180,210,232,.8))}
+
+/* status pill: a soft tile behind whichever app/tray button the mouse is on */
+.pill :is(.run i,.trayb,.bell){border-radius:8px;transition:background .15s,box-shadow .15s}
+.pill :is(.run i,.trayb,.bell):is(:hover,.hov){background:color-mix(in srgb,var(--accent) 35%,rgba(255,255,255,.3));box-shadow:0 0 0 8px color-mix(in srgb,var(--accent) 35%,rgba(255,255,255,.3)),0 0 0 9px rgba(255,255,255,.45),0 0 18px 8px color-mix(in srgb,var(--accent) 45%,transparent)}

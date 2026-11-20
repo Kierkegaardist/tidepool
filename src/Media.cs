@@ -196,6 +196,22 @@ sealed class Media
         if (!File.Exists(exe)) return false;
         var si = new ProcessStartInfo(exe) { UseShellExecute = false, CreateNoWindow = true };
         foreach (var a in args) si.ArgumentList.Add(a);
+        // Its command line only talks to a running Spotifast and does nothing otherwise (18 Nov: plays from the Music tab went nowhere while it
+        // was closed). So start it first and send the command once its window is up.
+        if (args.Length > 0 && args[0] != "seek-to" && Process.GetProcessesByName("spotifast").Length == 0)
+            try
+            {
+                var app = Process.Start(new ProcessStartInfo(exe) { UseShellExecute = true })!;
+                Log.Write("spotifast was closed, starting it for: " + string.Join(' ', args));
+                _ = Task.Run(() =>
+                {
+                    for (int i = 0; i < 60 && app.MainWindowHandle == IntPtr.Zero && !app.HasExited; i++) { Thread.Sleep(250); app.Refresh(); }
+                    Thread.Sleep(1500);   // ponytail: fixed grace for its single-instance listener; poll for it if commands still get lost
+                    try { Process.Start(si); Log.Write("spotifast " + string.Join(' ', args)); } catch (Exception e) { Log.Write("spotifast failed: " + e.Message); }
+                });
+                return true;
+            }
+            catch (Exception e) { Log.Write("spotifast start failed: " + e.Message); return false; }
         try { Process.Start(si); Log.Write("spotifast " + string.Join(' ', args)); return true; } catch (Exception e) { Log.Write("spotifast failed: " + e.Message); return false; }
     }
 }

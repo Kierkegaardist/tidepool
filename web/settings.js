@@ -9,6 +9,7 @@ const onOff = (on, what = "") => `${on ? "On" : "Off"}${what ? " · " + what : "
 const step = (list, cur, dir) => list[(list.indexOf(cur) + dir + list.length) % list.length];
 const VOICES = [["zf_xiaoyi", "Xiaoyi (soft)"], ["af_heart", "Heart (warm)"], ["af_bella", "Bella (bright)"], ["af_nicole", "Nicole (whisper)"], ["bf_emma", "Emma (British)"], ["am_puck", "Puck (playful)"], ["bm_george", "George (British)"]];
 const HVIZ = ["off", "subtle", "full"];
+const AMBIENTS = [15, 20, 30, "full"];   // Settings › Scenes › Ambient motion (motion.js ambient clock)
 const SPEEDS = [0.9, 1, 1.05, 1.15, 1.3], FOLLOWS = [0, 5, 8, 12, 20], SHADES = ["auto", "open", "closed"];
 const SHADE_TXT = { auto: "Collapsed except on Music", open: "Always open", closed: "Always collapsed" };
 
@@ -24,6 +25,7 @@ function settingsItems() {
     { n: "Screens", d: sc.length > 1 ? `${plural(sc.length, "screen")} · main one: screen ${sc.findIndex(x => x.role === "main") + 1}` : "One screen", ic: "@window.svg", set: "screens", id: "set:screens" },
     { n: "Location and sun", d: `${loc.place} · ${loc.lat.toFixed(2)}° N, ${loc.lon.toFixed(2)}° E`, ic: "@pin.svg", act: "setup", id: "set:place" },
     { n: "Setup", d: `${NM.player} · ${NM.browser} · ${CFG.modules.studio === false ? "no studio" : NM.daw} · ${NM.ai}`, ic: "@gear.svg", act: "setup", id: "set:setup" },
+    { n: "Windows Settings", d: "Opens the Windows Settings app", ic: "@gear.svg", act: "winset", id: "set:win" },
     { n: "Classic desktop", d: "Back to stock Windows", ic: "@window.svg", act: "hatch", id: "set:hatch" },
   ];
 }
@@ -32,7 +34,7 @@ const SETPAGES = { winamp: "Winamp", scenes: "Scenes", sound: "Sound", marina: "
 /* ---- the rows ---- */
 function setRows(c) {
   if (c.set === "winamp") {
-    const ids = Object.keys(SKINS).sort((a, b) => (SKINS[a].user ? 1 : 0) - (SKINS[b].user ? 1 : 0)), shade = LS.get("tp-wa-shade", "auto");
+    const ids = Object.keys(SKINS).sort((a, b) => (SKINS[a].user ? 1 : 0) - (SKINS[b].user ? 1 : 0)), shade = LS.get("tp-wa-shade", "closed");
     return [
       ...ids.map(id => ({ n: SKINS[id].name, d: `${id === WA.id ? "✓ Wearing it · " : ""}${SKINS[id].user ? "Added by you · Del removes it" : "Built in"}`, ic: abs(`${V4}skins/${id}/main.png`), cover: 1, wide: 1, on: id === WA.id,
         run: () => { buildWinamp(id); toast("@skin.svg", "Winamp skin", SKINS[id].name); }, del: SKINS[id].user ? () => skinRemove(id) : null })),
@@ -48,6 +50,10 @@ function setRows(c) {
     { n: "How often it changes", d: `${ROT.mode === "4h" ? "Every four hours" : "Once a day, at solar midnight"} · Enter changes it`, ic: "@scene", run: () => { ROT.mode = ROT.mode === "4h" ? "day" : "4h"; LS.set("tp-rotate", ROT.mode); render(); } },
     { n: "Horizon visualizer", d: `${{ off: "Off", subtle: "Subtle", full: "Full" }[window.Horizon?.mode() ?? "full"]} · music rises as light behind the land · ←→ or Enter changes it`, ic: "@scene",
       run: () => Horizon.set(step(HVIZ, Horizon.mode(), 1)), adj: d => Horizon.set(step(HVIZ, Horizon.mode(), d)) },
+    { n: "Ambient motion", d: `${(r => r === "full" ? "Full rate · the smoothest, about 3× the graphics power" : `${r} updates a second${r === 15 ? " · lightest on power" : ""}`)(window.Motion?.ambient() ?? 15)} · fireflies, bubbles, Marina's swim · ←→ or Enter changes it`, ic: "@scene",
+      run: () => Motion.ambient(step(AMBIENTS, Motion.ambient(), 1)), adj: d => Motion.ambient(step(AMBIENTS, Motion.ambient(), d)) },
+    { n: "Rest while you work", d: onOff(LS.get("tp-rest", "1") !== "0", LS.get("tp-rest", "1") !== "0" ? "the scene holds still while an app is in front · saves power" : "the scene keeps moving behind your apps"), ic: "@scene",
+      run: () => { LS.set("tp-rest", LS.get("tp-rest", "1") === "0" ? "1" : "0"); dispatchEvent(new Event("tp-rest")); } },
     ...SCENES.map((x, i) => ({ n: x.name, d: `${ROT.pin === i ? "✓ Pinned · " : ""}${x.where}`, ic: abs(x.img), cover: 1, wide: 1, run: () => pinScene(ROT.pin === i ? null : i) })),
   ];
   if (c.set === "sound") {
@@ -71,6 +77,15 @@ function setRows(c) {
       { n: "Keep listening after she answers", d: `${FOLLOW_S ? FOLLOW_S + " seconds, for a follow-up without her name" : "Off"} · ←→ changes it`, ic: "@mic.svg", run: () => follow(1), adj: follow },
       { n: "What she can do without the AI", d: "Timers, music, the weather, sums, opening games… · Enter hears it", ic: "orb.svg", run: () => speak(Marina.LOCAL_HELP) },
       { n: "Her own notes", d: `${plural(Marina.MST.notes.length, "thing")} you asked her to remember · Del forgets them`, ic: "@mic.svg", run: () => speak(Marina.MST.notes.length ? "You told me: " + Marina.MST.notes.map(x => Marina.flip(x.t)).join(". ") : "You haven't asked me to remember anything yet."), del: () => { Marina.MST.notes = []; Marina.msave(); toast("@mic.svg", "Marina forgot her notes", ""); } },
+    ];
+  }
+  if (c.set === "mvol") {   // the Music tab's volume column: the player's own level (also the Winamp slider) and the PC's
+    const p = PV.p, m = PV.m;
+    return [
+      { n: `${NM.player ?? "Player"} volume`, d: p ? `${p.vol}% · ←→ change it · the Winamp slider too` : "The player makes no sound yet · start a song", ic: "@speaker2.svg", run: () => pvol("pvolstep", 10), adj: d => pvol("pvolstep", d * 10) },
+      { n: p?.muted ? "Unmute the player" : "Mute the player", d: "Only the music, not the PC", ic: "@speaker2.svg", run: () => pvol("pmute", p?.muted ? 0 : 1) },
+      { n: "PC volume", d: m ? `${m.vol}%${m.muted ? " · muted" : ""} · ←→ change it` : "…", ic: "@speaker2.svg", run: () => pvol("volstep", 10), adj: d => pvol("volstep", d * 10) },
+      { n: m?.muted ? "Unmute the PC" : "Mute the PC", d: "Everything", ic: "@speaker2.svg", run: () => pvol("mute", m?.muted ? 0 : 1) },
     ];
   }
   if (c.set === "screens") {
@@ -120,3 +135,9 @@ addEventListener("drop", e => {
   if (!H?.skinfile) { toast("@skin.svg", "Adding skins needs the desktop", ""); return; }
   for (const f of fs) { const rd = new FileReader(); rd.onload = () => H.skinfile.add(f.name, String(rd.result).split(",")[1]); rd.readAsDataURL(f); toast("@skin.svg", "Adding a skin…", f.name); }
 });
+
+/* ---- player + PC volume (Music › Volume, Winamp slider): PV.p = the player's { vol, muted }, PV.m = the PC's ---- */
+const PV = { p: null, m: null };
+function pvRead() { const h = window.host?.sys; if (!h) return; Promise.all([h("pvol"), h("vol")]).then(([p, m]) => { PV.p = p; PV.m = m; if (p) waVol(p.vol / 100); drawCol(); sync(); }); }
+function pvol(op, v) { window.host?.sys?.(op, v)?.then(r => { if (!r) return; if (op[0] === "p") { PV.p = r; waVol(r.vol / 100); } else PV.m = r; drawCol(); sync(); }); }
+setTimeout(pvRead, 1500); setInterval(() => { if (S.cat === "music") pvRead(); }, 5000);

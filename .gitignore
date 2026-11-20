@@ -25,3 +25,6 @@ tools/vm-test.ps1
 obj-webtest/
 .popout.json
 .heard.json
+.dock.json
+.ctx-window
+.chrome-tmp-*

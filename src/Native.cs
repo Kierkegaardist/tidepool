@@ -30,6 +30,9 @@ static class Native
     [DllImport("user32.dll")] public static extern bool UnregisterHotKey(IntPtr h, int id);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern bool SystemParametersInfo(uint action, uint param, StringBuilder? pv, uint winIni);
     [DllImport("user32.dll")] public static extern bool SystemParametersInfo(uint action, uint param, ref RECT pv, uint winIni);
+    [DllImport("user32.dll")] public static extern bool SystemParametersInfo(uint action, uint param, out int pv, uint winIni);
+    [DllImport("user32.dll")] public static extern IntPtr RegisterPowerSettingNotification(IntPtr h, ref Guid setting, int flags);
+    public static bool ScreensaverRunning() => SystemParametersInfo(0x0072 /*SPI_GETSCREENSAVERRUNNING*/, 0, out int on, 0) && on != 0;
     [DllImport("dwmapi.dll")] public static extern int DwmGetWindowAttribute(IntPtr h, int attr, out int value, int size);
 
     [StructLayout(LayoutKind.Sequential)] public struct APPBARDATA { public int cbSize; public IntPtr hWnd; public uint uCallbackMessage, uEdge; public RECT rc; public IntPtr lParam; }
@@ -83,10 +86,11 @@ static class Native
 sealed class MsgWindow : NativeWindow
 {
     readonly Action<Message>? onMessage;
-    public MsgWindow(string title, Action<Message>? onMessage = null)
+    /// <param name="messageOnly">false: a hidden top-level window instead, for broadcasts a message-only window never gets (power settings).</param>
+    public MsgWindow(string title, Action<Message>? onMessage = null, bool messageOnly = true)
     {
         this.onMessage = onMessage;
-        CreateHandle(new CreateParams { Caption = title, Parent = Native.HWND_MESSAGE });
+        CreateHandle(new CreateParams { Caption = title, Parent = messageOnly ? Native.HWND_MESSAGE : IntPtr.Zero });
     }
     protected override void WndProc(ref Message m) { onMessage?.Invoke(m); base.WndProc(ref m); }
 }

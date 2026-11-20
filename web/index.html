@@ -20,6 +20,7 @@
   <div class="pill glassdark" id="pill"><span class="run" id="run"></span><span class="vr"></span>
     <span class="ti off">Offline</span>
     <span class="ti"><img id="noteic" src="assets/icons/download.png" alt=""><span id="note"></span></span><span class="ti"><img src="icons/speaker.svg" alt="">64%</span>
+    <span class="trayb" id="trayb" title="Tray icons"><svg viewBox="0 0 24 24" aria-label="Tray icons"><path d="M6 15l6-6 6 6" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
     <span class="bell" id="bell"><svg viewBox="0 0 24 24" aria-label="Notifications"><defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF4C2"/><stop offset=".5" stop-color="#F5C542"/><stop offset="1" stop-color="#B9831A"/></linearGradient></defs>
       <path d="M12 2.5c-.9 0-1.6.7-1.6 1.6v.6C7.6 5.5 5.8 8 5.8 11v4.2L4 17.6v1h16v-1l-1.8-2.4V11c0-3-1.8-5.5-4.6-6.3v-.6c0-.9-.7-1.6-1.6-1.6z" fill="url(#bg)" stroke="#7a5510" stroke-width=".8"/>
       <path d="M9.6 19.6a2.4 2.4 0 0 0 4.8 0z" fill="#B9831A"/><path d="M8.2 8.6c.6-1.4 1.7-2.2 3-2.5" stroke="#fff" stroke-width="1.3" fill="none" stroke-linecap="round" opacity=".85"/></svg><b id="badge"></b></span></div>
@@ -42,7 +43,7 @@
   <svg class="arc" id="arc" viewBox="0 0 1920 1080" aria-hidden="true"><path id="arcp"/><circle id="arcd" r="7"/><text id="arcr" class="cap"></text><text id="arcs" class="cap"></text></svg>
   <div class="idlehint cap">Press any button</div>
   <div class="cl glassdark" id="cl">
-    <div class="client"><header><div class="cav"><div class="orb"></div></div><div><b>Marina</b><small id="csub2"><span id="cvia"></span><select id="cmod" title="Model"><option value="opus">Opus 5.5</option><option value="sonnet">Sonnet 5.5</option><option value="haiku">Haiku 5.5</option><option value="fable">Fable 5.2</option></select><select id="ceff" title="Reasoning effort"><option value="low">Low effort</option><option value="medium">Medium effort</option><option value="high">High effort</option><option value="xhigh">Extra high effort</option><option value="max">Max effort</option></select><select id="cmode" title="What Claude may do"><option value="bypassPermissions">Full access</option><option value="plan">Plan first</option></select><select id="cmics" title="Microphone (the mic buttons record through this one)"></select><select id="cquiet" title="How long a pause ends dictation"><option value="1.5">1.5 s pause</option><option value="3">3 s pause</option><option value="5">5 s pause</option><option value="10">10 s pause</option><option value="20">20 s pause</option><option value="0">Click to stop</option></select></small></div><span class="status"></span><span class="cib" id="chis" title="Past chats" role="button"><img src="icons/history.svg" alt=""></span><span class="cib" id="cwake" title="Listen for “Hey Marina” all the time" role="button"><img src="icons/mic.svg" alt=""></span><span class="cib" id="ctalk" title="Read replies aloud" role="button"><img src="icons/speaker2.svg" alt=""></span><span class="clx" id="clx" title="Close (Esc)" role="button" aria-label="Close">✕</span></header>
+    <div class="client"><header><div class="cav"><div class="orb"></div></div><div><b>Marina</b><small id="csub2"><span id="cvia"></span><select id="cmod" title="Model"><option value="opus">Opus 5.5</option><option value="sonnet">Sonnet 5.5</option><option value="haiku">Haiku 5.5</option><option value="fable">Fable 5.2</option></select><select id="ceff" title="Reasoning effort"><option value="low">Low effort</option><option value="medium">Medium effort</option><option value="high">High effort</option><option value="xhigh">Extra high effort</option><option value="max">Max effort</option></select><select id="cmode" title="What Claude may do"><option value="bypassPermissions">Full access</option><option value="plan">Plan first</option></select><select id="cmics" title="Microphone (the mic buttons record through this one)"></select><select id="cquiet" title="How long a pause ends dictation"><option value="1.5">1.5 s pause</option><option value="3">3 s pause</option><option value="5">5 s pause</option><option value="10">10 s pause</option><option value="20">20 s pause</option><option value="0">Click to stop</option></select></small></div><span class="status"></span><span class="cib" id="cnew" title="New chat (one that is working keeps going in Past chats)" role="button"><img src="icons/newproj.svg" alt=""></span><span class="cib" id="chis" title="Past chats" role="button"><img src="icons/history.svg" alt=""></span><span class="cib" id="cwake" title="Listen for “Hey Marina” all the time" role="button"><img src="icons/mic.svg" alt=""></span><span class="cib" id="ctalk" title="Read replies aloud" role="button"><img src="icons/speaker2.svg" alt=""></span><span class="clx" id="clx" title="Close (Esc)" role="button" aria-label="Close">✕</span></header>
       <div class="gcard"><p id="greet"></p><div class="sugs" id="sugs"></div></div>
       <div class="msgs" id="msgs"></div><div class="chist glassdark" id="chist"></div>
       <div class="ctodo" id="ctodo"></div><div class="cstat" id="cstat"></div>
@@ -179,6 +180,7 @@ function musicItems() {
   return [{ n: "Now playing", d: "", act: "music", run: 1, ic: "music.png", art: H.nowPlaying?.art }, ...spTiles(st),
     { n: "Heard lately", d: hd.length ? `${today ? plural(today, "song") + " today · " : ""}last: ${hd[0].artist} – ${hd[0].title}` : "Songs you play from now on show up here", ic: "@playlist.svg", list: "heard", id: "music:heard" },   // no cover: next to Now playing it would show the same album twice
     { n: "Your tracks", d: tr.length ? `${plural(tr.length, "song")} bounced in ${NM.daw} · newest: ${tr[0].name}, ${ago(tr[0].modified)}` : `Songs you export from ${NM.daw} show up here`, ic: "studio.png", list: "tracks", id: "music:tracks" },
+    { n: "Volume", d: PV.p ? `${NM.player ?? "Player"} ${PV.p.vol}%${PV.p.muted ? " · muted" : ""} · PC ${PV.m?.vol ?? "?"}%` : "Player and PC volume", ic: "@speaker2.svg", set: "mvol", cat: "music", id: "music:vol" },
     { n: "Winamp skin", d: "", act: "skin", ic: "@skin.svg" }];
 }
 /* Home groups the windows of one app into one tile (PS3 style): Enter opens a vertical column of its windows (S.col = { app, i }) */
@@ -199,7 +201,7 @@ function openCol(it) {
   if (S.col.dir) browse(S.col.dir, true);
   drawCol();
 }
-const colCat = c => c.set ? "settings" : c.yt || c.ytc ? "video" : c.proj ? "studio" : c.dir ? "files" : c.list || c.sp ? "music" : c.web || c.wcol ? "web" : null;   // the category a column (or the tile that opens it) belongs to
+const colCat = c => c.set ? c.cat ?? "settings" : c.yt || c.ytc ? "video" : c.proj ? "studio" : c.dir ? "files" : c.list || c.sp ? "music" : c.web || c.wcol ? "web" : null;   // the category a column (or the tile that opens it) belongs to
 function closeCol() { S.col = null; drawCol(); }
 function colBack() {   // Esc / Backspace / left: up one folder, else out of the column
   if (S.col?.back?.length) { const b = S.col.back.pop(); Object.assign(S.col, b); if (b.dir) browse(b.dir); } else S.col = null;   // a folder, or a Spotify list (an artist's albums -> the album)
@@ -369,7 +371,9 @@ const HINTS = {
   welcome: [["Enter", "A", "Start"]],
   states: [["F1", "", "Close"]],
 };
-const waShade = () => S.shade ?? ({ open: false, closed: true }[LS.get("tp-wa-shade", "auto")] ?? S.cat !== "music");   // Settings › Winamp   // S.shade: null = auto, true/false = the user's F4 or click on this rail
+const waShade = () => S.shade ?? ({ open: false, closed: true }[LS.get("tp-wa-shade", "closed")] ?? S.cat !== "music");   // Settings › Winamp   // S.shade: null = auto, true/false = the user's F4 or click on this rail
+const resting = () => !!window.host?.rest && !window.host.menu?.open && LS.get("tp-rest", "1") !== "0";   // host "rest": an app window has focus, not the desktop; the scene holds still to save power
+addEventListener("tp-rest", () => sync()); addEventListener("storage", e => { if (e.key === "tp-rest") sync(); });   // the other screen's page follows the setting too
 const goCat = c => { if (c !== S.cat) stopPreview(); S.orbF = false; S.cat = c; S.item = 0; S.shade = null; S.col = null; drawCol(); };
 function sync() {
   UI.className = ["ui", "m-" + S.mode, S.ov && "ov-" + S.ov, S.cl && "cl-on", waShade() && "shade-on", S.paused && "wa-pause", S.guide && "guide-on", S.applying && "applying",
@@ -377,14 +381,14 @@ function sync() {
   $("screen").classList.toggle("gaming", S.mode === "game");
   $("screen").classList.toggle("ytp-on", !!S.yt);   // the player is opaque: the scene stops drawing under it (ui.css)
   $("screen").classList.toggle("covered", S.mode === "game" || S.mode === "stock");
-  $("screen").classList.toggle("frozen", !!window.HOSTCOVERED);   // a window covers this screen: everything stops, but the scene stays drawn, so moving or minimizing the window shows it at once (no black)
+  $("screen").classList.toggle("frozen", !!window.HOSTCOVERED || resting());   // resting: an app is in front (Settings › Scenes › Rest while you work)   // a window covers this screen: everything stops, but the scene stays drawn, so moving or minimizing the window shows it at once (no black)
   const away = DUAL && SCR === 1 && !!window.HOSTCOVERED && !document.body.classList.contains("s2cov");   // screen 1 covered, screen 2 free: the menu crosses over to screen 2 (and back when uncovered)
   if (away !== !!slideAway.on) { slideAway.on = away; slideAway(away); } $("screen").classList.toggle("away", away);
   $("screen").classList.toggle("idle", S.mode === "idle");   // the sky title leaves with the menu
   const hk = S.yt ? "yt" : (S.ov === "search" && S.spq ? "spsearch" : S.ov) ?? (S.cl === "asking" ? "asking" : busyCl() ? "working" : S.cl ? "claude" : S.col ? (S.col.app ? "col" : S.col.yt ? "colyt" : S.col.sp ? "colsp" : S.col.list ? "col" + S.col.list : S.col.proj ? "colproj" : S.col.back?.length ? "coldir" : "colroot") : S.orbF ? "orb" : SORTS[S.cat] && !MOUSE ? "sortable" : "desk"), h = (MOUSE && HINTS["m-" + hk]) || HINTS[hk] || HINTS.desk;
   $("legend").innerHTML = h.map(([k, p, t]) => `<span><i class="key">${k}</i><i class="pad p-${PADC[p] ?? "V"}">${p}</i>${t}</span>`).join("") + (S.ov || !DEV ? "" : `<span class="concept"><i class="key">F1</i>All states</span>`);
   $("badge").textContent = S.unread || ""; syncSend();
-  $("run").innerHTML = S.wins.map(([n, , ic]) => `<i title="${n}"><img src="${I(ic)}" alt=""></i>`).join("");
+  const runH = S.wins.map(([n, , ic]) => `<i title="${n}"><img src="${I(ic)}" alt=""></i>`).join(""); if ($("run").dataset.h !== runH) { $("run").innerHTML = runH; $("run").dataset.h = runH; }   // rebuilt only on change: a rebuild every sync dropped the hover tile (flicker)
   drawMenu();
 }
 /* Winamp collapsed (windowshade), laid out the way Winamp 2 lays it out from any classic skin's own titlebar.bmp (user, 15 Nov: the title belongs
@@ -422,7 +426,7 @@ function waDo(k, e) {
   else if (k === "spos" && np?.dur && np.canSeek) { const r = WA.shPos.getBoundingClientRect(), t = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * np.dur;
     H.media("seek", t); Object.assign(np, { pos: Math.round(t), at: Date.now() }); drawShade(); tickWinamp(WA.lastTrack); }
   else if (k === "vol") { const r = WA.volBg.getBoundingClientRect(), v = Math.max(0, Math.min(1, (e.clientX - r.left - r.width * 7 / 68) / (r.width * 54 / 68)));
-    waVol(v); clearTimeout(WA.volT); WA.volT = setTimeout(() => H?.sys?.("volset", Math.round(v * 100)), 60); }
+    waVol(v); clearTimeout(WA.volT); WA.volT = setTimeout(() => H?.sys?.("pvolset", Math.round(v * 100)), 60); }
 }
 $("shade").addEventListener("click", e => { const k = e.target.dataset.wt; if (k == null) return; e.stopPropagation(); waDo(k, e); });   // a button, not "expand"
 // One light source: gloss sits under the sun (or the moon at night), drop shadows fall away from it.
@@ -502,6 +506,7 @@ function activate(it) {
   else if (it.act === "claude") openClaude();
   else if (it.act === "ask") { openClaude(); send(it.q); }
   else if (it.act === "hatch") S.ov = "hatch";
+  else if (it.act === "winset") H?.winSettings?.();
   else if (it.act === "setup") { if (H?.setup) H.setup(); else toast("@gear.svg", "Setup opens in the desktop", "Run ConsoleDesktop.exe --setup"); }
   else if (it.act === "skin") { const k = Object.keys(SKINS); buildWinamp(k[(k.indexOf(WA.id) + 1) % k.length]); toast("music.png", "Winamp skin", SKINS[WA.id].name); }
   else if (it.act === "scene") pinScene(ROT.pin == null ? (sceneAt(override ?? new Date()).i + 1) % SCENES.length : null);
@@ -669,7 +674,8 @@ function claudeEv(type, v) {
     addMsg("ai", esc(v.message)); reply = null; setCl("done"); syncSend(); setTimeout(drainQueue, 400);
   }
   else if (type === "claude-busy") { S.cbusy = v; drawBusy(); }
-  else if (type === "claude-new") { $("msgs").innerHTML = GREET; reply = null; setCl("open"); S.todos = null; S.cuse = null; drawTodo(); drawStat(); }
+  else if (type === "claude-new") { $("msgs").innerHTML = GREET; reply = null; setCl("open"); S.todos = null; S.cuse = null; drawTodo(); drawStat();
+    if (S.voiceNext) { $("cin").value = "🎙 " + S.voiceNext; S.voiceNext = null; submit(true); } }   // the spoken ask that started this chat
 }
 function addMsg(cls, html) { const m = $("msgs"); m.insertAdjacentHTML("beforeend", `<div class="m ${cls}">${html}</div>`); m.scrollTop = m.scrollHeight; return m.lastElementChild; }
 const setCl = v => { if (S.cl) S.cl = v; else S.clSaved = v; };   // the panel may have been closed mid-change: keep progress, don't reopen it
@@ -823,7 +829,8 @@ function drawTodo() {
 /* the line under the chat: model, permissions, how full the context is, what the chat cost so far */
 function drawStat() {
   const u = S.cuse, pct = u?.window ? Math.round(u.ctx / u.window * 100) : null;
-  $("cstat").innerHTML = [$("cmod").selectedOptions[0]?.text, $("cmode").value === "plan" ? "Plan first" : "Full access", pct != null ? `<span class="${pct > 80 ? "hot" : ""}" title="${u.ctx.toLocaleString("en-GB")} of ${u.window.toLocaleString("en-GB")} tokens">Context ${pct}%</span>` : "",
+  $("cstat").innerHTML = [$("cmod").selectedOptions[0]?.text, $("cmode").value === "plan" ? "Plan first" : "Full access", pct != null ? `<span class="${pct > 80 ? "hot" : ""}" title="${u.ctx.toLocaleString("en-GB")} of ${u.window.toLocaleString("en-GB")} tokens">Context ${pct}%</span>` : u?.ctx ? `<span title="The window size shows after the next reply">Context ${Math.round(u.ctx / 1000)}k tokens</span>` : "",
+    u?.cached && u.ctx ? `<span title="${u.cached.toLocaleString("en-GB")} tokens read from the prompt cache last call">Cache ${Math.round(u.cached / u.ctx * 100)}%</span>` : "",
     u?.cost ? `$${u.cost.toFixed(2)} so far` : "", S.cinfo?.mcp?.length ? `${S.cinfo.mcp.filter(m => m.status === "connected").length}/${S.cinfo.mcp.length} MCP` : ""].filter(Boolean).join(" · ");
 }
 /* past chats: Claude Code's own transcripts for E:\Projects; picking one continues it */
@@ -843,7 +850,7 @@ function drawBusy() {
 }
 $("chist").onclick = e => { if (e.target.id === "chx") { $("chist").classList.remove("on"); return; } if (e.target.id === "chnew") { $("chist").classList.remove("on"); newChatNow(); return; } const h = e.target.closest(".hi[data-id]"); if (h) { $("chist").classList.remove("on"); HC()?.resume?.(h.dataset.id); } };
 function drawResumed(v) {
-  hush(); S.cq = []; S.todos = null; S.cuse = null; drawQueue(); drawTodo(); drawStat(); reply = null; setCl("done");
+  hush(); S.cq = []; S.todos = null; S.cuse = v.usage ?? null; drawQueue(); drawTodo(); drawStat(); reply = null; setCl("done");   // usage: the transcript's last reply (Claude.Resume)
   let html = "", steps = [];
   const flush = () => { if (steps.length) html += `<div class="m ai"><ul class="steps">${steps.map(s => `<li class="ok">${VERB[s.name] ?? esc(s.name)}${s.file ? ` <code>${esc(s.file)}</code>` : ""}</li>`).join("")}</ul></div>`; steps = []; };
   for (const m of v.messages ?? []) { if (m.role === "tool") { steps.push(m); continue; } flush(); html += `<div class="m ${m.role}">${m.role === "ai" ? `<span class="rt">${md(m.text)}</span>` : esc(m.text)}</div>`; }
@@ -925,9 +932,10 @@ function wakeEv(v) {
     Promise.resolve(own).catch(() => "Something went wrong there.").then(r => { addMsg("ai", esc(r)); if (S.ovl === mine) speak(r); });
     return;
   }
+  if (CC && ["thinking", "applying"].includes(S.cl ?? S.clSaved)) { S.voiceNext = t; newChatNow(); return; }   // user, 16 Nov: a spoken ask mid-task gets its own chat; the running one keeps working in Past chats (claude-new sends it)
   $("cin").value = "🎙 " + t; submit(true);
 }
-$("cwake").addEventListener("click", wakeToggle); $("cwake").classList.toggle("on", !!S.wake);
+$("cwake").addEventListener("click", wakeToggle); $("cnew").addEventListener("click", newChatNow); $("cwake").classList.toggle("on", !!S.wake);
 /* the mic: Windows speech recognition through the host, the words land in the box as they are heard (search boxes and the Claude panel) */
 var VOICE = { on: false, el: null, base: "" };
 function voiceToggle(el) {
@@ -1123,7 +1131,7 @@ const on = (id, f) => $(id).addEventListener("click", f);
 $("slabs").onclick = e => { const s = e.target.closest(".slab"); if (s) { goCat(s.dataset.c); sync(); } };
 on("orbw", () => { S.orbF = false; if (S.cl) closeClaude(); else openClaude(); });   // the fishbowl opens and closes the chat (no chat tab, user 15 Nov)
 $("row").onclick = e => { if (SCR === 2 && !SOLO) { const it = e.target.closest(".item"); if (it) BC?.postMessage({ tap: +it.dataset.j }); return; }   // screen 2 shows screen 1's row: the click is screen 1's to act on
-  if (S.flung) return; const it = e.target.closest(".item"); if (!it) return; const j = +it.dataset.j; if (S.col) closeCol(); hideTip(); S.item = j; S.hov = null; const li = items(S.cat)[j]; if (li && !li.empty) activate(li); else sync(); };   // one click opens (mouse-first); keys and pad still walk the carousel
+  if (S.flung) return; const it = e.target.closest(".item"); if (!it) return; const j = +it.dataset.j; if (S.col) closeCol(); hideTip(); const li = items(S.cat)[j], front = S.item === j; S.item = j; S.hov = null; if (front && li && !li.empty) activate(li); else sync(); };   // a side tile only glides to the front; clicking the front one opens it (user, 18 Nov)
 /* ===== mouse: hover preview + hint, wheel, paddles, scrubber, right-click menu, filter and sort ===== */
 var MOUSE = false, lastXY = "";   // var: sync() reads it before this line runs
 addEventListener("mousemove", e => { const xy = e.screenX + "," + e.screenY; if (xy === lastXY) return; lastXY = xy; if (!MOUSE) { MOUSE = true; document.body.classList.add("mouse"); sync(); } }, true);
@@ -1252,6 +1260,7 @@ $("ctx").onclick = e => {
   else if (k === "replay") replay(it.heard, v);
   else if (k.startsWith("sp")) spCtxDo(k, v, it);
   else if (k.startsWith("yt")) ytCtxDo(k, v, it);
+  else if (k === "desk") { if (v === "menu") H?.openMenu?.(); else if (v === "shell") H?.shellMenu?.(); else activate({ act: v }); }
   else if (k === "studio") { const pr = projOf(v); closeCol(); goCat("studio"); S.item = Math.max(0, items("studio").findIndex(x => x.id === pr.id)); sync(); }
   else if (k === "launch") { stopPreview(); H?.launch?.(v ?? it.id); toast(v ? "@flp.svg" : it.ic, "Opening " + (v ? v.replace(/^.*\\|\.flp$/gi, "") : it.n), it.dir || it.isDir ? "File Explorer" : `${NM.daw}`); }
   else if (k === "copy") { navigator.clipboard?.writeText(v).then(() => toast("@pin.svg", "Copied", v.slice(0, 60))).catch(() => {}); }
@@ -1259,7 +1268,15 @@ $("ctx").onclick = e => {
   else if (k === "closeall") { it.grp.forEach(w => H?.close?.(w.id)); S.wins = S.wins.filter(w => !it.grp.some(g => g.id === w[3])); $("row").dataset.k = ""; sync(); }
 };
 addEventListener("mousedown", e => { if (!e.target.closest("#ctx")) $("ctx").classList.remove("on"); }, true);
-addEventListener("contextmenu", e => { if (!e.target.closest("#row, input")) e.preventDefault(); });   // no browser menu on the page; text boxes keep theirs (paste)
+let hovEl = null; addEventListener("mousemove", e => { const r = e.target.closest?.("#ctx.on .ci,.pill .run i,.pill .trayb,.pill .bell") || null; if (r === hovEl) return; hovEl?.classList.remove("hov"); r?.classList.add("hov"); hovEl = r; });   // the highlight follows the pointer in JS: with the menu closed the host posts the moves while Explorer's window is the real one under the mouse, so Chromium's :hover drops (it hears a mouse-leave) and a mouseleave listener would too (user, 18 Nov: "the hitbox is a little weird")
+addEventListener("contextmenu", e => {   // right-click on the bare desktop (the host takes it from Explorer): Tidepool's own menu, with Explorer's one step away
+  if (e.target.closest("input, textarea")) return;   // text boxes keep theirs (paste)
+  if (e.defaultPrevented) return; e.preventDefault();   // a tile, a video… showed its own
+  const shell = !H?.menu?.open && H?.shellMenu;   // menu open: the page covers the desktop, so Explorer's menu would land on us again
+  if (SCR === 2 && !SOLO) { if (shell) H.shellMenu(); return; }   // screen 2 has no menu of its own (.s2 hides #ctx)
+  ctxIt = { n: "Desktop" }; hideTip();
+  showCtx(e, [...(H?.menu?.open ? [] : [["desk", "Open the menu", "menu"]]), ["desk", ROT.pin == null ? "Next place" : "Back to a new place each day", "scene"], ["desk", "Next Winamp skin", "skin"], ["desk", "Tidepool setup", "setup"], ["desk", "Windows settings", "winset"], ...(shell ? [["desk", "Windows menu  ›", "shell"]] : [])]);
+});
 addEventListener("keydown", e => { if (e.key === "Escape" && $("ctx").classList.contains("on")) { $("ctx").classList.remove("on"); e.preventDefault(); e.stopImmediatePropagation(); } }, true);
 addEventListener("wheel", () => $("ctx").classList.remove("on"), true);
 /* drag the column: it follows the hand, a flick coasts and slows, then it settles. The pick rides the third row, as with the keys and the wheel */
@@ -1305,6 +1322,7 @@ const shut = () => H && !H.menu?.open;   // menu closed: a desktop click on the 
 on("bell", () => { if (SCR === 2 && !SOLO) BC?.postMessage({ read: 1 });   // screen 1 keeps the badge count: tell it they were seen
   // the menu opens on this screen; on screen 2 with screen 1 free it stays the mirror plus the notifications (setSolo)
   if (shut()) H.openMenu?.(true); S.ov = S.ov === "notifs" && !shut() ? null : "notifs"; S.unread = 0; drawNotes(); sync(); });   // closed: the menu opens on this screen with the notifications
+on("trayb", () => H?.tray?.());   // the flyout takes focus, and an open menu drops on its own (lost focus)
 on("nclear", clearNotes);
 on("run", e => { const i = [...$("run").children].indexOf(e.target.closest("#run > i"));
   if (shut()) { if (i >= 0 && S.wins[i]?.[3] != null) H.focus?.(S.wins[i][3]); return; }   // like a taskbar button: that window comes to the front
@@ -1400,6 +1418,7 @@ function fromHost(type, value) {
     const n = {}; S.wins.forEach(w => n[w[0]] = (n[w[0]] ?? 0) + 1);
     S.wins.forEach(w => { w[4] = w[0]; if (n[w[0]] > 1) w[0] = w[1].split(/ [-—–] /)[0].trim().slice(0, 28) || w[0]; });
     if (S.ov === "switcher") drawSwitcher(); drawCol(); }   // three "VS Code" tiles: each is named by its window title (the folder or page)
+  if (type === "rest") sync();
   if (!type || type === "covered" || type === "menu") { window.HOSTCOVERED = !!H.covered && !H.menu?.open; if (!window.HOSTCOVERED) render(); sync(); }   // the menu shows over the windows that cover this screen: draw the scene again   // covered: core.js stops rendering, .covered pauses every animation
   if ((!type || type === "location") && H.location) { Object.assign(loc, H.location); render(); }   // sent after load, once the bridge is ready
   if (!type || type === "screen" || type === "screens") setScreen();
@@ -2174,7 +2193,7 @@ function npBar() {
   const b = document.querySelector("#deck .npb"), np = H?.nowPlaying; if (!b || !np?.dur) return;
   const p = npPos(np); b.querySelector("i").style.width = p / np.dur * 100 + "%"; b.parentElement.querySelector(".pt").textContent = `${mmss(p)} / ${mmss(np.dur)}`;
 }
-setInterval(npBar, 500);
+setInterval(() => { if (!document.hidden && !$("screen").matches(".frozen,.covered") && document.querySelector("#deck .npb")?.offsetParent) npBar(); }, 500);   // each write repaints (and re-blurs glass): tick only while it can be seen; drawing the card writes it at once
 function deckNp() {
   const np = H.nowPlaying, hd = H.heard ?? [], today = hd.filter(h => ago(h.at) === "today");
   return `<div class="pv">${np.art ? `<img class="pvimg cover" src="${np.art}" alt="">` : `<img class="pvic" src="${I("music.png")}" alt="">`}</div><div class="fi"><b>${esc(np.title || "Untitled")}</b><small>${esc([np.artist, np.album].filter(Boolean).join(" · "))}</small>`
@@ -2356,38 +2375,6 @@ $("deck").onclick = e => {
   const pl = e.target.closest(".plr, .pick"); if (pl) playToggle(pl.dataset.play, pl.dataset.n);
 };
 const played = t => t ? when(t, "played") : "not played yet";
-/* Glass from the host's pre-blurred frame (BRIDGE.md host.snapshot) instead of live backdrop-filter: about 6 GPU points at night (perf.md).
-   Retaken when the scene or the phase changes. ponytail: panels that are or sit in a transformed box (the carousel tiles, sliding panels)
-   keep the live blur, because a fixed background scrolls with a transform in Chromium (measured); give them per-panel offsets if they matter. */
-let SNAP = null, snapKey = "", snapping = false;
-const moved = e => { for (; e && e !== $("screen"); e = e.parentElement) {   // #screen fills the viewport, so its own (boot) transform keeps the frame aligned
-    const c = getComputedStyle(e); if (c.transform !== "none" || c.translate !== "none" || c.scale !== "none") return true; } return false; };
-function paintGlass() {
-  if (!SNAP) return;
-  for (const e of UI.querySelectorAll("*")) {
-    if (e.dataset.snap === SNAP.id) continue;
-    e.dataset.snap = SNAP.id;
-    if (e.dataset.bg != null) { e.style.backgroundImage = e.style.backgroundAttachment = e.style.backgroundSize = e.style.backgroundPosition = e.style.backgroundRepeat = e.style.backdropFilter = ""; }   // an older snapshot: start again from the stylesheet
-    const cs = getComputedStyle(e);
-    if (cs.backdropFilter === "none" || moved(e)) continue;
-    const c = Object.fromEntries(["backgroundImage", "backgroundAttachment", "backgroundSize", "backgroundPosition", "backgroundRepeat"].map(k => [k, cs[k]]));   // copied: the live style changes as layers are added
-    const has = c.backgroundImage !== "none", add = (prop, v) => e.style[prop] = (has ? c[prop] + ", " : "") + v;   // one list entry per layer: the snapshot goes underneath
-    e.dataset.bg = "";
-    e.style.backdropFilter = "none";
-    add("backgroundImage", `url(${SNAP.url})`); add("backgroundAttachment", "fixed"); add("backgroundSize", "100vw 100vh"); add("backgroundPosition", "0 0"); add("backgroundRepeat", "no-repeat");
-  }
-}
-async function snapGlass() {
-  const key = SCENES[sceneAt(new Date()).i].id + S.ph?.label;
-  if (!H?.snapshot || snapping || key === snapKey || window.HOSTCOVERED || S.mode !== "desk") return;
-  snapping = true;
-  UI.style.visibility = "hidden"; document.body.classList.add("snapping");   // the big category title would stay baked into the glass; a class, because the scene can rebuild its title during the wait
-  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-  const snap = await H.snapshot(12).catch(() => null);
-  UI.style.visibility = ""; document.body.classList.remove("snapping"); snapping = false;
-  if (!snap?.url) return;
-  snapKey = key; SNAP = { url: snap.url, id: String(Date.now()) }; paintGlass();
-}
 function waButton(i) {   // Winamp's own buttons: prev, play, pause, stop, next (the real player through host.media; the mock without a host)
   if (i === 0 || i === 4) { H?.media?.(i ? "next" : "prev"); return; }
   if ((i === 1) === !!S.paused || !S.music) { if (!S.music) { S.music = true; S.paused = true; } togglePause(); }
@@ -2436,7 +2423,7 @@ function setSolo() {   // screen 2 only
    new spot and the rest fly in from the side the menu comes from. */
 // every piece you can see: each top-level part of the menu (not full-screen layers: those stay in the "ui" crossfade), each tile, and the big sky title
 const inSight = (el, wide) => { if (!el.offsetParent) return false; const r = el.getBoundingClientRect(), cs = getComputedStyle(el);
-  return r.width > 0 && (wide || r.width < innerWidth * .9) && r.right > 0 && r.left < innerWidth && (wide || +cs.opacity > .02); };   // no visibility test: the glass snapshot hides the whole layer for a moment (snapGlass), and a cover then found no pieces   // wide (the sky title): its own fade may be at 0 right now
+  return r.width > 0 && (wide || r.width < innerWidth * .9) && r.right > 0 && r.left < innerWidth && (wide || +cs.opacity > .02); };   // no visibility test: a cover once found no pieces while the layer was hidden for a moment   // wide (the sky title): its own fade may be at 0 right now
 const handParts = () => [...UI.children].map((el, i) => [el, "u" + i]).filter(([el]) => !el.classList.contains("rowclip") && inSight(el))
   .concat([...$("row").children].filter(inSight).map(el => [el, "t" + el.dataset.j]), [...document.querySelectorAll(".scn.on .skyt")].filter(el => inSight(el, true)).map(el => [el, "skyt"]));
 // Timing (user, 15 Nov: "more visibly animated, a bit slower; starts immediately but not done in an instant"): the first piece moves at 0 ms, the
@@ -2484,7 +2471,7 @@ function setScreen() {   // its part from the host (Host.Arrange: main, partner,
 }
 const drawMenu1 = drawMenu, sync1 = sync, onRender1 = window.onRender;
 drawMenu = function () {
-  drawMenu1(); paintGlass();
+  drawMenu1();
   if (!DUAL) return;
   if (SOLO || PSIDE < 0 || ROLE === "extra") { [...$("row").children].forEach(el => el.style.translate = ""); return; }   // a screen of its own, or the partner is on the left (it shows no row): no bezel to step over
   if (SCR === 2) $("row").style.transform = `translateX(${200 - (S2POS ?? S.item) * 248 - 1920}px)`;   // the same row, seen 1920 px further right
@@ -2503,7 +2490,7 @@ sync = function () {
   const tp = JSON.stringify({ cat: S.cat, item: S.item, mode: S.mode, ov: S.ov, cl: S.cl, unread: S.unread, noteFloor: S.noteFloor, sort: S.sort, fq: S.fq, pin: ROT.pin, s1cov: !!window.HOSTCOVERED });
   if (tp !== told) { told = tp; BC?.postMessage({ tp }); }
 };
-window.onRender = a => { if (SCR === 2 && !SOLO) S.last = Date.now(); onRender1(a); snapGlass(); };   // screen 2 never idles on its own while it follows screen 1; solo (screen 1 busy) it dozes to the clock like any desktop
+window.onRender = a => { if (SCR === 2 && !SOLO) S.last = Date.now(); onRender1(a); };   // screen 2 never idles on its own while it follows screen 1; solo (screen 1 busy) it dozes to the clock like any desktop
 if (BC) BC.onmessage = ({ data: d }) => {
   if (d.tp && SCR === 2) { const { pin, s1cov, ...st } = JSON.parse(d.tp); S1COV = s1cov; setSolo(); if (SOLO) return;   // solo: screen 2 keeps its own place in the menu
     if (H?.menu?.open) delete st.ov;   // screen 2 is the menu for its notifications: they stay open while screen 1 changes

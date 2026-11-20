@@ -39,10 +39,10 @@ static class Library
         return found;
     }
 
-    public static bool Launch(string id)
+    public static bool Launch(string id, Screen? on = null)
     {
         if (id.StartsWith("tab:")) return Web.Switch(id);   // an open Firefox tab: switch to it, not a second copy
-        if (id.StartsWith("web:") && targets.TryGetValue(id, out var page)) { OpenUrl(page); return true; }   // in the browser picked in Setup, not just Windows' default
+        if (id.StartsWith("web:") && targets.TryGetValue(id, out var page)) { OpenUrl(page, on); return true; }   // in the browser picked in Setup, not just Windows' default
         var target = targets.GetValueOrDefault(id) ?? Browsed(id);
         if (target == null) { Log.Write($"launch refused: unknown id {id}"); return false; }
         try { Process.Start(new ProcessStartInfo(target) { UseShellExecute = true }); Log.Write($"launch {id} -> {target}"); return true; }
@@ -61,7 +61,7 @@ static class Library
     static string? Browsed(string id) => id.StartsWith("file:") && File.Exists(id[5..]) ? id[5..] : id.StartsWith("dir:") && Directory.Exists(id[4..]) ? id[4..] : null;
 
     /// <summary>Opens a web address in the browser picked in Setup, else the default one (the search's "Search the web"); http and https only.</summary>
-    public static void OpenUrl(string url) => Web.Open(url);
+    public static void OpenUrl(string url, Screen? on = null) => Web.Open(url, on);
 
     static string Vdf(string text, string key) => Regex.Match(text, $"\"{key}\"\\s+\"([^\"]*)\"", RegexOptions.IgnoreCase) is { Success: true } m ? m.Groups[1].Value : "";
 
